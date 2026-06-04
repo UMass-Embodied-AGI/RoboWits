@@ -1,0 +1,115 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robowits"
+version = "0.1.0"
+description = "RoboWits: bimanual manipulation benchmark with Genesis physics"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+keywords = ["robotics", "simulation", "genesis", "gym", "bimanual", "manipulation", "benchmark"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Games/Entertainment :: Simulation",
+]
+dependencies = [
+    "genesis-world @ git+https://github.com/Genesis-Embodied-AI/Genesis.git@v0.4.7",
+    "torch>=2.8.0",
+    "numpy>=1.24.0",
+    "gymnasium>=1.0.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0.0",
+    "importlib-resources>=5.0.0",
+    "h5py>=2.2.6",
+    "pin-pink>=3.3.0",  # Combined pinocchio + pink for IK
+    "qpsolvers[quadprog]>=4.7.0",  # Required by pink
+    "proxsuite==0.7.2",  # Faster QP solver for pink IK (proxqp backend); 0.7.2.post1 has no cp311 wheel
+    "lerobot",  # Local lerobot package (source defined in [tool.uv.sources])
+    "transformers @ git+https://github.com/huggingface/transformers.git@fix/lerobot_openpi",  # Required for pi0/pi05
+]
+
+[tool.uv]
+override-dependencies = [
+    "z3-solver==4.13.4.0",
+    "torch>=2.8.0",
+    "torchvision>=0.23.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu129"
+url = "https://download.pytorch.org/whl/cu129"
+explicit = true
+
+[tool.uv.sources]
+lerobot = { path = "third_party/lerobot", editable = true }
+torch = [
+  { index = "pytorch-cu129", marker = "sys_platform == 'linux'" },
+]
+torchvision = [
+  { index = "pytorch-cu129", marker = "sys_platform == 'linux'" },
+]
+torchaudio = [
+  { index = "pytorch-cu129", marker = "sys_platform == 'linux'" },
+]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gs_gym*"]
+
+[tool.setuptools.package-data]
+"gs_gym" = ["configs/**/*.yaml", "configs/**/*.json"]
+
+# Ruff configuration
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+exclude = ["third_party/"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "C901",   # too complex
+    "ARG001", # unused function argument
+    "ARG002", # unused method argument
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ARG001", "ARG002"]
+"scripts/debug_*.py" = ["E402", "B905", "B007"]
+"scripts/eval_repeat_trial.py" = ["E402"]
+"scripts/debug_pipeline_compare.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["gs_gym"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+

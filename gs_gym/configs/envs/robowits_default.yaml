@@ -1,0 +1,34 @@
+genesis_init:
+  seed: 42
+  precision: "float32"
+  logging_level: "INFO"
+  backend: null
+
+scene:
+  type: "flat"
+  size: [1.0, 1.0, 0.1]
+  position: [0.0, 0.0, 0.0]
+  gravity: [0.0, 0.0, -9.81]
+  dt: 0.0333
+  substeps: 4
+  show_viewer: false
+  show_fps: false
+  ground_friction: 1.0
+  ground_restitution: 0.0
+
+robot:
+  type: "bimanual_marvin"
+  position: [0.0, 0.0, 1.08]
+  euler: [0.0, 0.0, 0.0]
+  joint_damping: 0.1
+  joint_armature: 0.1
+  action_scale: 1.0
+  max_joint_velocity: 2.0
+
+# Reachable bounds for object placement (x_range, y_range)
+reachable_bounds:
+  x: [0.2, 0.7]
+  y: [-0.45, 0.45]
+
+termination:
+  max_episode_steps: 200

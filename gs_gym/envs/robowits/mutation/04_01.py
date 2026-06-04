@@ -1,0 +1,145 @@
+from importlib import import_module as _import
+
+import genesis as gs
+
+from gs_gym.common.utils import get_asset_path
+from gs_gym.envs.registry import register_task
+from gs_gym.envs.robowits.robowits import PlacementGroups
+
+PinchCardEnv = _import("gs_gym.envs.robowits.04_pinch_card").PinchCardEnv
+
+
+@register_task("robowits/04_01-v0")
+class PinchCardMut1Env(PinchCardEnv):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Define reachable areas for distractor objects (outside main task area)
+        self._object_reachable_areas["wooden pencil case"] = {
+            "x_min": 0.3,
+            "x_max": 0.55,
+            "y_min": -0.5,
+            "y_max": -0.25,
+        }
+        self._object_reachable_areas["candle pot"] = {"x_min": 0.25, "x_max": 0.45, "y_min": 0.3, "y_max": 0.55}
+
+        table_area = {"x_min": 0.3, "x_max": 0.6, "y_min": -0.15, "y_max": 0.15}
+        self._object_reachable_areas["bank card"] = table_area
+        self._object_reachable_areas["eraser"] = table_area
+
+    @property
+    def placement_groups(self) -> PlacementGroups | None:
+        """Define placement groups for random initialization."""
+        return (
+            "bank card",
+            "eraser",
+            "wooden pencil case",
+            "candle pot",
+        )
+
+    def _add_custom_entities(self) -> None:
+        """Add custom entities using genesis APIs."""
+        coacd_options = gs.options.CoacdOptions(
+            threshold=0.01, preprocess_resolution=80, max_convex_hull=20, decimate=True
+        )
+
+        # Code Block: bank card
+        _e = self._scene.scene.add_entity(
+            gs.morphs.Mesh(
+                coacd_options=coacd_options,
+                file=get_asset_path("blender_kit/9b4245ca-361f-4940-a23d-090b1e547a52/obj.glb", pattern_is_dir=False),
+                scale=0.8,
+                pos=(0.46, 0.0, 0.843),
+                euler=(0.0, 0.0, 0.0),
+                fixed=False,
+                collision=True,
+            ),
+            material=gs.materials.Rigid(rho=200.0, friction=0.4),
+            surface=gs.surfaces.Smooth(double_sided=True),
+        )
+        self._entities["bank card"] = {"entity": _e}
+
+        # Code Block: eraser
+        _e = self._scene.scene.add_entity(
+            gs.morphs.Mesh(
+                coacd_options=coacd_options,
+                file=get_asset_path("blender_kit/333832bb-68f0-4f72-a300-658c4fdccfdf/obj.glb", pattern_is_dir=False),
+                scale=2,
+                pos=(0.48, 0.08, 0.85),  # 1.12338),
+                euler=(0.0, 0.0, 0.0),
+                fixed=False,
+                collision=True,
+            ),
+            material=gs.materials.Rigid(rho=200.0, friction=1.2),
+            surface=gs.surfaces.Rough(double_sided=True),
+        )
+        self._entities["eraser"] = {"entity": _e}
+        # Code Block: small table
+        _e = self._scene.scene.add_entity(
+            gs.morphs.Mesh(
+                coacd_options=coacd_options,
+                file=get_asset_path("blender_kit/17674e05-b713-4b2a-a04c-49aee4d4d401/obj.glb", pattern_is_dir=False),
+                scale=0.5,
+                pos=(0.46, 0, 0.76338),
+                euler=(0.0, 0.0, 0.0),
+                fixed=True,
+                collision=True,
+            ),
+            material=gs.materials.Rigid(rho=200.0, friction=1.2),
+            surface=gs.surfaces.Rough(double_sided=True),
+        )
+        self._entities["small table"] = {"entity": _e}
+        # Code Block: target cube
+        _e = self._scene.scene.add_entity(
+            gs.morphs.Box(
+                pos=(0.7, -0.3, 0.86), euler=(0.0, 0.0, 0.0), size=(0.15, 0.15, 0.2), fixed=True, collision=True
+            ),
+            material=gs.materials.Rigid(rho=200.0),
+            surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.4, ior=1.5),
+        )
+        self._entities["target cube"] = {"entity": _e}
+        # Code Block: target area
+        _e = self._scene.scene.add_entity(
+            gs.morphs.Box(
+                pos=(0.7, -0.3, 0.96), euler=(0.0, 0.0, 0.0), size=(0.15, 0.15, 0.002), fixed=True, collision=False
+            ),
+            material=gs.materials.Rigid(rho=200.0),
+            surface=gs.surfaces.Default(color=(0.2, 0.8, 0.2), roughness=0.4, ior=1.5),
+        )
+        self._entities["target area"] = {"entity": _e}
+        # NOTE: the "toy train" distractor (asset
+        # blender_kit/72581c7a-6734-4970-9ed2-1cffec032c5f) was removed here
+        # because its mesh has a degenerate volume integral — Genesis computes
+        # a NaN inertia tensor for it at scene-build time, which causes the
+        # first physics step to raise "Invalid constraint forces causing
+        # 'nan'". Re-add it only once the underlying asset / inertia override
+        # is fixed.
+        # Code Block: wooden pencil case
+        _e = self._scene.scene.add_entity(
+            gs.morphs.Mesh(
+                coacd_options=coacd_options,
+                file=get_asset_path("blender_kit/4de06b64-1660-4775-818b-4935e4cc8cf3/obj.glb", pattern_is_dir=False),
+                scale=0.55,
+                pos=(0.42, -0.38, 0.76 + 0.1031 * 0.55),
+                euler=(0.0, 0.0, 0.0),
+                fixed=False,
+                collision=True,
+            ),
+            material=gs.materials.Rigid(rho=400.0, friction=0.8),
+            surface=gs.surfaces.Rough(double_sided=True),
+        )
+        self._entities["wooden pencil case"] = {"entity": _e}
+        # Code Block: candle pot
+        _e = self._scene.scene.add_entity(
+            gs.morphs.Mesh(
+                coacd_options=coacd_options,
+                file=get_asset_path("blender_kit/d484ed47-44ea-4518-87ae-3397d3eb732f/obj.glb", pattern_is_dir=False),
+                scale=1.538,
+                pos=(0.341, 0.45, 0.76 + 0.0261 * 1.538),
+                euler=(0.0, 0.0, 0.0),
+                fixed=False,
+                collision=True,
+            ),
+            material=gs.materials.Rigid(rho=350.0, friction=0.7),
+            surface=gs.surfaces.Smooth(double_sided=True),
+        )
+        self._entities["candle pot"] = {"entity": _e}
