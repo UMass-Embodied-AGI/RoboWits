@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- Meta tags for social media banners, these should be filled in appropriatly as they are your "business card" -->
+  <!-- Replace the content tag with appropriate information -->
+  <meta name="description" content="DESCRIPTION META TAG">
+  <meta property="og:title" content="SOCIAL MEDIA TITLE TAG"/>
+  <meta property="og:description" content="SOCIAL MEDIA DESCRIPTION TAG TAG"/>
+  <meta property="og:url" content="URL OF THE WEBSITE"/>
+  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X630-->
+  <meta property="og:image" content="static/image/your_banner_image.png" />
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+
+
+  <meta name="twitter:title" content="TWITTER BANNER TITLE META TAG">
+  <meta name="twitter:description" content="TWITTER BANNER DESCRIPTION META TAG">
+  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X600-->
+  <meta name="twitter:image" content="static/images/your_twitter_banner_image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- Keywords for your paper to be indexed by-->
+  <meta name="keywords" content="KEYWORDS SHOULD BE PLACED HERE">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+  <title>RoboWits: Unexpected Challenges for  Robotic Creative Problem Solving</title>
+  <link rel="icon" type="image/x-icon" href="static/images/robowits.png">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+  rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script src="static/js/bulma-carousel.min.js"></script>
+  <script src="static/js/bulma-slider.min.js"></script>
+  <script src="static/js/index.js"></script>
+</head>
+<body>
+
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">RoboWits: Unexpected Challenges for Robotic Creative Problem Solving</h1>
+            <div class="is-size-5 publication-authors">
+              <span class="author-block">
+                <a href="https://chunru-lin.github.io/">Chunru Lin</a><sup>1</sup>*</span>,
+              <span class="author-block">
+                <a href="https://icefoxzhx.github.io/">Hongxin Zhang</a><sup>1</sup>*</span>,
+              <span class="author-block">
+                <a href="https://ario-photography.netlify.app/dist/about_me">Fenghao Yu</a><sup>1</span>,
+              </span>
+              <span class="author-block">
+                <a href="https://acmlczh.github.io/">Zhehuan Chen</a><sup>1</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://cocosci.princeton.edu/tom/index.php">Thomas L. Griffiths</a><sup>2</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://yejinc.github.io/">Yejin Choi</a><sup>3</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://davheld.github.io/">David Held</a><sup>4</sup>,
+              </span>
+              <span class="author-block">
+                <a href="https://people.csail.mit.edu/ganchuang/">Chuang Gan</a><sup>1</sup>
+              </span>
+            </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>University of Massachusetts Amherst,</span>
+            <span class="author-block"><sup>2</sup>Princeton University,</span>
+            <span class="author-block"><sup>3</sup>Stanford University,</span>
+            <span class="author-block"><sup>4</sup>Carnegie Mellon University</span>
+          </div>
+
+          <div class="column has-text-centered" style="padding-top: 1rem;">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2605.30326" class="external-link button is-normal is-rounded is-dark" target="_blank" rel="noopener noreferrer">
+                  <span class="icon">
+                    <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/UMass-Embodied-AGI/RoboWits" class="external-link button is-normal is-rounded is-dark" target="_blank" rel="noopener noreferrer">
+                  <span class="icon">
+                    <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://huggingface.co/datasets/XHRlyb2001/RoboWits_lerobot_dataset" class="external-link button is-normal is-rounded is-dark" target="_blank" rel="noopener noreferrer">
+                  <span class="icon">
+                    <i class="fas fa-database"></i>
+                  </span>
+                  <span>Dataset</span>
+                </a>
+              </span>
+            </div>
+          </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 1.Teaser. -->
+<!-- <section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <video id="teaser" autoplay controls muted loop playsinline height="100%">
+        <source src="./static/videos/teaser.mp4" type="video/mp4">
+      </video>
+    </div>            
+  </div>
+</section> -->
+<!--/ Teaser. -->
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- 2.Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            The ability to reason, adapt, and creatively solve problems under unexpected challenges is essential for robots operating in real-world environments. However, current robotic benchmarks primarily emphasize skill-level execution and provide limited insight into such cognitive reasoning capabilities. We introduce <b>RoboWits</b>, a bi-manual robotic benchmark designed to systematically evaluate cognitive reasoning, creative tool use, and robustness to unexpected conditions. To enable scalable construction of high-quality reasoning-centric unexpected scenarios, we propose an automated task generation pipeline formulated as a multi-agent cooperative framework, comprising agents for seed task generation and verification, metric generation, scene generation, and task mutation. Using the pipeline, we curated 30 diverse seed tasks and 200 mutated tasks with graded difficulty across geometry, material, and assembly-based reasoning. We benchmark popular robot policy models, pre-trained VLAs, and oracle state-based planners in both single-task fine-tuning and multi-task learning settings. Our results show that while pre-trained VLAs show some preliminary performance on the seed task under single-task fine-tuning settings, they struggle to perform on mutated tasks, implying their brittleness in manipulation tasks requiring non-trivial reasoning, strategy adaptation, and robustness to deceptive or constrained environments.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 4.Task Generation Pipeline. -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Task Generation</h2>
+        <div class="content has-text-justified">
+          <p>
+            Our automated task generation pipeline consists of two main stages. <b>Left:</b> Seed task generation and verification at the specification (verbal) level. <b>Right:</b> A verified seed task is expanded into diverse creative problem-solving task variants through iterative mutation and verification, and is then instantiated with 3D scene configurations and executable evaluation metrics in the simulator to produce the final benchmark tasks.
+          </p>
+        </div>
+        <div class="content" style="margin-top: 2rem;">
+          <img src="./static/images/04_task_gen_pipeline_v3.png" alt="Task Generation Pipeline" style="width: 100%; height: auto; border: 1px solid #ddd;">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!--/ Task Generation Pipeline. -->
+
+
+<!-- 3.Task Gallery. -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="hero-body has-text-centered">
+      <h2 class="title is-3">Task Gallery</h2>
+
+      <!-- Task Videos Grid -->
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/01.mp4" type="video/mp4">
+          </video>
+          <p>Align Blocks</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/02.mp4" type="video/mp4">
+          </video>
+          <p>Retrieve Cube</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/03.mp4" type="video/mp4">
+          </video>
+          <p>Gap Retrieve</p>
+        </div>
+      </div>
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/04.mp4" type="video/mp4">
+          </video>
+          <p>Pinch Card</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/05.mp4" type="video/mp4">
+          </video>
+          <p>Roll Up Ball</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/06.mp4" type="video/mp4">
+          </video>
+          <p>Dominos</p>
+        </div>
+      </div>
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/07.mp4" type="video/mp4">
+          </video>
+          <p>Stand Pages</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/09.mp4" type="video/mp4">
+          </video>
+          <p>Hold Cup</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/10.mp4" type="video/mp4">
+          </video>
+          <p>Collect Screw</p>
+        </div>
+      </div>
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/11.mp4" type="video/mp4">
+          </video>
+          <p>Place Tall Box</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/12.mp4" type="video/mp4">
+          </video>
+          <p>Ball Into Bottle</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/13.mp4" type="video/mp4">
+          </video>
+          <p>Cover With Lid</p>
+        </div>
+      </div>
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/14.mp4" type="video/mp4">
+          </video>
+          <p>Stack Cubes</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/16.mp4" type="video/mp4">
+          </video>
+          <p>Stand Bulb</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/17.mp4" type="video/mp4">
+          </video>
+          <p>Ball Onto Tower</p>
+        </div>
+      </div>
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/18.mp4" type="video/mp4">
+          </video>
+          <p>Cylinder Through Hole</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/19.mp4" type="video/mp4">
+          </video>
+          <p>Stack Bowls</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/23.mp4" type="video/mp4">
+          </video>
+          <p>Place Book</p>
+        </div>
+      </div>
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/24.mp4" type="video/mp4">
+          </video>
+          <p>Raise Platform</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/26.mp4" type="video/mp4">
+          </video>
+          <p>Align Chopsticks</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/27.mp4" type="video/mp4">
+          </video>
+          <p>Retrieve Roll</p>
+        </div>
+      </div>
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/28.mp4" type="video/mp4">
+          </video>
+          <p>Move Cubes</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/29.mp4" type="video/mp4">
+          </video>
+          <p>Balance Board</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/02_2.mp4" type="video/mp4">
+          </video>
+          <p>Retrieve Cube</p>
+        </div>
+      </div>
+
+      <!-- <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/task_stack_bowls_19_gallery.mp4" type="video/mp4">
+          </video>
+          <p>Stack Bowls</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/task_stack_cubes_14_gallery.mp4" type="video/mp4">
+          </video>
+          <p>Stack Cubes</p>
+        </div>
+        <div class="column content">
+          Empty column for spacing 
+        </div>
+      </div> -->
+
+    </div>
+  </div>
+</section>
+
+<!--/ Task Gallery. -->
+
+
+
+<!-- 3.Mutation Examples. -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="hero-body has-text-centered">
+      <h2 class="title is-3">Mutation Examples</h2>
+
+      <!-- Task Videos Grid -->
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/01.mp4" type="video/mp4">
+          </video>
+          <p>Seed Task</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/01_mut1.mp4" type="video/mp4">
+          </video>
+          <p>Mutation 1 (Add irrelevant objects)</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/01_mut2.mp4" type="video/mp4">
+          </video>
+          <p>Mutation 2 (Fix two blocks)</p>
+        </div>
+      </div>
+
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/04.mp4" type="video/mp4">
+          </video>
+          <p>Seed Task</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/04_mut1.mp4" type="video/mp4">
+          </video>
+          <p>Mutation 1 (Add irrelevant objects)</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/04_mut2.mp4" type="video/mp4">
+          </video>
+          <p>Mutation 2 (Add an obstacle)</p>
+        </div>
+      </div>
+
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/06.mp4" type="video/mp4">
+          </video>
+          <p>Seed Task</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/06_mut1.mp4" type="video/mp4">
+          </video>
+          <p>Mutation 1 (Add irrelevant objects)</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/06_mut2.mp4" type="video/mp4">
+          </video>
+          <p>Mutation 2 (Replace pusher)</p>
+        </div>
+      </div>
+
+
+      <div class="columns is-centered">
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/09.mp4" type="video/mp4">
+          </video>
+          <p>Seed Task</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/09_mut1.mp4" type="video/mp4">
+          </video>
+          <p>Mutation 1 (Replace coaster)</p>
+        </div>
+        <div class="column content">
+          <video id="matting-video" controls muted loop playsinline height="100%">
+            <source src="./static/videos/09_mut2.mp4" type="video/mp4">
+          </video>
+          <p>Mutation 2 (Fix coaster)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Citation</h2>
+        <div class="content has-text-left">
+          <p>If you find our work useful, please consider citing:</p>
+          <pre><code>@article{lin2026robowits,
+  title={RoboWits: Unexpected Challenges for Robotic Creative Problem Solving},
+  author={Lin, Chunru and Zhang, Hongxin and Yu, Fenghao and Chen, Zhehuan and Griffiths, Thomas L and Choi, Yejin and Held, David and Gan, Chuang},
+  journal={arXiv preprint arXiv:2605.30326},
+  year={2026}
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            Website built upon 
+            <a
+              href="https://github.com/nerfies/nerfies.github.io">Nerfies'
+            </a> 
+            open-source template
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
