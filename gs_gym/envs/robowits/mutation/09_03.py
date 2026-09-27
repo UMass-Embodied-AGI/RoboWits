@@ -14,7 +14,7 @@ class HoldCupMut3Env(HoldCupEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("cup", "eraser", ("slope", "target area"))
+        return ("cup", "eraser", ("slope", "target_area"))
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -79,4 +79,4 @@ class HoldCupMut3Env(HoldCupEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.2, 0.8, 0.3), roughness=0.2),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}

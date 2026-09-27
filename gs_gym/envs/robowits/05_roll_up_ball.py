@@ -56,13 +56,13 @@ class RollUpBallEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """All objects placed independently."""
-        return ("long board", "box", "high basket")
+        return ("long_board", "box", "high_basket")
 
     @property
     def _object_reachable_areas(self) -> dict:
-        # 'long board' AABB x-size slightly exceeds the default 0.400-wide x-bounds,
+        # 'long_board' AABB x-size slightly exceeds the default 0.400-wide x-bounds,
         # so widen just enough to allow valid placement sampling.
-        return {"long board": {"x_min": 0.25, "x_max": 0.75}}
+        return {"long_board": {"x_min": 0.25, "x_max": 0.75}}
 
     def _add_custom_entities(self) -> None:
         """Add basket, board, and box."""
@@ -84,7 +84,7 @@ class RollUpBallEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["high basket"] = {
+        self._entities["high_basket"] = {
             "entity": basket,
         }
 
@@ -102,7 +102,7 @@ class RollUpBallEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["long board"] = {
+        self._entities["long_board"] = {
             "entity": board,
         }
 
@@ -127,7 +127,7 @@ class RollUpBallEnv(RoboWitsEnv):
         objs_info = self.collect_objs_info()
 
         box = objs_info.get("box")
-        basket = objs_info.get("high basket")
+        basket = objs_info.get("high_basket")
 
         if box is None or basket is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -169,8 +169,8 @@ class RollUpBallEnv(RoboWitsEnv):
         LIFT_HEIGHT = 0.05
         APPROACH_THRESHOLD = 0.3
 
-        BOARD = "long board"
-        BASKET = "high basket"
+        BOARD = "long_board"
+        BASKET = "high_basket"
         BOX = "box"
 
         INITIAL_BOARD_POS = np.array([0.50, -0.15, 0.77], dtype=float)

@@ -35,10 +35,13 @@ class RoundDoughSheetEnv(RoboWitsEnv):
     - XY convex hull circularity ≥ 0.85 (4π·Area/Perimeter² == 1 for perfect circle)
     """
 
+    # MPM deformable dough: far faster on the GPU backend.
+    preferred_genesis_backend = "cuda"
+
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
-        return "Flattern the dough ball and make a perfect round sheet"
+        return "Flatten the dough ball and make a perfect round sheet."
 
     TABLE_Z = 0.76
 
@@ -68,7 +71,7 @@ class RoundDoughSheetEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """No random placement for this task."""
-        return ("large flat board", "round cutter", "dough ball")
+        return ("large_flat_board", "round_cutter", "dough_ball")
 
     def _add_custom_entities(self) -> None:
         """Add dough ball, flat board, and round cutter."""
@@ -95,7 +98,7 @@ class RoundDoughSheetEnv(RoboWitsEnv):
             ),
             surface=gs.surfaces.Default(color=(0.95, 0.85, 0.65), vis_mode="recon"),
         )
-        self._entities["dough ball"] = {
+        self._entities["dough_ball"] = {
             "entity": dough,
         }
 
@@ -119,7 +122,7 @@ class RoundDoughSheetEnv(RoboWitsEnv):
             ),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["large flat board"] = {
+        self._entities["large_flat_board"] = {
             "entity": board,
         }
 
@@ -143,7 +146,7 @@ class RoundDoughSheetEnv(RoboWitsEnv):
             ),
             surface=gs.surfaces.Smooth(color=(0.72, 0.45, 0.20), double_sided=True),
         )
-        self._entities["round cutter"] = {
+        self._entities["round_cutter"] = {
             "entity": cutter,
         }
 
@@ -154,7 +157,7 @@ class RoundDoughSheetEnv(RoboWitsEnv):
         TABLE_X_MIN, TABLE_X_MAX = 0.21, 1.00
         TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
 
-        dough_info = objs_info.get("dough ball")
+        dough_info = objs_info.get("dough_ball")
 
         if dough_info is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -230,7 +233,7 @@ class RoundDoughSheetEnv(RoboWitsEnv):
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        dough_info = objs_info.get("dough ball")
+        dough_info = objs_info.get("dough_ball")
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
         if dough_info is None or dough_info.get("material") != "particle":

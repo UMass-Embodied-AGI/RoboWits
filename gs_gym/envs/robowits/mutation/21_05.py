@@ -14,7 +14,11 @@ class SealColanderMut5Env(SealColanderEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("perforated container", "water"), "pitcher", "curved holder", "flowerpot")
+        # The MPM water sits inside the pitcher, so it has to move *with* the
+        # pitcher: grouping it with the perforated container dragged the liquid out
+        # of the pitcher while the pitcher was relocated separately, and the
+        # resulting interpenetration blew the solver up at every substeps value.
+        return ("perforated_container", "curved_holder", "flowerpot")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +40,7 @@ class SealColanderMut5Env(SealColanderEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.6),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["perforated container"] = {"entity": _e}
+        self._entities["perforated_container"] = {"entity": _e}
         # Code Block: pitcher
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -47,24 +51,28 @@ class SealColanderMut5Env(SealColanderEnv):
                 euler=(0, 0, 0),
                 fixed=True,
                 collision=True,
+                convexify=False,
             ),
-            material=gs.materials.Rigid(rho=200.0),
+            material=gs.materials.Rigid(rho=200.0, sdf_max_res=256),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
         self._entities["pitcher"] = {"entity": _e}
+        self._add_pitcher_blockers(0.61, 0.0)
         # Code Block: curved holder
         _e = self._scene.scene.add_entity(
             gs.morphs.Sphere(radius=0.012, pos=(0.50, -0.15, 0.772), euler=(0, 0, 0), fixed=True, collision=True),
             material=gs.materials.Rigid(rho=200.0, friction=0.6),
             surface=gs.surfaces.Smooth(color=(0.85, 0.85, 0.85), double_sided=True),
         )
-        self._entities["curved holder"] = {"entity": _e}
+        self._entities["curved_holder"] = {"entity": _e}
         # Code Block: water
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
                 radius=0.045, height=0.13, pos=(0.61, 0.0, 0.86), euler=(0, 0, 0), fixed=False, collision=True
             ),
-            material=gs.materials.MPM.Liquid(E=80000.0, nu=0.49, rho=1000.0, viscous=True, sampler="pbs"),
+            material=gs.materials.SPH.Liquid(
+                rho=500.0, stiffness=80000.0, exponent=7.0, mu=0.005, gamma=0.01, sampler="pbs"
+            ),
             surface=gs.surfaces.Default(color=(0.6, 0.7, 1.0), double_sided=True, vis_mode="recon"),
         )
         self._entities["water"] = {"entity": _e}

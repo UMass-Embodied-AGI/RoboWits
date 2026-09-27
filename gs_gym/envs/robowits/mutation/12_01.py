@@ -14,7 +14,7 @@ class BallIntoBottleMut1Env(BallIntoBottleEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("ball container", "small ball"), "red bottle", "funnel", "cat figurine")
+        return (("ball_container", "small_ball"), "red_bottle", "funnel", "cat_figurine")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class BallIntoBottleMut1Env(BallIntoBottleEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(double_sided=True, color=(0.8, 0.2, 0.2)),
         )
-        self._entities["red bottle"] = {"entity": _e}
+        self._entities["red_bottle"] = {"entity": _e}
         # Code Block: funnel
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -66,7 +66,7 @@ class BallIntoBottleMut1Env(BallIntoBottleEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1.2),
             surface=gs.surfaces.Glass(color=(0.8, 0.9, 1.0), opacity=0.3, double_sided=True),
         )
-        self._entities["ball container"] = {"entity": _e}
+        self._entities["ball_container"] = {"entity": _e}
         # Code Block: cat figurine
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -81,11 +81,11 @@ class BallIntoBottleMut1Env(BallIntoBottleEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["cat figurine"] = {"entity": _e}
+        self._entities["cat_figurine"] = {"entity": _e}
         # Code Block: small ball
         _e = self._scene.scene.add_entity(
             gs.morphs.Sphere(pos=(0.63, -0.12, 0.79), radius=0.007, fixed=False, collision=True),
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.2, 0.6, 0.9), double_sided=True),
         )
-        self._entities["small ball"] = {"entity": _e}
+        self._entities["small_ball"] = {"entity": _e}

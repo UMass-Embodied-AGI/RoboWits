@@ -14,7 +14,7 @@ class RetrieveCubeMut6Env(RetrieveCubeEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("deep narrow container", "cube"), "target area", "spoon")
+        return (("deep_narrow_container", "cube"), "target_area", "spoon")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class RetrieveCubeMut6Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(color=(0.95, 0.95, 0.95), double_sided=True),
         )
-        self._entities["deep narrow container"] = {"entity": _e}
+        self._entities["deep_narrow_container"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -45,7 +45,7 @@ class RetrieveCubeMut6Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.1, 0.8, 0.1), double_sided=True),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: spoon
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

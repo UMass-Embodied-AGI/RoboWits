@@ -15,12 +15,12 @@ class StandBulbMut2Env(StandBulbEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "target patch",
-            "stabilizing ring",
-            "tall object with curved bottom",
+            "target_patch",
+            "stabilizing_ring",
+            "tall_object_with_curved_bottom",
             "ceramic_saucer",
             "glass_tumbler",
-            "small bowl",
+            "small_bowl",
             "gold_ring",
         )
 
@@ -30,7 +30,7 @@ class StandBulbMut2Env(StandBulbEnv):
             threshold=0.01, preprocess_resolution=80, max_convex_hull=20, decimate=True
         )
 
-        # Code Block: target_patch
+        # Code Block: target patch
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
                 pos=(0.56, 0.0, 0.761), euler=(0, 0, 0), radius=0.08, height=0.002, fixed=True, collision=False
@@ -55,8 +55,8 @@ class StandBulbMut2Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["stabilizing ring"] = {"entity": _e}
-        # Code Block: small_bowl
+        self._entities["stabilizing_ring"] = {"entity": _e}
+        # Code Block: small bowl
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -103,7 +103,7 @@ class StandBulbMut2Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["tall object with curved bottom"] = {"entity": _e}
+        self._entities["tall_object_with_curved_bottom"] = {"entity": _e}
         # Code Block: glass_tumbler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -120,12 +120,17 @@ class StandBulbMut2Env(StandBulbEnv):
         )
         self._entities["glass_tumbler"] = {"entity": _e}
         # Code Block: gold_ring
+        # scale 1.0 -> 2.0: at native scale this annulus is 25x26x10mm, and COACD splits it
+        # into up to 20 wedges around the hole -- each only a few mm across. Those sliver
+        # convexes are ill-conditioned at dt=0.0333/substeps=4 and the rigid solver raised
+        # "Invalid constraint forces causing 'nan'" on 3/20 episodes. Doubling the ring
+        # doubles each wedge. pos z tracks the scale so it still rests on the table.
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/02d04392-5d49-4e31-be80-20c0e3f64c4b/obj.glb", pattern_is_dir=False),
-                scale=1.0,
-                pos=(0.62, 0.12, 0.7652),
+                scale=2.0,
+                pos=(0.62, 0.12, 0.7704),
                 euler=(0, 0, 0),
                 fixed=False,
                 collision=True,

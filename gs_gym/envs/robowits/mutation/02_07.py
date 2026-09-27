@@ -14,7 +14,7 @@ class RetrieveCubeMut7Env(RetrieveCubeEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("wide open container", "cube"), "target area")
+        return (("wide_open_container", "cube"), "target_area")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class RetrieveCubeMut7Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(color=(1.0, 1.0, 1.0), double_sided=True),
         )
-        self._entities["wide open container"] = {"entity": _e}
+        self._entities["wide_open_container"] = {"entity": _e}
         # Code Block: cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -54,4 +54,4 @@ class RetrieveCubeMut7Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.1, 0.8, 0.1), double_sided=True),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}

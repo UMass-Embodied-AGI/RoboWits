@@ -29,6 +29,9 @@ class BallIntoJarEnv(RoboWitsEnv):
     - Objects haven't fallen off the table
     """
 
+    # SPH liquid: far faster on the GPU backend.
+    preferred_genesis_backend = "cuda"
+
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
@@ -62,7 +65,7 @@ class BallIntoJarEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """Jar/ball rigid placement (if applicable); foam MPM cloud gets XY jitter in ``_place_objects``."""
-        return ("glass jar", "foam ball")
+        return ("glass_jar", "foam_ball")
 
     def _add_custom_entities(self) -> None:
         """Add glass jar and foam ball."""
@@ -84,7 +87,7 @@ class BallIntoJarEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=250.0, friction=0.5, coup_friction=0.15),
             surface=gs.surfaces.Glass(color=(0.85, 0.9, 0.95), double_sided=True),
         )
-        self._entities["glass jar"] = {
+        self._entities["glass_jar"] = {
             "entity": jar,
         }
 
@@ -99,13 +102,13 @@ class BallIntoJarEnv(RoboWitsEnv):
             material=gs.materials.MPM.Elastic(E=5e4, nu=0.2, rho=200.0, sampler="pbs"),
             surface=gs.surfaces.Smooth(color=(1.0, 0.9, 0.1), double_sided=True, vis_mode="recon"),
         )
-        self._entities["foam ball"] = {
+        self._entities["foam_ball"] = {
             "entity": foam_ball,
         }
 
     def _capture_initial_entity_poses(self) -> None:
         super()._capture_initial_entity_poses()
-        info = self._entities.get("foam ball")
+        info = self._entities.get("foam_ball")
         if info is None:
             return
         entity = info["entity"]
@@ -122,9 +125,9 @@ class BallIntoJarEnv(RoboWitsEnv):
 
     def _place_objects(self) -> None:
         super()._place_objects()
-        if self._eval_particles.get("foam ball") is not None:
+        if self._eval_particles.get("foam_ball") is not None:
             return
-        info = self._entities.get("foam ball")
+        info = self._entities.get("foam_ball")
         if info is None:
             return
         template = info.get("initial_particles_pos")
@@ -170,8 +173,8 @@ class BallIntoJarEnv(RoboWitsEnv):
         Z_FLOOR_THRESH = self.TABLE_Z - 0.15
         PAD = 0.02
 
-        jar = objs_info.get("glass jar")
-        ball = objs_info.get("foam ball")
+        jar = objs_info.get("glass_jar")
+        ball = objs_info.get("foam_ball")
 
         if jar is None or ball is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -258,8 +261,8 @@ class BallIntoJarEnv(RoboWitsEnv):
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        jar = objs_info.get("glass jar")
-        ball = objs_info.get("foam ball")
+        jar = objs_info.get("glass_jar")
+        ball = objs_info.get("foam_ball")
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
         if jar is None or ball is None:

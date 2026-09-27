@@ -14,7 +14,7 @@ class CollectScrewsMut2Env(CollectScrewsEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("screw", "dustpan", "container", "glass tumbler", "hook stylized", "olive oil bottle")
+        return ("screw", "dustpan", "container", "glass_tumbler", "hook_stylized", "olive_oil_bottle")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -81,7 +81,7 @@ class CollectScrewsMut2Env(CollectScrewsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.7, 0.85, 0.95), double_sided=True),
         )
-        self._entities["glass tumbler"] = {"entity": _e}
+        self._entities["glass_tumbler"] = {"entity": _e}
         # Code Block: hook stylized
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -96,7 +96,7 @@ class CollectScrewsMut2Env(CollectScrewsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.3, 0.6, 0.3), double_sided=True),
         )
-        self._entities["hook stylized"] = {"entity": _e}
+        self._entities["hook_stylized"] = {"entity": _e}
         # Code Block: olive oil bottle
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -111,4 +111,4 @@ class CollectScrewsMut2Env(CollectScrewsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.7, 0.75, 0.2), double_sided=True),
         )
-        self._entities["olive oil bottle"] = {"entity": _e}
+        self._entities["olive_oil_bottle"] = {"entity": _e}

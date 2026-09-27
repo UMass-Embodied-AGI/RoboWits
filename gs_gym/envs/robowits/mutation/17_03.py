@@ -15,14 +15,14 @@ class BallOntoTowerMut3Env(BallOntoTowerEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            ("tower base", "large ring", "medium ring"),
-            "small ring",
+            ("tower_base", "large_ring", "medium_ring"),
+            "small_ring",
             "ball",
             "funnel",
             "mug",
-            "organizer bag",
-            "glass tumbler",
-            "brown leather wallet",
+            "organizer_bag",
+            "glass_tumbler",
+            "brown_leather_wallet",
         )
 
     def _add_custom_entities(self) -> None:
@@ -47,7 +47,7 @@ class BallOntoTowerMut3Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["tower base"] = {"entity": _e}
+        self._entities["tower_base"] = {"entity": _e}
         # Code Block: large ring
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -64,7 +64,7 @@ class BallOntoTowerMut3Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["large ring"] = {"entity": _e}
+        self._entities["large_ring"] = {"entity": _e}
         # Code Block: medium ring
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -81,7 +81,7 @@ class BallOntoTowerMut3Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["medium ring"] = {"entity": _e}
+        self._entities["medium_ring"] = {"entity": _e}
         # Code Block: small ring
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -98,7 +98,7 @@ class BallOntoTowerMut3Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small ring"] = {"entity": _e}
+        self._entities["small_ring"] = {"entity": _e}
         # Code Block: ball
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -158,7 +158,7 @@ class BallOntoTowerMut3Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=400.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["organizer bag"] = {"entity": _e}
+        self._entities["organizer_bag"] = {"entity": _e}
         # Code Block: glass tumbler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -173,7 +173,7 @@ class BallOntoTowerMut3Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=800.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["glass tumbler"] = {"entity": _e}
+        self._entities["glass_tumbler"] = {"entity": _e}
         # Code Block: brown leather wallet
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -188,4 +188,4 @@ class BallOntoTowerMut3Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=700.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["brown leather wallet"] = {"entity": _e}
+        self._entities["brown_leather_wallet"] = {"entity": _e}

@@ -14,7 +14,7 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("pot without lid", "small lid", "lid medium", "lid large", "plate")
+        return ("pot_without_lid", "small_lid", "lid_medium", "lid_large", "plate")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["pot without lid"] = {"entity": _e}
+        self._entities["pot_without_lid"] = {"entity": _e}
         # Code Block: small lid
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -51,7 +51,7 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small lid"] = {"entity": _e}
+        self._entities["small_lid"] = {"entity": _e}
         # Code Block: lid medium
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -66,7 +66,7 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["lid medium"] = {"entity": _e}
+        self._entities["lid_medium"] = {"entity": _e}
         # Code Block: lid large
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -81,7 +81,7 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["lid large"] = {"entity": _e}
+        self._entities["lid_large"] = {"entity": _e}
         # Code Block: plate
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

@@ -14,7 +14,7 @@ class StandBulbMut3Env(StandBulbEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("target patch", "stabilizing ring", "tall object with curved bottom", "small bowl")
+        return ("target_patch", "stabilizing_ring", "tall_object_with_curved_bottom", "small_bowl")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -30,7 +30,7 @@ class StandBulbMut3Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.1), roughness=0.6, ior=1.5),
         )
-        self._entities["target patch"] = {"entity": _e}
+        self._entities["target_patch"] = {"entity": _e}
         # Code Block: small bowl
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -45,7 +45,7 @@ class StandBulbMut3Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small bowl"] = {"entity": _e}
+        self._entities["small_bowl"] = {"entity": _e}
         # Code Block: tall object with curved bottom
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -63,7 +63,7 @@ class StandBulbMut3Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["tall object with curved bottom"] = {"entity": _e}
+        self._entities["tall_object_with_curved_bottom"] = {"entity": _e}
         # Code Block: stabilizing ring
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -80,4 +80,4 @@ class StandBulbMut3Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["stabilizing ring"] = {"entity": _e}
+        self._entities["stabilizing_ring"] = {"entity": _e}

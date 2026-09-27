@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from gymnasium import spaces
 
-from gs_gym.common.utils.math_utils import quat_mul
+from gs_gym.common.utils.math_utils import quat_mul, rot6d_to_quat
 from gs_gym.robots.registry import register_robot
 
 
@@ -31,7 +31,7 @@ class BimanualMarvinRobot:
     """
 
     #: Available control modes for this robot
-    CONTROL_MODES: ClassVar[list[str]] = ["JOINT_ABS", "JOINT_DELTA", "EE_ABS", "EE_DELTA"]
+    CONTROL_MODES: ClassVar[list[str]] = ["JOINT_ABS", "JOINT_DELTA", "EE_ABS", "EE_ABS_ROT6D", "EE_DELTA"]
 
     #: Joint names in order (right arm, then left arm)
     #: This matches the order Genesis assigns DOF indices from the URDF
@@ -390,6 +390,7 @@ class BimanualMarvinRobot:
                 - JOINT: (n_envs, 16) [R_arm(7), R_grip(1), L_arm(7), L_grip(1)]
                 - JOINT_DELTA: (n_envs, 16) same format, added to current positions
                 - EE_ABS: (n_envs, 14) [R_pos(3), L_pos(3), R_axis_angle(3), L_axis_angle(3), R_grip(1), L_grip(1)]
+                - EE_ABS_ROT6D: (n_envs, 20) [R_pos(3), L_pos(3), R_rot6d(6), L_rot6d(6), R_grip(1), L_grip(1)]
                 - EE_DELTA: (n_envs, 14) [R_delta_pos(3), R_delta_euler(3), R_grip(1),
                                           L_delta_pos(3), L_delta_euler(3), L_grip(1)]
         """
@@ -399,6 +400,8 @@ class BimanualMarvinRobot:
             self._apply_joint_delta(action)
         elif self.control_mode == "EE_ABS":
             self._apply_ee_abs(action)
+        elif self.control_mode == "EE_ABS_ROT6D":
+            self._apply_ee_abs_rot6d(action)
         elif self.control_mode == "EE_DELTA":
             self._apply_ee_delta(action)
         else:
@@ -464,6 +467,38 @@ class BimanualMarvinRobot:
         right_quat = self._axis_angle_to_quat(right_aa)
         left_quat = self._axis_angle_to_quat(left_aa)
 
+        self._apply_ee_pose_targets(right_pos, right_quat, left_pos, left_quat, right_grip, left_grip)
+
+    def _apply_ee_abs_rot6d(self, action: torch.Tensor) -> None:
+        """Apply absolute end-effector control with IK, using the 6D rotation representation.
+
+        Args:
+            action: (n_envs, 20) [R_pos(3), L_pos(3), R_rot6d(6), L_rot6d(6), R_grip(1), L_grip(1)]
+        """
+        # Parse action
+        right_pos = action[:, 0:3]
+        left_pos = action[:, 3:6]
+        right_rot6d = action[:, 6:12]
+        left_rot6d = action[:, 12:18]
+        right_grip = action[:, 18:19]
+        left_grip = action[:, 19:20]
+
+        # Convert 6D rotation to quaternion (Gram-Schmidt, tolerates non-orthonormal policy output)
+        right_quat = rot6d_to_quat(right_rot6d)
+        left_quat = rot6d_to_quat(left_rot6d)
+
+        self._apply_ee_pose_targets(right_pos, right_quat, left_pos, left_quat, right_grip, left_grip)
+
+    def _apply_ee_pose_targets(
+        self,
+        right_pos: torch.Tensor,
+        right_quat: torch.Tensor,
+        left_pos: torch.Tensor,
+        left_quat: torch.Tensor,
+        right_grip: torch.Tensor,
+        left_grip: torch.Tensor,
+    ) -> None:
+        """Solve bimanual IK for the given EE pose targets and command arms and grippers."""
         # Bimanual IK (solves both arms simultaneously)
         right_joints, left_joints = self.run_bimanual_ik(right_pos, right_quat, left_pos, left_quat)
 
@@ -882,10 +917,10 @@ class BimanualMarvinRobot:
         dofs_pos = self._dof_to_sequential(dofs_pos_raw)
         dofs_vel = self._dof_to_sequential(dofs_vel_raw)
 
-        right_ee_pos = self.ee_link_right.get_pos()
-        right_ee_quat = self.ee_link_right.get_quat()
-        left_ee_pos = self.ee_link_left.get_pos()
-        left_ee_quat = self.ee_link_left.get_quat()
+        right_ee_pos = self.ee_link_right.get_pos(relative=False)
+        right_ee_quat = self.ee_link_right.get_quat(relative=False)
+        left_ee_pos = self.ee_link_left.get_pos(relative=False)
+        left_ee_quat = self.ee_link_left.get_quat(relative=False)
 
         return torch.cat(
             [
@@ -912,8 +947,8 @@ class BimanualMarvinRobot:
         Returns:
             (n_envs, 7) tensor with [x, y, z, qw, qx, qy, qz]
         """
-        pos = self.ee_link_right.get_pos()
-        quat = self.ee_link_right.get_quat()
+        pos = self.ee_link_right.get_pos(relative=False)
+        quat = self.ee_link_right.get_quat(relative=False)
         return torch.cat([pos, quat], dim=-1)
 
     @property
@@ -923,8 +958,8 @@ class BimanualMarvinRobot:
         Returns:
             (n_envs, 7) tensor with [x, y, z, qw, qx, qy, qz]
         """
-        pos = self.ee_link_left.get_pos()
-        quat = self.ee_link_left.get_quat()
+        pos = self.ee_link_left.get_pos(relative=False)
+        quat = self.ee_link_left.get_quat(relative=False)
         return torch.cat([pos, quat], dim=-1)
 
     @property
@@ -954,13 +989,15 @@ class BimanualMarvinRobot:
                 ]
             )
             return spaces.Box(low=low, high=high, shape=(16,), dtype=np.float32)
-        else:  # EE_DELTA or EE_ABS
-            # 14-DOF: [right: 3 pos + 3 rot + 1 gripper, left: 3 pos + 3 rot + 1 gripper]
-            return spaces.Box(low=-1.0, high=1.0, shape=(14,), dtype=np.float32)
+        else:  # EE_DELTA, EE_ABS or EE_ABS_ROT6D
+            # 14-DOF: [right: 3 pos + 3 rot + 1 gripper, left: same]; 20-DOF when rot is 6D
+            return spaces.Box(low=-1.0, high=1.0, shape=(self.action_dim,), dtype=np.float32)
 
     @property
     def action_dim(self) -> int:
         """Dimension of action space."""
+        if self.control_mode == "EE_ABS_ROT6D":
+            return 20  # 10+10 (pos+rot6d+gripper per arm)
         if self.control_mode in ("EE_DELTA", "EE_ABS"):
             return 14  # 7+7 (pos+rot+gripper per arm)
         return 16  # 7+1+7+1 (arm + single gripper width per arm)

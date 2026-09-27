@@ -12,18 +12,30 @@ CoverWithLidEnv = _import("gs_gym.envs.robowits.13_cover_with_lid").CoverWithLid
 @register_task("robowits/13_02-v0")
 class CoverWithLidMut2Env(CoverWithLidEnv):
     @property
+    def _object_reachable_areas(self) -> dict:
+        # The parent exposes this as a property, so extend it rather than assigning.
+        # Distractors only have to sit on the table, not within arm reach; "lid_large"
+        # is task-critical but its 0.243 m footprint left only 15 mm of slack in x.
+        clutter_area = {"x_min": 0.25, "x_max": 0.88, "y_min": -0.62, "y_max": 0.62}
+        areas = dict(super()._object_reachable_areas)
+        for name in ("coaster_medium", "glass_mug", "olive_oil_bottle", "plate_medium", "table_lamp"):
+            areas[name] = clutter_area
+        areas["lid_large"] = {"x_min": 0.2, "x_max": 0.75, "y_min": -0.45, "y_max": 0.45}
+        return areas
+
+    @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "pot without lid",
-            "small lid",
-            "lid medium",
-            "lid large",
-            "plate medium",
-            "coaster medium",
-            "olive oil bottle",
-            "table lamp",
-            "glass mug",
+            "pot_without_lid",
+            "small_lid",
+            "lid_medium",
+            "lid_large",
+            "plate_medium",
+            "coaster_medium",
+            "olive_oil_bottle",
+            "table_lamp",
+            "glass_mug",
         )
 
     def _add_custom_entities(self) -> None:
@@ -46,7 +58,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["pot without lid"] = {"entity": _e}
+        self._entities["pot_without_lid"] = {"entity": _e}
         # Code Block: small lid
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -61,7 +73,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small lid"] = {"entity": _e}
+        self._entities["small_lid"] = {"entity": _e}
         # Code Block: lid medium
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -76,7 +88,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["lid medium"] = {"entity": _e}
+        self._entities["lid_medium"] = {"entity": _e}
         # Code Block: lid large
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -91,7 +103,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["lid large"] = {"entity": _e}
+        self._entities["lid_large"] = {"entity": _e}
         # Code Block: plate medium
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -106,7 +118,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["plate medium"] = {"entity": _e}
+        self._entities["plate_medium"] = {"entity": _e}
         # Code Block: coaster medium
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -115,7 +127,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.55, 0.36, 0.2), double_sided=True),
         )
-        self._entities["coaster medium"] = {"entity": _e}
+        self._entities["coaster_medium"] = {"entity": _e}
         # Code Block: olive oil bottle
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -130,7 +142,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["olive oil bottle"] = {"entity": _e}
+        self._entities["olive_oil_bottle"] = {"entity": _e}
         # Code Block: table lamp
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -145,7 +157,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["table lamp"] = {"entity": _e}
+        self._entities["table_lamp"] = {"entity": _e}
         # Code Block: glass mug
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -160,4 +172,4 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["glass mug"] = {"entity": _e}
+        self._entities["glass_mug"] = {"entity": _e}

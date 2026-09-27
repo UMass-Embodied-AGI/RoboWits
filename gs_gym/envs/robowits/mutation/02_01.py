@@ -15,11 +15,11 @@ class RetrieveCubeMut1Env(RetrieveCubeEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            ("wide open container", "cube"),
-            "target area",
-            "ikea plate",
-            "tv remote control",
-            "stylized copper kettle",
+            ("wide_open_container", "cube"),
+            "target_area",
+            "ikea_plate",
+            "tv_remote_control",
+            "stylized_copper_kettle",
         )
 
     def _add_custom_entities(self) -> None:
@@ -42,7 +42,7 @@ class RetrieveCubeMut1Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["wide open container"] = {"entity": _e}
+        self._entities["wide_open_container"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -51,7 +51,7 @@ class RetrieveCubeMut1Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.1, 0.8, 0.1), double_sided=True),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -75,7 +75,7 @@ class RetrieveCubeMut1Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["ikea plate"] = {"entity": _e}
+        self._entities["ikea_plate"] = {"entity": _e}
         # Code Block: tv remote control
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -90,7 +90,7 @@ class RetrieveCubeMut1Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["tv remote control"] = {"entity": _e}
+        self._entities["tv_remote_control"] = {"entity": _e}
         # Code Block: stylized copper kettle
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -105,4 +105,4 @@ class RetrieveCubeMut1Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Metal(color=(0.95, 0.6, 0.2), double_sided=True, metal_type="copper"),
         )
-        self._entities["stylized copper kettle"] = {"entity": _e}
+        self._entities["stylized_copper_kettle"] = {"entity": _e}

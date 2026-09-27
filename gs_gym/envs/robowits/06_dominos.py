@@ -11,6 +11,7 @@ import torch
 
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
+from gs_gym.envs.robowits.utils import require_objs
 
 
 @register_task("robowits/06-dominos-v0")
@@ -32,6 +33,11 @@ class DominosEnv(RoboWitsEnv):
 
     TABLE_Z = 0.76
     BLOCK_SIZE = (0.02, 0.05, 0.09)
+
+    # The one object within reach that the robot uses to start the chain. Mutations that
+    # remove white block 4 substitute another reachable object (e.g. a tennis ball) and
+    # override this so the reward scores the same milestones against that object.
+    TRIGGER_OBJ = "white_block_4"
 
     def __init__(
         self,
@@ -61,16 +67,16 @@ class DominosEnv(RoboWitsEnv):
             "y_min": -0.40,
             "y_max": 0.40,
         }
-        self._object_reachable_areas["white block 3"] = unreachable_area
-        self._object_reachable_areas["white block 2"] = unreachable_area
-        self._object_reachable_areas["white block 1"] = unreachable_area
-        self._object_reachable_areas["red block"] = unreachable_area
-        self._object_reachable_areas["target area"] = unreachable_area
+        self._object_reachable_areas["white_block_3"] = unreachable_area
+        self._object_reachable_areas["white_block_2"] = unreachable_area
+        self._object_reachable_areas["white_block_1"] = unreachable_area
+        self._object_reachable_areas["red_block"] = unreachable_area
+        self._object_reachable_areas["target_area"] = unreachable_area
 
     @property
     def placement_groups(self) -> PlacementGroups:
         """White block 4 independent, others grouped together."""
-        return ("white block 4", ("white block 3", "white block 2", "white block 1", "red block", "target area"))
+        return ("white_block_4", ("white_block_3", "white_block_2", "white_block_1", "red_block", "target_area"))
 
     def _add_custom_entities(self) -> None:
         """Add domino blocks and target area."""
@@ -86,7 +92,7 @@ class DominosEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.1, 0.7, 0.2), double_sided=False),
         )
-        self._entities["target area"] = {
+        self._entities["target_area"] = {
             "entity": target,
         }
 
@@ -102,7 +108,7 @@ class DominosEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=300.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=False),
         )
-        self._entities["white block 4"] = {
+        self._entities["white_block_4"] = {
             "entity": wb4,
         }
 
@@ -118,7 +124,7 @@ class DominosEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=300.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=False),
         )
-        self._entities["white block 3"] = {
+        self._entities["white_block_3"] = {
             "entity": wb3,
         }
 
@@ -134,7 +140,7 @@ class DominosEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=300.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=False),
         )
-        self._entities["white block 2"] = {
+        self._entities["white_block_2"] = {
             "entity": wb2,
         }
 
@@ -150,7 +156,7 @@ class DominosEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=300.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=False),
         )
-        self._entities["white block 1"] = {
+        self._entities["white_block_1"] = {
             "entity": wb1,
         }
 
@@ -166,7 +172,7 @@ class DominosEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=300.0),
             surface=gs.surfaces.Smooth(color=(0.9, 0.1, 0.1), double_sided=False),
         )
-        self._entities["red block"] = {
+        self._entities["red_block"] = {
             "entity": red,
         }
 
@@ -174,9 +180,9 @@ class DominosEnv(RoboWitsEnv):
         """Check if task is successful: red block overlaps target by 30%."""
         objs_info = self.collect_objs_info()
 
-        red_name = "red block"
-        target_name = "target area"
-        if red_name not in objs_info or target_name not in objs_info:
+        red_name = "red_block"
+        target_name = "target_area"
+        if not require_objs(self, objs_info, [red_name, target_name]):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         red = objs_info[red_name]
@@ -290,17 +296,16 @@ class DominosEnv(RoboWitsEnv):
         GRASP_GRIPPER_WIDTH = 0.04
         BLOCK_TOUCH_THRESHOLD = 0.03
 
-        WHITE_BLOCK_4 = "white block 4"
-        WHITE_BLOCK_3 = "white block 3"
-        WHITE_BLOCK_2 = "white block 2"
-        RED_BLOCK = "red block"
-        TARGET = "target area"
+        WHITE_BLOCK_4 = self.TRIGGER_OBJ
+        WHITE_BLOCK_3 = "white_block_3"
+        WHITE_BLOCK_2 = "white_block_2"
+        RED_BLOCK = "red_block"
+        TARGET = "target_area"
 
         required_objects = [WHITE_BLOCK_4, WHITE_BLOCK_3, WHITE_BLOCK_2, RED_BLOCK, TARGET]
-        for n in required_objects:
-            if n not in objs_info:
-                score_t = torch.tensor(0.0, dtype=torch.float32, device=self._device)
-                return score_t, {"score": score_t}
+        if not require_objs(self, objs_info, required_objects):
+            score_t = torch.tensor(0.0, dtype=torch.float32, device=self._device)
+            return score_t, {"score": score_t}
 
         def get_pos(name):
             p = objs_info[name]["pos"]

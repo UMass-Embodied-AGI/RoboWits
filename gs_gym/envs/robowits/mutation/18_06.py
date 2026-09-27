@@ -6,15 +6,15 @@ from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups
 
-CylinderThroughHoleEnv = _import("gs_gym.envs.robowits.18_cylinder_through_hole").CylinderThroughHoleEnv
+InsertCylinderEnv = _import("gs_gym.envs.robowits.18_insert_cylinder").InsertCylinderEnv
 
 
 @register_task("robowits/18_06-v0")
-class CylinderThroughHoleMut6Env(CylinderThroughHoleEnv):
+class InsertCylinderMut6Env(InsertCylinderEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("cylindrical_peg", ("collection_zone", "hole_plate"), "thick dowel", "square rod")
+        return ("cylindrical_peg", "thick_dowel", "square_rod")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -62,7 +62,7 @@ class CylinderThroughHoleMut6Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Smooth(color=(0.8, 0.8, 0.0), double_sided=True),
         )
-        self._entities["cylindrical peg"] = {"entity": _e}
+        self._entities["cylindrical_peg"] = {"entity": _e}
         # Code Block: thick dowel
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -71,7 +71,7 @@ class CylinderThroughHoleMut6Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Rough(color=(0.6, 0.4, 0.2), double_sided=True),
         )
-        self._entities["thick dowel"] = {"entity": _e}
+        self._entities["thick_dowel"] = {"entity": _e}
         # Code Block: square rod
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -80,4 +80,4 @@ class CylinderThroughHoleMut6Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Smooth(color=(0.75, 0.75, 0.75), double_sided=True),
         )
-        self._entities["square rod"] = {"entity": _e}
+        self._entities["square_rod"] = {"entity": _e}

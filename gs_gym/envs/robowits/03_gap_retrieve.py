@@ -11,7 +11,7 @@ import torch
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held
+from gs_gym.envs.robowits.utils import check_being_held, require_objs
 
 
 @register_task("robowits/03-gap-retrieve-v0")
@@ -36,6 +36,10 @@ class GapRetrieveEnv(RoboWitsEnv):
     TABLE_Z = 0.76
     LEMON_SIZE = (0.05, 0.03, 0.03)  # Approximate
 
+    # Boundary blocks forming the channel. Mutations that deliberately keep a single wall
+    # override this; the reward then drops the gap-widening stage (see get_reward).
+    CHANNEL_BLOCKS = ("left_boundary_block", "right_boundary_block")
+
     def __init__(
         self,
         config_name: str = "robowits_default",
@@ -57,7 +61,7 @@ class GapRetrieveEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """Lemon and boundary blocks grouped together, target independent."""
-        return (("lemon", "left boundary block", "right boundary block"), "target area")
+        return (("lemon", "left_boundary_block", "right_boundary_block"), "target_area")
 
     def _add_custom_entities(self) -> None:
         """Add lemon, boundary blocks, and target area."""
@@ -77,7 +81,7 @@ class GapRetrieveEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Rough(color=(0.6, 0.6, 0.6), double_sided=False),
         )
-        self._entities["left boundary block"] = {
+        self._entities["left_boundary_block"] = {
             "entity": left_block,
         }
 
@@ -93,7 +97,7 @@ class GapRetrieveEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Rough(color=(0.6, 0.6, 0.6), double_sided=False),
         )
-        self._entities["right boundary block"] = {
+        self._entities["right_boundary_block"] = {
             "entity": right_block,
         }
 
@@ -111,7 +115,7 @@ class GapRetrieveEnv(RoboWitsEnv):
                 color=(0.1, 0.8, 0.1), roughness=0.9, ior=1.4, double_sided=True, vis_mode="visual"
             ),
         )
-        self._entities["target area"] = {
+        self._entities["target_area"] = {
             "entity": target,
         }
 
@@ -143,9 +147,9 @@ class GapRetrieveEnv(RoboWitsEnv):
         Z_TOL = 0.02
 
         key_name = "lemon"
-        target_name = "target area"
+        target_name = "target_area"
 
-        if key_name not in objs_info or target_name not in objs_info:
+        if not require_objs(self, objs_info, [key_name, target_name]):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
         key = objs_info[key_name]
         target = objs_info[target_name]
@@ -291,22 +295,24 @@ class GapRetrieveEnv(RoboWitsEnv):
         BLOCK_HALF_Y = 0.025
         INITIAL_GAP = 0.062
         GAP_SUFFICIENT = 0.08
-        LEMON_ON_TABLE_Z = 0.82
 
-        LEFT_BLOCK = "left boundary block"
-        RIGHT_BLOCK = "right boundary block"
+        LEFT_BLOCK = "left_boundary_block"
+        RIGHT_BLOCK = "right_boundary_block"
         LEMON = "lemon"
-        TARGET = "target area"
+        TARGET = "target_area"
 
         INIT_LEFT_POS = np.array([0.40, -0.056, 0.86], dtype=float)
         INIT_RIGHT_POS = np.array([0.40, 0.056, 0.86], dtype=float)
         INIT_LEMON_POS = np.array([0.40, 0.0, 0.77964], dtype=float)
-        TARGET_CENTER = np.array([0.60, 0.0], dtype=float)
 
-        for name in [LEFT_BLOCK, RIGHT_BLOCK, LEMON, TARGET]:
-            if name not in objs_info:
-                score_t = torch.tensor(0.0, dtype=torch.float32, device=self._device)
-                return score_t, {"score": score_t}
+        if not require_objs(self, objs_info, [*self.CHANNEL_BLOCKS, LEMON, TARGET]):
+            score_t = torch.tensor(0.0, dtype=torch.float32, device=self._device)
+            return score_t, {"score": score_t}
+
+        # Single-wall variants: with only one boundary block there is no channel to widen,
+        # so the block-manipulation stage does not apply. The lemon approach ramp is
+        # rescaled to fill [0, 0.50] in its place, keeping 1.0 == success.
+        single_wall = len(self.CHANNEL_BLOCKS) < 2
 
         def get_pos(name):
             p = objs_info[name]["pos"]
@@ -394,10 +400,11 @@ class GapRetrieveEnv(RoboWitsEnv):
         right_ee_pos = self._robot.right_ee_pose[0, :3].cpu().numpy()
         left_ee_pos = self._robot.left_ee_pose[0, :3].cpu().numpy()
 
-        left_pos = get_pos(LEFT_BLOCK)
         right_pos = get_pos(RIGHT_BLOCK)
         lemon_pos = get_pos(LEMON)
-        lemon_xy = lemon_pos[:2]
+        # Absent in single-wall variants; the left-block terms below are all gated on
+        # ``single_wall`` so this placeholder never reaches a score.
+        left_pos = INIT_LEFT_POS if single_wall else get_pos(LEFT_BLOCK)
 
         gap = (right_pos[1] - BLOCK_HALF_Y) - (left_pos[1] + BLOCK_HALF_Y)
         left_moved = float(np.linalg.norm(left_pos[:2] - INIT_LEFT_POS[:2])) > BLOCK_MOVE_XY
@@ -415,22 +422,18 @@ class GapRetrieveEnv(RoboWitsEnv):
         left_upright = left_pos[2] > BLOCK_UPRIGHT_Z_MIN
         right_upright = right_pos[2] > BLOCK_UPRIGHT_Z_MIN
         # Y-based check is unreliable when a block has fallen (its center Y is meaningless)
-        left_inner_y = left_pos[1] + BLOCK_HALF_Y if left_upright else -float("inf")
+        # No left wall means the -y side is open, so only the right wall can confine the lemon
+        left_inner_y = -float("inf") if (single_wall or not left_upright) else left_pos[1] + BLOCK_HALF_Y
         right_inner_y = right_pos[1] - BLOCK_HALF_Y if right_upright else float("inf")
         lemon_escaped_x = abs(lemon_pos[0] - INIT_LEMON_POS[0]) > BLOCK_HALF_X
         lemon_escaped_y = lemon_pos[1] < left_inner_y - 0.01 or lemon_pos[1] > right_inner_y + 0.01
         lemon_out_of_channel = lemon_escaped_x or lemon_escaped_y
 
-        lemon_on_table = lemon_pos[2] <= LEMON_ON_TABLE_Z
-
-        lemon_to_target = float(np.linalg.norm(lemon_xy - TARGET_CENTER))
-        init_lemon_to_target = float(np.linalg.norm(INIT_LEMON_POS[:2] - TARGET_CENTER))
-
+        block_positions = [right_pos] if single_wall else [left_pos, right_pos]
         dist_ee_block = min(
-            float(np.linalg.norm(right_ee_pos - left_pos)),
-            float(np.linalg.norm(right_ee_pos - right_pos)),
-            float(np.linalg.norm(left_ee_pos - left_pos)),
-            float(np.linalg.norm(left_ee_pos - right_pos)),
+            float(np.linalg.norm(ee_pos - block_pos))
+            for ee_pos in (right_ee_pos, left_ee_pos)
+            for block_pos in block_positions
         )
         dist_ee_lemon = min(
             float(np.linalg.norm(right_ee_pos - lemon_pos)),
@@ -440,8 +443,18 @@ class GapRetrieveEnv(RoboWitsEnv):
         def lerp(lo, hi, t):
             return lo + (hi - lo) * max(0.0, min(1.0, t))
 
+        # Single-wall variants: the gap-widening stage is replaced by a lemon-approach ramp
+        # rescaled over the same [0, 0.50] band, so the two stages still meet at 0.50.
+        if single_wall:
+            if dist_ee_lemon <= TOUCH_THRESHOLD:
+                block_score = 0.50
+            elif dist_ee_lemon <= REACH_THRESHOLD:
+                t = 1.0 - (dist_ee_lemon - TOUCH_THRESHOLD) / (REACH_THRESHOLD - TOUCH_THRESHOLD)
+                block_score = lerp(0.0, 0.50, max(0.0, t))
+            else:
+                block_score = 0.0
         # Block manipulation score (0.0–0.50)
-        if gap_sufficient:
+        elif gap_sufficient:
             if dist_ee_lemon <= TOUCH_THRESHOLD:
                 block_score = 0.50
             elif dist_ee_lemon <= REACH_THRESHOLD:
@@ -475,18 +488,18 @@ class GapRetrieveEnv(RoboWitsEnv):
         else:
             block_score = 0.0
 
-        # Extraction score (0.0–0.50): rises as lemon moves out of channel
-        lemon_displacement = float(np.linalg.norm(lemon_pos[:2] - INIT_LEMON_POS[:2]))
-        extraction_score = lerp(0.0, 0.50, min(1.0, lemon_displacement / 0.10))
+        lemon_on_table = lemon_pos[2] <= 0.82
 
-        # Transport score (0.50–1.0): proportional to distance to target, only when out and on table
+        # Transport score (0.50–1.0): 0.5 when lemon exits channel and lands, rises to 1.0 at 80% overlap with target
         if lemon_out_of_channel and lemon_on_table:
-            dist_progress = max(0.0, 1.0 - lemon_to_target / (init_lemon_to_target + 1e-8))
-            transport_score = lerp(0.50, 1.0, dist_progress)
+            lemon_hull = get_hull_2d(LEMON)
+            target_hull = get_hull_2d(TARGET)
+            ratio = overlap_ratio(lemon_hull, target_hull)
+            transport_score = lerp(0.50, 1.0, min(1.0, ratio / 0.8))
         else:
             transport_score = 0.0
 
-        score = max(block_score, extraction_score, transport_score)
+        score = max(block_score, transport_score)
 
         score_t = torch.tensor(score, dtype=torch.float32, device=self._device)
         return score_t, {"score": score_t}

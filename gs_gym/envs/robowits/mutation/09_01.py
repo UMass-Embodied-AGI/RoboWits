@@ -14,7 +14,7 @@ class HoldCupMut1Env(HoldCupEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("cup", "coaster", ("slope", "target area"), "automotive funnel", "calendar cube decoration")
+        return ("cup", "coaster", ("slope", "target_area"), "automotive_funnel", "calendar_cube_decoration")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -78,7 +78,7 @@ class HoldCupMut1Env(HoldCupEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.2, 0.8, 0.3), roughness=0.2),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: automotive funnel
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -93,7 +93,7 @@ class HoldCupMut1Env(HoldCupEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=True),
         )
-        self._entities["automotive funnel"] = {"entity": _e}
+        self._entities["automotive_funnel"] = {"entity": _e}
         # Code Block: calendar cube decoration
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -108,4 +108,4 @@ class HoldCupMut1Env(HoldCupEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.8, 0.7, 0.5), double_sided=True),
         )
-        self._entities["calendar cube decoration"] = {"entity": _e}
+        self._entities["calendar_cube_decoration"] = {"entity": _e}

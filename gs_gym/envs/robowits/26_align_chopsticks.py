@@ -36,6 +36,33 @@ class AlignChopsticksEnv(RoboWitsEnv):
 
     TABLE_Z = 0.76
 
+    CHOPSTICK_NAMES = (
+        "first_chopstick",
+        "second_chopstick",
+        "third_chopstick",
+        "fourth_chopstick",
+        "fifth_chopstick",
+        "sixth_chopstick",
+    )
+
+    # _check_success requires every chopstick inside the table bounds, so a sampled
+    # scene that opens with one overhanging the front edge is unsolvable, and its
+    # progress score is capped at on_table/6 no matter how well the policy aligns them.
+    # sample_scenes.py reads this to reject such layouts.
+    MUST_STAY_ON_TABLE = CHOPSTICK_NAMES
+
+    # Pairwise tolerance for success: every stick within TOL_DEG of the reference.
+    TOL_DEG = 12.0
+
+    # Progress ramps toward *perfect* alignment rather than toward the loosest
+    # arrangement that would pass TOL_DEG. Alignment is a resultant length, which is
+    # not monotone in the max-pairwise-deviation that success tests: five tight sticks
+    # plus one 30° out scores 0.9906, above the 0.9891 of six sticks each sitting
+    # exactly on the 12° limit -- so ramping to the latter let progress reach 1.0 in
+    # states that do not pass. Ramping to 1.0 keeps a full score for real success,
+    # which get_reward returns directly.
+    PERFECT_ALIGNMENT = 1.0
+
     def __init__(
         self,
         config_name: str = "robowits_default",
@@ -51,7 +78,11 @@ class AlignChopsticksEnv(RoboWitsEnv):
             show_viewer=show_viewer,
             max_episode_steps=max_episode_steps,
             control_mode=control_mode,
-            config_overrides={"scene": {"substeps": 5}},
+            # Thin chopsticks resting on a board generate stiff contacts: at 4, 5
+            # and 10 the solver still blew up with "Invalid constraint forces
+            # causing 'nan'" on some eval scenes (scene 41 of the seed set at 10).
+            # 20 is what stabilised the comparably thin rubber band in 16_06.
+            config_overrides={"scene": {"substeps": 20}},
             **kwargs,
         )
 
@@ -61,13 +92,13 @@ class AlignChopsticksEnv(RoboWitsEnv):
         return (
             "ruler",
             (
+                "first_chopstick",
+                "second_chopstick",
+                "third_chopstick",
+                "fourth_chopstick",
+                "fifth_chopstick",
+                "sixth_chopstick",
                 "board",
-                "first chopstick",
-                "second chopstick",
-                "third chopstick",
-                "fourth chopstick",
-                "fifth chopstick",
-                "sixth chopstick",
             ),
         )
 
@@ -113,12 +144,12 @@ class AlignChopsticksEnv(RoboWitsEnv):
 
         # Chopsticks (6 mesh objects)
         chopstick_configs = [
-            ("first chopstick", (0.535, -0.02, 0.85), (0.0, 0.0, 180.0)),
-            ("second chopstick", (0.535, -0.02, 0.82), (0, 0, 0)),
-            ("third chopstick", (0.535, -0.00, 0.85), (0, 0, 0)),
-            ("fourth chopstick", (0.535, 0.0, 0.82), (0, 0, 0)),
-            ("fifth chopstick", (0.535, 0.02, 0.82), (0, 0, 0)),
-            ("sixth chopstick", (0.535, 0.02, 0.85), (0, 0, 0)),
+            ("first_chopstick", (0.535, -0.02, 0.85), (0.0, 0.0, 180.0)),
+            ("second_chopstick", (0.535, -0.02, 0.82), (0, 0, 0)),
+            ("third_chopstick", (0.535, -0.00, 0.85), (0, 0, 0)),
+            ("fourth_chopstick", (0.535, 0.0, 0.82), (0, 0, 0)),
+            ("fifth_chopstick", (0.535, 0.02, 0.82), (0, 0, 0)),
+            ("sixth_chopstick", (0.535, 0.02, 0.85), (0, 0, 0)),
         ]
 
         for name, pos, euler in chopstick_configs:
@@ -139,6 +170,31 @@ class AlignChopsticksEnv(RoboWitsEnv):
                 "entity": chopstick,
             }
 
+    @staticmethod
+    def _heading_xy(quat) -> np.ndarray:
+        """Unit XY heading of a chopstick's thin end, or a zero vector if undefined.
+
+        The heading is the stick's local +x axis rotated into the world, i.e. the
+        first column of R(quat), projected onto the table plane. At euler (0,0,0) a
+        settled stick measures 0.27 m along world x against 0.02 m across, so local
+        +x is the long axis.
+
+        Reading ``euler[2]`` instead agrees for a stick lying flat -- a pitch about y
+        only scales the projection by cos(pitch) -- but an XYZ decomposition is
+        degenerate at pitch = ±90° (a stick stood on end) and flips the heading's sign
+        once the stick tips past vertical. Rotating the axis has neither failure.
+
+        A near-vertical stick has no planar heading at all, so it contributes a zero
+        vector: that lowers the resultant without injecting a direction the stick does
+        not have, and it can never pass the success tolerance against another stick.
+        """
+        w, x, y, z = (float(v) for v in quat)
+        v = np.array([1.0 - 2.0 * (y * y + z * z), 2.0 * (x * y + w * z)], dtype=float)
+        n = float(np.linalg.norm(v))
+        if not np.isfinite(n) or n <= 1e-6:
+            return np.zeros(2, dtype=float)
+        return v / n
+
     def _check_success(self) -> torch.Tensor:
         """Check if task is successful: all chopsticks aligned."""
         objs_info = self.collect_objs_info()
@@ -147,14 +203,7 @@ class AlignChopsticksEnv(RoboWitsEnv):
         y_min, y_max = -0.69, 0.69
         margin = 1e-3
 
-        chopstick_names = [
-            "first chopstick",
-            "second chopstick",
-            "third chopstick",
-            "fourth chopstick",
-            "fifth chopstick",
-            "sixth chopstick",
-        ]
+        chopstick_names = self.CHOPSTICK_NAMES
 
         for name in chopstick_names:
             if name not in objs_info:
@@ -189,21 +238,12 @@ class AlignChopsticksEnv(RoboWitsEnv):
 
         headings = []
         for name in chopstick_names:
-            euler = objs_info[name].get("euler", None)
-            if euler is None:
+            quat = objs_info[name].get("quat")
+            if quat is None or len(quat) != 4:
                 return torch.tensor([False], dtype=torch.bool, device=self._device)
-            try:
-                yaw_rad = float(euler[2])
-            except Exception:
-                return torch.tensor([False], dtype=torch.bool, device=self._device)
-            h = np.array([np.cos(yaw_rad), np.sin(yaw_rad)], dtype=float)
-            n = np.linalg.norm(h)
-            if not np.isfinite(n) or n < 1e-8:
-                return torch.tensor([False], dtype=torch.bool, device=self._device)
-            headings.append(h / n)
+            headings.append(self._heading_xy(quat))
 
-        tol_deg = 12.0
-        cos_tol = float(np.cos(np.deg2rad(tol_deg)))
+        cos_tol = float(np.cos(np.deg2rad(self.TOL_DEG)))
 
         ref = headings[0]
         for h in headings[1:]:
@@ -213,28 +253,25 @@ class AlignChopsticksEnv(RoboWitsEnv):
 
         return torch.tensor([True], dtype=torch.bool, device=self._device)
 
-    def _alignment_score(self) -> float:
-        """Progress score in [0, 1]: mean heading alignment weighted by on-table fraction."""
+    def _raw_alignment(self) -> tuple[int, float] | None:
+        """Return (chopsticks on the table, absolute alignment in [0.5, 1]), or None.
+
+        None means the state could not be read (an entity or its quaternion missing),
+        which callers treat as no progress rather than guessing.
+        """
         objs_info = self.collect_objs_info()
 
         x_min, x_max = 0.21, 1.00
         y_min, y_max = -0.69, 0.69
         margin = 1e-3
 
-        chopstick_names = [
-            "first chopstick",
-            "second chopstick",
-            "third chopstick",
-            "fourth chopstick",
-            "fifth chopstick",
-            "sixth chopstick",
-        ]
+        chopstick_names = self.CHOPSTICK_NAMES
 
         on_table = 0
         headings = []
         for name in chopstick_names:
             if name not in objs_info:
-                return 0.0
+                return None
             obj = objs_info[name]
 
             hull = obj.get("convex_hull_2d")
@@ -257,27 +294,60 @@ class AlignChopsticksEnv(RoboWitsEnv):
             ):
                 on_table += 1
 
-            euler = obj.get("euler")
-            if euler is None:
-                return 0.0
-            try:
-                yaw_rad = float(euler[2])
-            except Exception:
-                return 0.0
-            h = np.array([np.cos(yaw_rad), np.sin(yaw_rad)], dtype=float)
-            n = np.linalg.norm(h)
-            if not np.isfinite(n) or n < 1e-8:
-                return 0.0
-            headings.append(h / n)
+            quat = obj.get("quat")
+            if quat is None or len(quat) != 4:
+                return None
+            headings.append(self._heading_xy(quat))
 
-        mean_vec = np.sum(headings, axis=0)
-        norm = np.linalg.norm(mean_vec)
-        if norm < 1e-8:
+        # mean over h of (dot(mean_dir, h) + 1) / 2 reduces to 0.5 + |sum h| / (2n),
+        # because sum_h dot(mean_dir, h) is just |sum h| -- the direction cancels out
+        # and only the resultant's length ever mattered. Evaluating that closed form
+        # removes the division by |sum h| along with the discontinuity it needed
+        # guarding: an exactly balanced set returned 0.0 where the formula it was
+        # standing in for gives 0.5. Three sticks each way is the mutation variants'
+        # designed start, so the old guard fired at reset by construction.
+        n = len(chopstick_names)
+        resultant = float(np.linalg.norm(np.sum(headings, axis=0)))
+        return on_table, 0.5 + resultant / (2.0 * n)
+
+    def reset_env(self) -> None:
+        """Reset, then remember the alignment this episode starts from."""
+        super().reset_env()
+        raw = self._raw_alignment()
+        self._initial_alignment = None if raw is None else raw[1]
+
+    def _alignment_score(self) -> float:
+        """Progress in [0, 1): how far alignment has come from its reset value.
+
+        Measured against the episode's own starting alignment, because the absolute
+        value is not a measure of the policy. The seed scenes start with five of six
+        sticks already pointing the same way -- alignment 0.8333 before the robot has
+        moved -- and reporting that directly credited the initial state with 0.83 of
+        the range, leaving 0.17 for the whole of the actual task. Success needs only
+        that one odd stick flipped, so nearly all of the work lived in that 0.17.
+
+        Still scaled by the on-table fraction: knocking sticks off the table is a
+        failure, not progress, and must not be rewarded for raising alignment.
+        """
+        raw = self._raw_alignment()
+        if raw is None:
             return 0.0
-        mean_dir = mean_vec / norm
+        on_table, alignment = raw
 
-        alignment = float(np.mean([(float(np.dot(mean_dir, h)) + 1.0) / 2.0 for h in headings]))
-        return (on_table / len(chopstick_names)) * alignment
+        baseline = getattr(self, "_initial_alignment", None)
+        if baseline is None:
+            # Scored before any reset: take the current state as the baseline rather
+            # than crediting whatever the scene happens to open with.
+            baseline = alignment
+            self._initial_alignment = baseline
+
+        span = self.PERFECT_ALIGNMENT - baseline
+        if span <= 1e-9:
+            # Already perfectly aligned at reset; _check_success short-circuits get_reward
+            # in that case, and validate_eval_scenes.py rejects such scenes.
+            return 0.0
+        frac = max(0.0, min(1.0, (alignment - baseline) / span))
+        return (on_table / len(self.CHOPSTICK_NAMES)) * frac
 
     def get_reward(self) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Compute reward: 1.0 on success, else alignment progress score in [0, 1)."""

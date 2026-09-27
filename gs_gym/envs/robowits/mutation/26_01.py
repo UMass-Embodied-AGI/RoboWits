@@ -15,19 +15,18 @@ class AlignChopsticksMut1Env(AlignChopsticksEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "ruler",
             (
+                "first_chopstick",
+                "second_chopstick",
+                "third_chopstick",
+                "fourth_chopstick",
+                "fifth_chopstick",
+                "sixth_chopstick",
                 "board",
-                "first chopstick",
-                "second chopstick",
-                "third chopstick",
-                "fourth chopstick",
-                "fifth chopstick",
-                "sixth chopstick",
             ),
             "tray",
             "bowl",
-            "cosmetic bottle",
+            "cosmetic_bottle",
         )
 
     def _add_custom_entities(self) -> None:
@@ -65,7 +64,7 @@ class AlignChopsticksMut1Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=800.0, friction=0.6),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["cosmetic bottle"] = {"entity": _e}
+        self._entities["cosmetic_bottle"] = {"entity": _e}
         # Code Block: bowl
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -108,7 +107,7 @@ class AlignChopsticksMut1Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["first chopstick"] = {"entity": _e}
+        self._entities["first_chopstick"] = {"entity": _e}
         # Code Block: second chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -122,7 +121,7 @@ class AlignChopsticksMut1Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["second chopstick"] = {"entity": _e}
+        self._entities["second_chopstick"] = {"entity": _e}
         # Code Block: third chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -136,7 +135,7 @@ class AlignChopsticksMut1Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["third chopstick"] = {"entity": _e}
+        self._entities["third_chopstick"] = {"entity": _e}
         # Code Block: fourth chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -150,7 +149,7 @@ class AlignChopsticksMut1Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["fourth chopstick"] = {"entity": _e}
+        self._entities["fourth_chopstick"] = {"entity": _e}
         # Code Block: fifth chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -164,7 +163,7 @@ class AlignChopsticksMut1Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["fifth chopstick"] = {"entity": _e}
+        self._entities["fifth_chopstick"] = {"entity": _e}
         # Code Block: sixth chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -178,4 +177,4 @@ class AlignChopsticksMut1Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["sixth chopstick"] = {"entity": _e}
+        self._entities["sixth_chopstick"] = {"entity": _e}

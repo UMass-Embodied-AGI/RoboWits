@@ -34,7 +34,7 @@ class RaisePlatformEnv(RoboWitsEnv):
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
-        return "Place the book on the cup supports."
+        return "Create an elevated platform and place the book on it."
 
     TABLE_Z = 0.76
 
@@ -61,13 +61,13 @@ class RaisePlatformEnv(RoboWitsEnv):
 
         # Set reachable areas for objects
         large_area = {"x_min": 0.25, "x_max": 0.65, "y_min": -0.5, "y_max": 0.5}
-        self._object_reachable_areas["cup support 2"] = large_area
-        self._object_reachable_areas["heavy book"] = large_area
+        self._object_reachable_areas["cup_support_2"] = large_area
+        self._object_reachable_areas["heavy_book"] = large_area
 
     @property
     def placement_groups(self) -> PlacementGroups:
         """Book and support cube grouped, other support cube independent."""
-        return (("heavy book", "support cube 2"), "support cube 1")
+        return (("heavy_book", "support_cube_2"), "support_cube_1")
 
     def _add_custom_entities(self) -> None:
         """Add heavy book, cup supports, and support cubes."""
@@ -89,7 +89,7 @@ class RaisePlatformEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=100),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["heavy book"] = {
+        self._entities["heavy_book"] = {
             "entity": book,
         }
 
@@ -107,7 +107,7 @@ class RaisePlatformEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["cup support 1"] = {
+        self._entities["cup_support_1"] = {
             "entity": cup1,
         }
 
@@ -125,7 +125,7 @@ class RaisePlatformEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["cup support 2"] = {
+        self._entities["cup_support_2"] = {
             "entity": cup2,
         }
 
@@ -141,7 +141,7 @@ class RaisePlatformEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
         )
-        self._entities["support cube 1"] = {
+        self._entities["support_cube_1"] = {
             "entity": cube1,
         }
 
@@ -157,7 +157,7 @@ class RaisePlatformEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
         )
-        self._entities["support cube 2"] = {
+        self._entities["support_cube_2"] = {
             "entity": cube2,
         }
 
@@ -170,9 +170,9 @@ class RaisePlatformEnv(RoboWitsEnv):
         SUPPORT_HORIZ_TOL = 0.05
         FALL_BELOW_TOL = 0.05
 
-        cup1 = objs_info.get("cup support 1")
-        cup2 = objs_info.get("cup support 2")
-        book = objs_info.get("heavy book")
+        cup1 = objs_info.get("cup_support_1")
+        cup2 = objs_info.get("cup_support_2")
+        book = objs_info.get("heavy_book")
 
         if cup1 is None or cup2 is None or book is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -286,9 +286,9 @@ class RaisePlatformEnv(RoboWitsEnv):
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        cup1 = objs_info.get("cup support 1")
-        cup2 = objs_info.get("cup support 2")
-        book = objs_info.get("heavy book")
+        cup1 = objs_info.get("cup_support_1")
+        cup2 = objs_info.get("cup_support_2")
+        book = objs_info.get("heavy_book")
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
         if cup1 is None or cup2 is None or book is None:

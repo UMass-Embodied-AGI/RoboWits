@@ -29,6 +29,9 @@ class DifferentiateCubesEnv(RoboWitsEnv):
     - Cubes remain within table bounds
     """
 
+    # MPM deformable cubes: far faster on the GPU backend.
+    preferred_genesis_backend = "cuda"
+
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
@@ -62,7 +65,7 @@ class DifferentiateCubesEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """No randomization for this task."""
-        return (("mug", "wooden cube", "metal cube"), "target area")  # , ("water pitcher", "water")
+        return (("mug", "wooden_cube", "metal_cube"), "target_area")  # , ("pitcher", "water")
 
     def _add_custom_entities(self) -> None:
         """Add mug, wooden cube, metal cube, water pitcher, water, and target area."""
@@ -100,7 +103,7 @@ class DifferentiateCubesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(1.0, 0.9, 0.1), roughness=0.6),
         )
-        self._entities["wooden cube"] = {
+        self._entities["wooden_cube"] = {
             "entity": wooden_cube,
         }
 
@@ -116,7 +119,7 @@ class DifferentiateCubesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=800.0),
             surface=gs.surfaces.Metal(color=(0.9, 0.1, 0.1), double_sided=False, metal_type="iron"),
         )
-        self._entities["metal cube"] = {
+        self._entities["metal_cube"] = {
             "entity": metal_cube,
         }
 
@@ -138,7 +141,7 @@ class DifferentiateCubesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=500.0, sdf_max_res=256),
             surface=gs.surfaces.Glass(color=(0.4, 0.4, 0.4), double_sided=True),
         )
-        self._entities["water pitcher"] = {
+        self._entities["pitcher"] = {
             "entity": pitcher,
         }
 
@@ -173,7 +176,7 @@ class DifferentiateCubesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.9),
         )
-        self._entities["target area"] = {
+        self._entities["target_area"] = {
             "entity": target_area,
         }
 
@@ -221,10 +224,10 @@ class DifferentiateCubesEnv(RoboWitsEnv):
                 return 0.0
             return inter_area / a_area
 
-        wood = objs_info.get("wooden cube")
-        metal = objs_info.get("metal cube")
+        wood = objs_info.get("wooden_cube")
+        metal = objs_info.get("metal_cube")
         mug = objs_info.get("mug")
-        target = objs_info.get("target area")
+        target = objs_info.get("target_area")
 
         if wood is None or metal is None or mug is None or target is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -280,10 +283,10 @@ class DifferentiateCubesEnv(RoboWitsEnv):
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        wood = objs_info.get("wooden cube")
-        metal = objs_info.get("metal cube")
+        wood = objs_info.get("wooden_cube")
+        metal = objs_info.get("metal_cube")
         mug = objs_info.get("mug")
-        target = objs_info.get("target area")
+        target = objs_info.get("target_area")
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
         if wood is None or metal is None or mug is None or target is None:

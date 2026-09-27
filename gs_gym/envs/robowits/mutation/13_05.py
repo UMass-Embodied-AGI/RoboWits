@@ -14,7 +14,7 @@ class CoverWithLidMut5Env(CoverWithLidEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("pot without lid", "small lid", "lid medium", "lid large", "plate medium", "coaster medium")
+        return ("pot_without_lid", "small_lid", "lid_medium", "lid_large", "plate_medium", "coaster_medium")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class CoverWithLidMut5Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["pot without lid"] = {"entity": _e}
+        self._entities["pot_without_lid"] = {"entity": _e}
         # Code Block: small lid
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -51,7 +51,7 @@ class CoverWithLidMut5Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small lid"] = {"entity": _e}
+        self._entities["small_lid"] = {"entity": _e}
         # Code Block: lid medium
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -66,7 +66,7 @@ class CoverWithLidMut5Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["lid medium"] = {"entity": _e}
+        self._entities["lid_medium"] = {"entity": _e}
         # Code Block: lid large
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -81,7 +81,7 @@ class CoverWithLidMut5Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["lid large"] = {"entity": _e}
+        self._entities["lid_large"] = {"entity": _e}
         # Code Block: plate medium
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -96,7 +96,7 @@ class CoverWithLidMut5Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["plate medium"] = {"entity": _e}
+        self._entities["plate_medium"] = {"entity": _e}
         # Code Block: coaster medium
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -105,4 +105,4 @@ class CoverWithLidMut5Env(CoverWithLidEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.55, 0.36, 0.20), roughness=0.8, ior=1.5),
         )
-        self._entities["coaster medium"] = {"entity": _e}
+        self._entities["coaster_medium"] = {"entity": _e}

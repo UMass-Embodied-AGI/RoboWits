@@ -14,7 +14,7 @@ class GapRetrieveMut5Env(GapRetrieveEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("lemon", "left boundary block", "right boundary block"), "target area", "plastic ruler", "hook")
+        return (("lemon", "left_boundary_block", "right_boundary_block"), "target_area", "plastic_ruler", "hook")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -34,7 +34,7 @@ class GapRetrieveMut5Env(GapRetrieveEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Rough(color=(0.6, 0.6, 0.6), double_sided=False),
         )
-        self._entities["left boundary block"] = {"entity": _e}
+        self._entities["left_boundary_block"] = {"entity": _e}
         # Code Block: right boundary block
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -47,7 +47,7 @@ class GapRetrieveMut5Env(GapRetrieveEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Rough(color=(0.6, 0.6, 0.6), double_sided=False),
         )
-        self._entities["right boundary block"] = {"entity": _e}
+        self._entities["right_boundary_block"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -62,7 +62,7 @@ class GapRetrieveMut5Env(GapRetrieveEnv):
                 color=(0.1, 0.8, 0.1), roughness=0.9, ior=1.4, double_sided=True, vis_mode="visual"
             ),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: plastic ruler
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -71,7 +71,7 @@ class GapRetrieveMut5Env(GapRetrieveEnv):
             material=gs.materials.Rigid(rho=300.0, friction=0.6),
             surface=gs.surfaces.Smooth(color=(0.8, 0.9, 1.0), double_sided=False),
         )
-        self._entities["plastic ruler"] = {"entity": _e}
+        self._entities["plastic_ruler"] = {"entity": _e}
         # Code Block: lemon
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

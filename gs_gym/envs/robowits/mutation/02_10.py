@@ -14,7 +14,7 @@ class RetrieveCubeMut10Env(RetrieveCubeEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("deep narrow container", "cube"), "target area", "wooden skewer")
+        return (("deep_narrow_container", "cube"), "target_area", "wooden_skewer")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -38,7 +38,7 @@ class RetrieveCubeMut10Env(RetrieveCubeEnv):
             ),
             surface=gs.surfaces.Glass(color=(1.0, 1.0, 1.0), double_sided=True),
         )
-        self._entities["deep narrow container"] = {"entity": _e}
+        self._entities["deep_narrow_container"] = {"entity": _e}
         # Code Block: cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -60,13 +60,16 @@ class RetrieveCubeMut10Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.1, 0.8, 0.1), double_sided=True),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: wooden skewer
+        # radius 0.003 -> 0.008: at r=3mm the rigid solver produced "Invalid constraint
+        # forces causing 'nan'" on 50-55% of episodes (11/20 pi05, 10/20 act@50k), which
+        # scored as policy failures. See the note in mutation/06_05.py for the mechanism.
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
-                pos=(0.55, 0.16, 0.76 + 0.003),
+                pos=(0.55, 0.16, 0.76 + 0.008),
                 euler=(0.0, 90.0, 0.0),
-                radius=0.003,
+                radius=0.008,
                 height=0.28,
                 fixed=False,
                 collision=True,
@@ -74,4 +77,4 @@ class RetrieveCubeMut10Env(RetrieveCubeEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Rough(color=(0.86, 0.76, 0.52), double_sided=False),
         )
-        self._entities["wooden skewer"] = {"entity": _e}
+        self._entities["wooden_skewer"] = {"entity": _e}

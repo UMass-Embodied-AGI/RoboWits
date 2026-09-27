@@ -13,7 +13,7 @@ class StackCubesMut6Env(StackCubesEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("apex target", "base cube 1", "base cube 2", "apex cube", "rubber ball")
+        return ("apex_target", "base_cube_1", "base_cube_2", "apex_cube", "rubber_ball")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -29,7 +29,7 @@ class StackCubesMut6Env(StackCubesEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.4),
         )
-        self._entities["apex target"] = {"entity": _e}
+        self._entities["apex_target"] = {"entity": _e}
         # Code Block: base cube 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -38,7 +38,7 @@ class StackCubesMut6Env(StackCubesEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
         )
-        self._entities["base cube 1"] = {"entity": _e}
+        self._entities["base_cube_1"] = {"entity": _e}
         # Code Block: base cube 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -47,7 +47,7 @@ class StackCubesMut6Env(StackCubesEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
         )
-        self._entities["base cube 2"] = {"entity": _e}
+        self._entities["base_cube_2"] = {"entity": _e}
         # Code Block: apex cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -56,7 +56,7 @@ class StackCubesMut6Env(StackCubesEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Default(color=(0.9, 0.1, 0.1), roughness=0.4),
         )
-        self._entities["apex cube"] = {"entity": _e}
+        self._entities["apex_cube"] = {"entity": _e}
         # Code Block: rubber ball
         _e = self._scene.scene.add_entity(
             gs.morphs.Sphere(
@@ -65,4 +65,4 @@ class StackCubesMut6Env(StackCubesEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.2),
             surface=gs.surfaces.Default(color=(1.0, 0.85, 0.1), roughness=0.4, ior=1.5),
         )
-        self._entities["rubber ball"] = {"entity": _e}
+        self._entities["rubber_ball"] = {"entity": _e}

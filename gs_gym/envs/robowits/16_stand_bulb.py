@@ -13,7 +13,7 @@ from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.placement import _is_fixed_entity
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held
+from gs_gym.envs.robowits.utils import check_being_held, require_objs
 
 
 @register_task("robowits/16-stand-bulb-v0")
@@ -62,10 +62,10 @@ class StandBulbEnv(RoboWitsEnv):
 
         # Set reachable areas for objects
         smaller_area = {"x_min": 0.3, "x_max": 0.8, "y_min": -0.4, "y_max": 0.4}
-        self._object_reachable_areas["target patch"] = smaller_area
-        self._object_reachable_areas["tall object with curved bottom"] = smaller_area
+        self._object_reachable_areas["target_patch"] = smaller_area
+        self._object_reachable_areas["tall_object_with_curved_bottom"] = smaller_area
         # Ring has large footprint (0.25m), so needs wider bounds to reliably find placement
-        self._object_reachable_areas["stabilizing ring"] = {"x_min": 0.25, "x_max": 0.85, "y_min": -0.45, "y_max": 0.45}
+        self._object_reachable_areas["stabilizing_ring"] = {"x_min": 0.25, "x_max": 0.85, "y_min": -0.45, "y_max": 0.45}
 
     @property
     def placement_groups(self) -> PlacementGroups:
@@ -75,7 +75,7 @@ class StandBulbEnv(RoboWitsEnv):
         it second (only target patch already placed) gives it more free space than
         placing it last when both target and ring are blocking.
         """
-        return ("target patch", "tall object with curved bottom", "stabilizing ring")
+        return ("target_patch", "tall_object_with_curved_bottom", "stabilizing_ring")
 
     def placement_entity_extra_hulls(self, name: str) -> list:
         """Arm exclusion hulls with zero padding.
@@ -120,7 +120,7 @@ class StandBulbEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.0, 0.8, 0.1), roughness=0.6),
         )
-        self._entities["target patch"] = {
+        self._entities["target_patch"] = {
             "entity": target_patch,
         }
 
@@ -140,7 +140,7 @@ class StandBulbEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["stabilizing ring"] = {
+        self._entities["stabilizing_ring"] = {
             "entity": ring,
         }
 
@@ -161,7 +161,7 @@ class StandBulbEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["tall object with curved bottom"] = {
+        self._entities["tall_object_with_curved_bottom"] = {
             "entity": bulb,
         }
 
@@ -259,9 +259,9 @@ class StandBulbEnv(RoboWitsEnv):
                 and np.all(ys <= TABLE_Y_MAX + TABLE_MARGIN)
             )
 
-        tall_name = "tall object with curved bottom"
-        patch_name = "target patch"
-        if tall_name not in objs_info or patch_name not in objs_info:
+        tall_name = "tall_object_with_curved_bottom"
+        patch_name = "target_patch"
+        if not require_objs(self, objs_info, [tall_name, patch_name]):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
         tall = objs_info[tall_name]
         patch = objs_info[patch_name]
@@ -313,9 +313,9 @@ class StandBulbEnv(RoboWitsEnv):
         """Compute dense reward based on milestone-based progress score."""
         objs_info = self.collect_objs_info()
 
-        RING = "stabilizing ring"
-        TALL = "tall object with curved bottom"
-        TARGET = "target patch"
+        RING = "stabilizing_ring"
+        TALL = "tall_object_with_curved_bottom"
+        TARGET = "target_patch"
 
         REACH_THRESHOLD = 0.15
         TOUCH_THRESHOLD = 0.05
@@ -325,10 +325,9 @@ class StandBulbEnv(RoboWitsEnv):
         INITIAL_RING_POS = np.array([0.45, -0.15, 0.808])
         INITIAL_TALL_POS = np.array([0.60, 0.2, 0.768])
 
-        for name in [RING, TALL, TARGET]:
-            if name not in objs_info:
-                score_t = torch.tensor(0.0, dtype=torch.float32, device=self._device)
-                return score_t, {"score": score_t}
+        if not require_objs(self, objs_info, [RING, TALL, TARGET]):
+            score_t = torch.tensor(0.0, dtype=torch.float32, device=self._device)
+            return score_t, {"score": score_t}
 
         def get_pos(name):
             p = objs_info[name]["pos"]

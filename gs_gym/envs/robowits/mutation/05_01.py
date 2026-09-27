@@ -14,7 +14,7 @@ class RollUpBallMut1Env(RollUpBallEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("long board", "box", "high basket", "orange beverage can", "chasen")
+        return ("long_board", "box", "high_basket", "orange_beverage_can", "chasen")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class RollUpBallMut1Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["high basket"] = {"entity": _e}
+        self._entities["high_basket"] = {"entity": _e}
         # Code Block: long board
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -51,7 +51,7 @@ class RollUpBallMut1Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.3),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["long board"] = {"entity": _e}
+        self._entities["long_board"] = {"entity": _e}
         # Code Block: box
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -90,4 +90,4 @@ class RollUpBallMut1Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.5),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["orange beverage can"] = {"entity": _e}
+        self._entities["orange_beverage_can"] = {"entity": _e}

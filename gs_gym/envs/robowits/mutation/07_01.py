@@ -14,7 +14,7 @@ class StandPagesMut1Env(StandPagesEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("page A with eyelets", "page B with eyelets", "stabilizing bar", "chocolate bar", "glass mug")
+        return ("page_A_with_eyelets", "page_B_with_eyelets", "stabilizing_bar", "chocolate_bar", "glass_mug")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class StandPagesMut1Env(StandPagesEnv):
             material=gs.materials.Rigid(rho=300.0, friction=1.0, coup_friction=0.2),
             surface=gs.surfaces.Smooth(color=(0.7, 0.7, 0.7), double_sided=True),
         )
-        self._entities["page A with eyelets"] = {"entity": _e}
+        self._entities["page_A_with_eyelets"] = {"entity": _e}
         # Code Block: page B with eyelets
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -51,7 +51,7 @@ class StandPagesMut1Env(StandPagesEnv):
             material=gs.materials.Rigid(rho=300.0, friction=1.0, coup_friction=0.2),
             surface=gs.surfaces.Smooth(color=(0.7, 0.7, 0.7), double_sided=True),
         )
-        self._entities["page B with eyelets"] = {"entity": _e}
+        self._entities["page_B_with_eyelets"] = {"entity": _e}
         # Code Block: stabilizing bar
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -65,7 +65,7 @@ class StandPagesMut1Env(StandPagesEnv):
             material=gs.materials.Rigid(rho=800.0, friction=0.8, coup_friction=0.2),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.2, ior=1.5),
         )
-        self._entities["stabilizing bar"] = {"entity": _e}
+        self._entities["stabilizing_bar"] = {"entity": _e}
         # Code Block: chocolate bar
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -80,7 +80,7 @@ class StandPagesMut1Env(StandPagesEnv):
             material=gs.materials.Rigid(rho=500.0, friction=0.9, coup_friction=0.2),
             surface=gs.surfaces.Rough(color=(0.4, 0.2, 0.1), double_sided=True),
         )
-        self._entities["chocolate bar"] = {"entity": _e}
+        self._entities["chocolate_bar"] = {"entity": _e}
         # Code Block: glass mug
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -95,4 +95,4 @@ class StandPagesMut1Env(StandPagesEnv):
             material=gs.materials.Rigid(rho=2500.0, friction=0.8, coup_friction=0.2),
             surface=gs.surfaces.Smooth(color=(0.9, 0.9, 0.95), double_sided=True),
         )
-        self._entities["glass mug"] = {"entity": _e}
+        self._entities["glass_mug"] = {"entity": _e}

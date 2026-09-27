@@ -33,7 +33,7 @@ class AlignBlocksEnv(RoboWitsEnv):
     # Cube configuration
     CUBE_SIZE = (0.05, 0.05, 0.05)  # 5cm cubes
     NUM_CUBES = 3
-    CUBE_NAMES = ("first target cube", "second target cube", "third target cube")
+    CUBE_NAMES = ("first_target_cube", "second_target_cube", "third_target_cube")
 
     # Ruler configuration
     RULER_SIZE = (0.30, 0.03, 0.005)  # 30cm x 3cm x 0.5cm (fallback box)
@@ -67,10 +67,10 @@ class AlignBlocksEnv(RoboWitsEnv):
         # Set reachable areas for objects
         far_reachable_area = {"x_min": 0.45, "x_max": 0.6, "y_min": -0.25, "y_max": 0.25}
         close_reachable_area = {"x_min": 0.2, "x_max": 0.5, "y_min": -0.35, "y_max": 0.35}
-        self._object_reachable_areas["first target cube"] = far_reachable_area
-        self._object_reachable_areas["second target cube"] = far_reachable_area
-        self._object_reachable_areas["third target cube"] = far_reachable_area
-        self._object_reachable_areas["long rigid ruler"] = close_reachable_area
+        self._object_reachable_areas["first_target_cube"] = far_reachable_area
+        self._object_reachable_areas["second_target_cube"] = far_reachable_area
+        self._object_reachable_areas["third_target_cube"] = far_reachable_area
+        self._object_reachable_areas["long_rigid_ruler"] = close_reachable_area
 
     def _add_custom_entities(self) -> None:
         """Add cubes and ruler to the scene."""
@@ -110,14 +110,14 @@ class AlignBlocksEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["long rigid ruler"] = {
+        self._entities["long_rigid_ruler"] = {
             "entity": ruler,
         }
 
     @property
     def placement_groups(self) -> tuple[str, ...]:
         """Objects to randomize on reset."""
-        return ("first target cube", "second target cube", "third target cube", "long rigid ruler")
+        return ("first_target_cube", "second_target_cube", "third_target_cube", "long_rigid_ruler")
 
     def get_reward(self) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Compute reward based on EE-to-cube proximity and cube alignment."""
@@ -144,7 +144,7 @@ class AlignBlocksEnv(RoboWitsEnv):
         positions = []
         for name in self.CUBE_NAMES:
             cube = self._entities[name]["entity"]
-            pos = cube.get_pos()  # (n_envs, 3)
+            pos = cube.get_pos(relative=False)  # (n_envs, 3)
             positions.append(pos)
 
         return torch.stack(positions, dim=1)  # (n_envs, 3, 3)
@@ -164,9 +164,9 @@ class AlignBlocksEnv(RoboWitsEnv):
         }
 
         cube_names = [
-            "first target cube",
-            "second target cube",
-            "third target cube",
+            "first_target_cube",
+            "second_target_cube",
+            "third_target_cube",
         ]
 
         for n in cube_names:
@@ -247,8 +247,8 @@ class AlignBlocksEnv(RoboWitsEnv):
             (n_envs,) reward in [0, 0.5]
         """
         robot = self._robot
-        right_ee = robot.ee_link_right.get_pos()  # (n_envs, 3)
-        left_ee = robot.ee_link_left.get_pos()  # (n_envs, 3)
+        right_ee = robot.ee_link_right.get_pos(relative=False)  # (n_envs, 3)
+        left_ee = robot.ee_link_left.get_pos(relative=False)  # (n_envs, 3)
 
         min_dist = torch.full((self._n_envs,), float("inf"), device=self._device)
         for i in range(self.NUM_CUBES):

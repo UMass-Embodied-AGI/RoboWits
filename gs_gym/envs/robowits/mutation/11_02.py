@@ -15,10 +15,10 @@ class PlaceTallBoxMut2Env(PlaceTallBoxEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "tall cardboard box",
-            ("support block left", "support block right", "beam plank", "target area"),
-            "plastic cutting board",
-            "body lotion",
+            "tall_cardboard_box",
+            ("support_block_left", "support_block_right", "beam_plank", "target_area"),
+            "plastic_cutting_board",
+            "body_lotion",
             "wrench",
         )
 
@@ -36,7 +36,7 @@ class PlaceTallBoxMut2Env(PlaceTallBoxEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.6, 0.6), roughness=0.6, ior=1.5),
         )
-        self._entities["support block left"] = {"entity": _e}
+        self._entities["support_block_left"] = {"entity": _e}
         # Code Block: support block right
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -45,14 +45,14 @@ class PlaceTallBoxMut2Env(PlaceTallBoxEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.6, 0.6), roughness=0.6, ior=1.5),
         )
-        self._entities["support block right"] = {"entity": _e}
+        self._entities["support_block_right"] = {"entity": _e}
         # Code Block: beam plank
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(pos=(0.55, 0.0, 0.855), euler=(0, 0, 0), size=(0.12, 0.36, 0.02), fixed=True, collision=True),
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.7, 0.55, 0.3), roughness=0.7, ior=1.5),
         )
-        self._entities["beam plank"] = {"entity": _e}
+        self._entities["beam_plank"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -61,7 +61,7 @@ class PlaceTallBoxMut2Env(PlaceTallBoxEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.2, 0.8, 0.2), roughness=0.4, ior=1.5),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: plastic cutting board
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -76,7 +76,7 @@ class PlaceTallBoxMut2Env(PlaceTallBoxEnv):
             material=gs.materials.Rigid(rho=500.0, friction=0.6),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["plastic cutting board"] = {"entity": _e}
+        self._entities["plastic_cutting_board"] = {"entity": _e}
         # Code Block: tall cardboard box
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -91,7 +91,7 @@ class PlaceTallBoxMut2Env(PlaceTallBoxEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["tall cardboard box"] = {"entity": _e}
+        self._entities["tall_cardboard_box"] = {"entity": _e}
         # Code Block: body lotion
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -106,7 +106,7 @@ class PlaceTallBoxMut2Env(PlaceTallBoxEnv):
             material=gs.materials.Rigid(rho=400.0, friction=0.7),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["body lotion"] = {"entity": _e}
+        self._entities["body_lotion"] = {"entity": _e}
         # Code Block: wrench
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(

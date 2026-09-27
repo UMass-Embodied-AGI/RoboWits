@@ -14,7 +14,7 @@ class StandBulbMut5Env(StandBulbEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("target patch", "stabilizing ring", "tall object with curved bottom", "ceramic_saucer", "small bowl")
+        return ("target_patch", "stabilizing_ring", "tall_object_with_curved_bottom", "ceramic_saucer", "small_bowl")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -22,7 +22,7 @@ class StandBulbMut5Env(StandBulbEnv):
             threshold=0.01, preprocess_resolution=80, max_convex_hull=20, decimate=True
         )
 
-        # Code Block: target_patch
+        # Code Block: target patch
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
                 pos=(0.56, 0.0, 0.761), euler=(0, 0, 0), radius=0.08, height=0.002, fixed=True, collision=False
@@ -47,8 +47,8 @@ class StandBulbMut5Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["stabilizing ring"] = {"entity": _e}
-        # Code Block: small_bowl
+        self._entities["stabilizing_ring"] = {"entity": _e}
+        # Code Block: small bowl
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -95,4 +95,4 @@ class StandBulbMut5Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["tall object with curved bottom"] = {"entity": _e}
+        self._entities["tall_object_with_curved_bottom"] = {"entity": _e}

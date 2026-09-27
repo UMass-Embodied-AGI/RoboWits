@@ -28,6 +28,9 @@ class SealColanderEnv(RoboWitsEnv):
     - Container hasn't fallen off the table
     """
 
+    # SPH liquid: far faster on the GPU backend.
+    preferred_genesis_backend = "cuda"
+
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
@@ -61,7 +64,38 @@ class SealColanderEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """Pitcher and water are fixed; only container and holder are randomized."""
-        return ("perforated container", "curved holder")
+        return ("perforated_container", "curved_holder")
+
+    def _add_pitcher_blockers(self, px: float, py: float) -> None:
+        """Add the invisible cage that keeps the SPH water inside the pitcher.
+
+        The pitcher mesh alone leaks: its SDF is too coarse to seal a 0.13 m column
+        of liquid, so without this cage the water drains onto the table within a few
+        steps. Water cylinder: radius=0.045, center z=0.86; ring sits at radius 0.055.
+        Every 21 variant that authors water inside the pitcher must call this.
+        """
+        self._scene.scene.add_entity(
+            gs.morphs.Cylinder(
+                pos=(px, py, 0.80),
+                radius=0.06,
+                height=0.04,
+                fixed=True,
+                visualization=False,
+                collision=True,
+            ),
+        )
+        for rot in range(0, 360, 30):
+            sr, cr = np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot))
+            self._scene.scene.add_entity(
+                gs.morphs.Box(
+                    pos=(px + 0.055 * cr, py + 0.055 * sr, 0.875),
+                    euler=(0.0, 0.0, float(rot)),
+                    size=(0.01, 0.04, 0.15),
+                    fixed=True,
+                    visualization=False,
+                    collision=True,
+                )
+            )
 
     def _add_custom_entities(self) -> None:
         """Add perforated container, pitcher, curved holder, and water."""
@@ -83,7 +117,7 @@ class SealColanderEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.6),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["perforated container"] = {
+        self._entities["perforated_container"] = {
             "entity": container,
         }
 
@@ -97,38 +131,15 @@ class SealColanderEnv(RoboWitsEnv):
                 euler=(0.0, 0.0, 0.0),
                 fixed=True,
                 collision=True,
+                convexify=False,
             ),
-            material=gs.materials.Rigid(rho=200.0),
+            material=gs.materials.Rigid(rho=200.0, sdf_max_res=256),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
         self._entities["pitcher"] = {
             "entity": pitcher,
         }
-        # Invisible blockers to contain SPH water inside the pitcher.
-        # Water cylinder: radius=0.045, center z=0.86. Blocker ring at radius=0.055.
-        _px, _py = 0.61, 0.0
-        self._scene.scene.add_entity(
-            gs.morphs.Cylinder(
-                pos=(_px, _py, 0.80),
-                radius=0.06,
-                height=0.04,
-                fixed=True,
-                visualization=False,
-                collision=True,
-            ),
-        )
-        for rot in range(0, 360, 30):
-            sr, cr = np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot))
-            self._scene.scene.add_entity(
-                gs.morphs.Box(
-                    pos=(_px + 0.055 * cr, _py + 0.055 * sr, 0.875),
-                    euler=(0.0, 0.0, float(rot)),
-                    size=(0.01, 0.04, 0.15),
-                    fixed=True,
-                    visualization=False,
-                    collision=True,
-                )
-            )
+        self._add_pitcher_blockers(0.61, 0.0)
 
         # Curved holder (sphere, fixed)
         curved_holder = self._scene.scene.add_entity(
@@ -141,7 +152,7 @@ class SealColanderEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.6),
             surface=gs.surfaces.Smooth(color=(0.85, 0.85, 0.85), double_sided=True),
         )
-        self._entities["curved holder"] = {
+        self._entities["curved_holder"] = {
             "entity": curved_holder,
         }
 
@@ -172,7 +183,7 @@ class SealColanderEnv(RoboWitsEnv):
         TABLE_X_MIN, TABLE_X_MAX = 0.21, 1.00
         TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
 
-        container = objs_info.get("perforated container")
+        container = objs_info.get("perforated_container")
         water = objs_info.get("water")
 
         if container is None or water is None:
@@ -266,7 +277,7 @@ class SealColanderEnv(RoboWitsEnv):
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        container = objs_info.get("perforated container")
+        container = objs_info.get("perforated_container")
         water = objs_info.get("water")
         pitcher = objs_info.get("pitcher")
 

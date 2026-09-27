@@ -15,13 +15,13 @@ class StandBulbMut1Env(StandBulbEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "stabilizing ring",
-            "tall object with curved bottom",
-            "target patch",
-            "three tier office filing tray",
-            "scale ruler",
-            "small bowl",
-            "body lotion",
+            "stabilizing_ring",
+            "tall_object_with_curved_bottom",
+            "target_patch",
+            "three_tier_office_filing_tray",
+            "scale_ruler",
+            "small_bowl",
+            "body_lotion",
         )
 
     def _add_custom_entities(self) -> None:
@@ -38,7 +38,7 @@ class StandBulbMut1Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.6),
         )
-        self._entities["target patch"] = {"entity": _e}
+        self._entities["target_patch"] = {"entity": _e}
         # Code Block: small bowl
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -53,7 +53,7 @@ class StandBulbMut1Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small bowl"] = {"entity": _e}
+        self._entities["small_bowl"] = {"entity": _e}
         # Code Block: tall object with curved bottom
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -71,7 +71,7 @@ class StandBulbMut1Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["tall object with curved bottom"] = {"entity": _e}
+        self._entities["tall_object_with_curved_bottom"] = {"entity": _e}
         # Code Block: stabilizing ring
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -88,7 +88,7 @@ class StandBulbMut1Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["stabilizing ring"] = {"entity": _e}
+        self._entities["stabilizing_ring"] = {"entity": _e}
         # Code Block: body lotion
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -103,7 +103,7 @@ class StandBulbMut1Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.2, 0.8, 0.3), roughness=0.5),
         )
-        self._entities["body lotion"] = {"entity": _e}
+        self._entities["body_lotion"] = {"entity": _e}
         # Code Block: scale ruler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -119,7 +119,7 @@ class StandBulbMut1Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["scale ruler"] = {"entity": _e}
+        self._entities["scale_ruler"] = {"entity": _e}
         # Code Block: three tier office filing tray
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -134,4 +134,4 @@ class StandBulbMut1Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["three tier office filing tray"] = {"entity": _e}
+        self._entities["three_tier_office_filing_tray"] = {"entity": _e}

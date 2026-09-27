@@ -1,0 +1,1036 @@
+{
+  "01": {
+    "name": "Align Blocks",
+    "instruction": "Align the three cubes perfectly in a straight line.",
+    "category": "Geometry",
+    "variants": {
+      "01_align_blocks": {
+        "type": "Seed",
+        "difficulty": 1
+      },
+      "mutation/01_01": {
+        "type": "Add1",
+        "difficulty": 2
+      },
+      "mutation/01_02": {
+        "type": "Add2",
+        "difficulty": 3
+      },
+      "mutation/01_03": {
+        "type": "Add3",
+        "difficulty": 3
+      },
+      "mutation/01_04": {
+        "type": "Pivot1",
+        "difficulty": 2
+      },
+      "mutation/01_05": {
+        "type": "Trap1",
+        "difficulty": 2
+      },
+      "mutation/01_06": {
+        "type": "Trap2",
+        "difficulty": 2
+      }
+    }
+  },
+  "02": {
+    "name": "Retrieve Cube",
+    "instruction": "Retrieve the cube from the container and place it on the green target area.",
+    "category": "Geometry",
+    "variants": {
+      "02_retrieve_cube": {
+        "type": "Seed",
+        "difficulty": 2
+      },
+      "mutation/02_01": {
+        "type": "Add1",
+        "difficulty": 2
+      },
+      "mutation/02_02": {
+        "type": "Add2",
+        "difficulty": 3
+      },
+      "mutation/02_03": {
+        "type": "Add3",
+        "difficulty": 4
+      },
+      "mutation/02_04": {
+        "type": "Pivot1",
+        "difficulty": 4
+      },
+      "mutation/02_05": {
+        "type": "Pivot2",
+        "difficulty": 5
+      },
+      "mutation/02_06": {
+        "type": "Pivot3",
+        "difficulty": 3
+      },
+      "mutation/02_07": {
+        "type": "Pivot4",
+        "difficulty": 1
+      },
+      "mutation/02_08": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/02_09": {
+        "type": "Trap2",
+        "difficulty": 5
+      },
+      "mutation/02_10": {
+        "type": "Trap3",
+        "difficulty": 3
+      }
+    }
+  },
+  "03": {
+    "name": "Gap Retrieve",
+    "instruction": "Place the lemon on the green target area.",
+    "category": "Geometry",
+    "variants": {
+      "03_gap_retrieve": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/03_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/03_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/03_03": {
+        "type": "Pivot1",
+        "difficulty": 4
+      },
+      "mutation/03_04": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/03_05": {
+        "type": "Trap2",
+        "difficulty": 5
+      }
+    }
+  },
+  "04": {
+    "name": "Pinch Card",
+    "instruction": "Pick the bank card up and place it on the green target area.",
+    "category": "Material",
+    "variants": {
+      "04_pinch_card": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/04_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/04_02": {
+        "type": "Add2",
+        "difficulty": 3
+      },
+      "mutation/04_03": {
+        "type": "Pivot1",
+        "difficulty": 4
+      },
+      "mutation/04_04": {
+        "type": "Trap1",
+        "difficulty": 5
+      },
+      "mutation/04_05": {
+        "type": "Trap2",
+        "difficulty": 3
+      }
+    }
+  },
+  "05": {
+    "name": "Roll Up Ball",
+    "instruction": "Move the box into the basket.",
+    "category": "Assembly",
+    "variants": {
+      "05_roll_up_ball": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/05_01": {
+        "type": "Add1",
+        "difficulty": 5
+      },
+      "mutation/05_02": {
+        "type": "Add2",
+        "difficulty": 3
+      },
+      "mutation/05_03": {
+        "type": "Add3",
+        "difficulty": 4
+      },
+      "mutation/05_04": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/05_05": {
+        "type": "Pivot2",
+        "difficulty": 2
+      },
+      "mutation/05_06": {
+        "type": "Pivot3",
+        "difficulty": 4
+      },
+      "mutation/05_07": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/05_08": {
+        "type": "Trap2",
+        "difficulty": 4
+      }
+    }
+  },
+  "06": {
+    "name": "Dominos",
+    "instruction": "Push the red block onto the green target area.",
+    "category": "Geometry",
+    "variants": {
+      "06_dominos": {
+        "type": "Seed",
+        "difficulty": 1
+      },
+      "mutation/06_01": {
+        "type": "Add1",
+        "difficulty": 2
+      },
+      "mutation/06_02": {
+        "type": "Add2",
+        "difficulty": 2
+      },
+      "mutation/06_03": {
+        "type": "Pivot1",
+        "difficulty": 1
+      },
+      "mutation/06_04": {
+        "type": "Pivot2",
+        "difficulty": 1
+      },
+      "mutation/06_05": {
+        "type": "Trap1",
+        "difficulty": 1
+      },
+      "mutation/06_06": {
+        "type": "Trap2",
+        "difficulty": 1
+      }
+    }
+  },
+  "07": {
+    "name": "Stand Pages",
+    "instruction": "Stand up the two pages stably.",
+    "category": "Assembly",
+    "variants": {
+      "07_stand_pages": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/07_01": {
+        "type": "Add1",
+        "difficulty": 5
+      },
+      "mutation/07_02": {
+        "type": "Pivot1",
+        "difficulty": 4
+      }
+    }
+  },
+  "08": {
+    "name": "Round Dough Sheet",
+    "instruction": "Flatten the dough ball and make a perfect round sheet.",
+    "category": "Material",
+    "variants": {
+      "08_round_dough_sheet": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/08_01": {
+        "type": "Add1",
+        "difficulty": 5
+      },
+      "mutation/08_02": {
+        "type": "Add2",
+        "difficulty": 5
+      },
+      "mutation/08_03": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/08_04": {
+        "type": "Pivot2",
+        "difficulty": 4
+      },
+      "mutation/08_05": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/08_06": {
+        "type": "Trap2",
+        "difficulty": 5
+      }
+    }
+  },
+  "09": {
+    "name": "Hold Cup",
+    "instruction": "Put the cup on the green target area on the slope without sliding down.",
+    "category": "Material",
+    "variants": {
+      "09_hold_cup": {
+        "type": "Seed",
+        "difficulty": 2
+      },
+      "mutation/09_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/09_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/09_03": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/09_04": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/09_05": {
+        "type": "Trap2",
+        "difficulty": 3
+      }
+    }
+  },
+  "10": {
+    "name": "Collect Screws",
+    "instruction": "Collect the screw into the container.",
+    "category": "Assembly",
+    "variants": {
+      "10_collect_screws": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/10_01": {
+        "type": "Add1",
+        "difficulty": 5
+      },
+      "mutation/10_02": {
+        "type": "Add2",
+        "difficulty": 5
+      },
+      "mutation/10_03": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/10_04": {
+        "type": "Pivot2",
+        "difficulty": 4
+      },
+      "mutation/10_05": {
+        "type": "Trap1",
+        "difficulty": 5
+      }
+    }
+  },
+  "11": {
+    "name": "Place Tall Box",
+    "instruction": "Move the rectangular box onto the green target area.",
+    "category": "Geometry",
+    "variants": {
+      "11_place_tall_box": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/11_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/11_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/11_03": {
+        "type": "Pivot1",
+        "difficulty": 2
+      },
+      "mutation/11_04": {
+        "type": "Trap1",
+        "difficulty": 3
+      },
+      "mutation/11_05": {
+        "type": "Trap2",
+        "difficulty": 3
+      }
+    }
+  },
+  "12": {
+    "name": "Ball Into Bottle",
+    "instruction": "Transfer the ball from the blue container into the red bottle.",
+    "category": "Geometry",
+    "variants": {
+      "12_ball_into_bottle": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/12_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/12_02": {
+        "type": "Add2",
+        "difficulty": 5
+      },
+      "mutation/12_03": {
+        "type": "Add3",
+        "difficulty": 5
+      },
+      "mutation/12_04": {
+        "type": "Pivot1",
+        "difficulty": 5
+      },
+      "mutation/12_05": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/12_06": {
+        "type": "Trap2",
+        "difficulty": 4
+      }
+    }
+  },
+  "13": {
+    "name": "Cover With Lid",
+    "instruction": "Cover the pot precisely using one lid.",
+    "category": "Assembly",
+    "variants": {
+      "13_cover_with_lid": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/13_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/13_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/13_03": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/13_04": {
+        "type": "Pivot2",
+        "difficulty": 3
+      },
+      "mutation/13_05": {
+        "type": "Trap1",
+        "difficulty": 3
+      },
+      "mutation/13_06": {
+        "type": "Trap2",
+        "difficulty": 3
+      }
+    }
+  },
+  "14": {
+    "name": "Stack Cubes",
+    "instruction": "Build a stable two-layer stack so the red cube's center is above the green colored dot.",
+    "category": "Assembly",
+    "variants": {
+      "14_stack_cubes": {
+        "type": "Seed",
+        "difficulty": 2
+      },
+      "mutation/14_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/14_02": {
+        "type": "Add2",
+        "difficulty": 2
+      },
+      "mutation/14_03": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/14_04": {
+        "type": "Trap1",
+        "difficulty": 3
+      },
+      "mutation/14_05": {
+        "type": "Trap2",
+        "difficulty": 2
+      },
+      "mutation/14_06": {
+        "type": "Trap3",
+        "difficulty": 2
+      }
+    }
+  },
+  "15": {
+    "name": "Separate Marbles And Sand",
+    "instruction": "Remove sand from the jar and keep the marbles in the jar.",
+    "category": "Material",
+    "variants": {
+      "15_separate_marbles_and_sand": {
+        "type": "Seed",
+        "difficulty": 5
+      },
+      "mutation/15_01": {
+        "type": "Add1",
+        "difficulty": 5
+      },
+      "mutation/15_02": {
+        "type": "Add2",
+        "difficulty": 5
+      },
+      "mutation/15_03": {
+        "type": "Pivot1",
+        "difficulty": 5
+      },
+      "mutation/15_04": {
+        "type": "Trap1",
+        "difficulty": 5
+      },
+      "mutation/15_05": {
+        "type": "Trap2",
+        "difficulty": 5
+      }
+    }
+  },
+  "16": {
+    "name": "Stand Bulb",
+    "instruction": "Stand the tall object with curved bottom stably within the green target area.",
+    "category": "Geometry",
+    "variants": {
+      "16_stand_bulb": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/16_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/16_02": {
+        "type": "Add2",
+        "difficulty": 5
+      },
+      "mutation/16_03": {
+        "type": "Pivot1",
+        "difficulty": 4
+      },
+      "mutation/16_04": {
+        "type": "Pivot2",
+        "difficulty": 3
+      },
+      "mutation/16_05": {
+        "type": "Trap1",
+        "difficulty": 3
+      },
+      "mutation/16_06": {
+        "type": "Trap2",
+        "difficulty": 4
+      },
+      "mutation/16_07": {
+        "type": "Trap3",
+        "difficulty": 4
+      }
+    }
+  },
+  "17": {
+    "name": "Ball Onto Tower",
+    "instruction": "Place the ball stably on top of the tower.",
+    "category": "Assembly",
+    "variants": {
+      "17_ball_onto_tower": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/17_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/17_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/17_03": {
+        "type": "Add3",
+        "difficulty": 4
+      },
+      "mutation/17_04": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/17_05": {
+        "type": "Pivot2",
+        "difficulty": 3
+      },
+      "mutation/17_06": {
+        "type": "Trap1",
+        "difficulty": 3
+      },
+      "mutation/17_07": {
+        "type": "Trap2",
+        "difficulty": 3
+      },
+      "mutation/17_08": {
+        "type": "Trap3",
+        "difficulty": 3
+      }
+    }
+  },
+  "18": {
+    "name": "Insert Cylinder",
+    "instruction": "Insert the yellow rod into one of the round holes in the white block so it stands upright in the hole.",
+    "category": "Geometry",
+    "variants": {
+      "18_insert_cylinder": {
+        "type": "Seed",
+        "difficulty": 2
+      },
+      "mutation/18_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/18_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/18_03": {
+        "type": "Add3",
+        "difficulty": 3
+      },
+      "mutation/18_04": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/18_05": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/18_06": {
+        "type": "Trap2",
+        "difficulty": 3
+      }
+    }
+  },
+  "19": {
+    "name": "Stack Bowls",
+    "instruction": "Nest the smaller bowl concentrically inside the larger one.",
+    "category": "Geometry",
+    "variants": {
+      "19_stack_bowls": {
+        "type": "Seed",
+        "difficulty": 1
+      },
+      "mutation/19_01": {
+        "type": "Add1",
+        "difficulty": 1
+      },
+      "mutation/19_02": {
+        "type": "Add2",
+        "difficulty": 3
+      },
+      "mutation/19_03": {
+        "type": "Add3",
+        "difficulty": 2
+      },
+      "mutation/19_04": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/19_05": {
+        "type": "Pivot2",
+        "difficulty": 2
+      },
+      "mutation/19_06": {
+        "type": "Trap1",
+        "difficulty": 2
+      },
+      "mutation/19_07": {
+        "type": "Trap2",
+        "difficulty": 2
+      }
+    }
+  },
+  "20": {
+    "name": "Ball Into Jar",
+    "instruction": "Put the foam ball fully into the jar.",
+    "category": "Material",
+    "variants": {
+      "20_ball_into_jar": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/20_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/20_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/20_03": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/20_04": {
+        "type": "Pivot2",
+        "difficulty": 3
+      },
+      "mutation/20_05": {
+        "type": "Trap1",
+        "difficulty": 4
+      }
+    }
+  },
+  "21": {
+    "name": "Seal Colander",
+    "instruction": "Make the container hold water for a short time.",
+    "category": "Material",
+    "variants": {
+      "21_seal_colander": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/21_01": {
+        "type": "Add1",
+        "difficulty": 5
+      },
+      "mutation/21_02": {
+        "type": "Add2",
+        "difficulty": 5
+      },
+      "mutation/21_03": {
+        "type": "Pivot1",
+        "difficulty": 5
+      },
+      "mutation/21_04": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/21_05": {
+        "type": "Trap2",
+        "difficulty": 4
+      }
+    }
+  },
+  "22": {
+    "name": "Stabilize Egg",
+    "instruction": "Make the ellipsoid object stand upright in the bowl without falling.",
+    "category": "Material",
+    "variants": {
+      "22_stabilize_egg": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/22_01": {
+        "type": "Add1",
+        "difficulty": 5
+      },
+      "mutation/22_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/22_03": {
+        "type": "Pivot1",
+        "difficulty": 4
+      },
+      "mutation/22_04": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/22_05": {
+        "type": "Trap2",
+        "difficulty": 4
+      }
+    }
+  },
+  "23": {
+    "name": "Place Book",
+    "instruction": "Shelve the book upright without knocking over the other books.",
+    "category": "Assembly",
+    "variants": {
+      "23_place_book": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/23_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/23_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/23_03": {
+        "type": "Add3",
+        "difficulty": 4
+      },
+      "mutation/23_04": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/23_05": {
+        "type": "Trap1",
+        "difficulty": 3
+      }
+    }
+  },
+  "24": {
+    "name": "Raise Platform",
+    "instruction": "Create an elevated platform and place the book on it.",
+    "category": "Assembly",
+    "variants": {
+      "24_raise_platform": {
+        "type": "Seed",
+        "difficulty": 2
+      },
+      "mutation/24_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/24_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/24_03": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/24_04": {
+        "type": "Trap1",
+        "difficulty": 2
+      },
+      "mutation/24_05": {
+        "type": "Trap2",
+        "difficulty": 3
+      }
+    }
+  },
+  "25": {
+    "name": "Water Into Mug",
+    "instruction": "Collect water in the mug without moving the pitcher.",
+    "category": "Material",
+    "variants": {
+      "25_water_into_mug": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/25_01": {
+        "type": "Add1",
+        "difficulty": 5
+      },
+      "mutation/25_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/25_03": {
+        "type": "Add3",
+        "difficulty": 5
+      },
+      "mutation/25_04": {
+        "type": "Pivot1",
+        "difficulty": 4
+      },
+      "mutation/25_05": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/25_06": {
+        "type": "Trap2",
+        "difficulty": 4
+      },
+      "mutation/25_07": {
+        "type": "Trap3",
+        "difficulty": 4
+      }
+    }
+  },
+  "26": {
+    "name": "Align Chopsticks",
+    "instruction": "Make all six chopsticks point in the same direction, with their small thin ends all facing the same way.",
+    "category": "Geometry",
+    "variants": {
+      "26_align_chopsticks": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/26_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/26_02": {
+        "type": "Pivot1",
+        "difficulty": 4
+      },
+      "mutation/26_03": {
+        "type": "Pivot2",
+        "difficulty": 4
+      },
+      "mutation/26_04": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/26_05": {
+        "type": "Trap2",
+        "difficulty": 4
+      }
+    }
+  },
+  "27": {
+    "name": "Retrieve Roll",
+    "instruction": "Place the roll on the green target area.",
+    "category": "Assembly",
+    "variants": {
+      "27_retrieve_roll": {
+        "type": "Seed",
+        "difficulty": 3
+      },
+      "mutation/27_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/27_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/27_03": {
+        "type": "Add3",
+        "difficulty": 4
+      },
+      "mutation/27_04": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/27_05": {
+        "type": "Trap1",
+        "difficulty": 3
+      },
+      "mutation/27_06": {
+        "type": "Trap2",
+        "difficulty": 3
+      },
+      "mutation/27_07": {
+        "type": "Trap3",
+        "difficulty": 3
+      }
+    }
+  },
+  "28": {
+    "name": "Move Cube",
+    "instruction": "Move any cube beyond the goal line.",
+    "category": "Material",
+    "variants": {
+      "28_move_cube": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/28_01": {
+        "type": "Add1",
+        "difficulty": 3
+      },
+      "mutation/28_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/28_03": {
+        "type": "Add3",
+        "difficulty": 5
+      },
+      "mutation/28_04": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/28_05": {
+        "type": "Pivot2",
+        "difficulty": 2
+      },
+      "mutation/28_06": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/28_07": {
+        "type": "Trap2",
+        "difficulty": 4
+      }
+    }
+  },
+  "29": {
+    "name": "Balance Board",
+    "instruction": "Place the board onto the wall and keep it balanced.",
+    "category": "Assembly",
+    "variants": {
+      "29_balance_board": {
+        "type": "Seed",
+        "difficulty": 2
+      },
+      "mutation/29_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/29_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/29_03": {
+        "type": "Add3",
+        "difficulty": 3
+      },
+      "mutation/29_04": {
+        "type": "Pivot1",
+        "difficulty": 3
+      },
+      "mutation/29_05": {
+        "type": "Trap1",
+        "difficulty": 3
+      },
+      "mutation/29_06": {
+        "type": "Trap2",
+        "difficulty": 2
+      }
+    }
+  },
+  "30": {
+    "name": "Differentiate Cubes",
+    "instruction": "Place the wooden cube to the green target area. Keep the metal cube inside the mug.",
+    "category": "Material",
+    "variants": {
+      "30_differentiate_cubes": {
+        "type": "Seed",
+        "difficulty": 4
+      },
+      "mutation/30_01": {
+        "type": "Add1",
+        "difficulty": 4
+      },
+      "mutation/30_02": {
+        "type": "Add2",
+        "difficulty": 4
+      },
+      "mutation/30_03": {
+        "type": "Pivot1",
+        "difficulty": 4
+      },
+      "mutation/30_04": {
+        "type": "Trap1",
+        "difficulty": 4
+      },
+      "mutation/30_05": {
+        "type": "Trap2",
+        "difficulty": 4
+      }
+    }
+  }
+}

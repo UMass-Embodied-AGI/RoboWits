@@ -14,7 +14,7 @@ class AlignBlocksMut6Env(AlignBlocksEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("first target cube", "second target cube", "third target cube", "long rigid ruler", "dinner knife")
+        return ("first_target_cube", "second_target_cube", "third_target_cube", "long_rigid_ruler", "dinner_knife")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -30,7 +30,7 @@ class AlignBlocksMut6Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.7, 0.9), roughness=0.5),
         )
-        self._entities["first target cube"] = {"entity": _e}
+        self._entities["first_target_cube"] = {"entity": _e}
         # Code Block: second target cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -43,7 +43,7 @@ class AlignBlocksMut6Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.7, 0.9), roughness=0.5),
         )
-        self._entities["second target cube"] = {"entity": _e}
+        self._entities["second_target_cube"] = {"entity": _e}
         # Code Block: third target cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -56,7 +56,7 @@ class AlignBlocksMut6Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.7, 0.9), roughness=0.5),
         )
-        self._entities["third target cube"] = {"entity": _e}
+        self._entities["third_target_cube"] = {"entity": _e}
         # Code Block: long rigid ruler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -64,7 +64,10 @@ class AlignBlocksMut6Env(AlignBlocksEnv):
                 file=get_asset_path("blender_kit/33679be6-fc3f-40e0-ae2b-c6329d2d0ac8/obj.glb", pattern_is_dir=False),
                 scale=1.2,
                 pos=(0.52, -0.43, 0.76 + 0.0097 * 1.2),
-                euler=(0, 0, 0),
+                # Spawned along y like the other 01_* variants: the ruler is
+                # 0.387 m long and its reachable area is only 0.30 m in x, so at
+                # euler 0 no placement can ever fit and every reset fell back.
+                euler=(0, 0, 90),
                 fixed=False,
                 collision=True,
                 group_by_material=True,
@@ -72,7 +75,7 @@ class AlignBlocksMut6Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["long rigid ruler"] = {"entity": _e}
+        self._entities["long_rigid_ruler"] = {"entity": _e}
         # Code Block: dinner knife
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -87,4 +90,4 @@ class AlignBlocksMut6Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=780.0, friction=0.6),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["dinner knife"] = {"entity": _e}
+        self._entities["dinner_knife"] = {"entity": _e}

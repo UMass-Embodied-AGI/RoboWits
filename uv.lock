@@ -1509,9 +1509,10 @@ http = [
 
 [[package]]
 name = "genesis-world"
-version = "0.4.7"
-source = { git = "https://github.com/Genesis-Embodied-AI/Genesis.git?rev=v0.4.7#f6807111170acf75fa8c103f59eb2eb5e9584035" }
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "av" },
     { name = "coacd" },
     { name = "dracopy" },
     { name = "fast-simplification" },
@@ -1546,6 +1547,9 @@ dependencies = [
     { name = "vtk" },
     { name = "xacro" },
     { name = "z3-solver" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/7c/052b166d8140a2ba67c6acffa5818ddc1cc87d632007486337097546a96c/genesis_world-1.3.1-py3-none-any.whl", hash = "sha256:8cbc9c0d7985092b3b19749039b32b399ffd07f512e6ce050ce6b714271bb895", size = 83429080, upload-time = "2026-07-30T12:53:17.714Z" },
 ]
 
 [[package]]
@@ -1606,12 +1610,48 @@ wheels = [
 
 [[package]]
 name = "gs-madrona"
-version = "0.0.7.post2"
+version = "0.0.10"
 source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
+]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/b8/d90531fabac6886dd451b4cc53d53aca2021fc590859337e98be5c657f5b/gs_madrona-0.0.7.post2-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8db61f7526713d9b92eb62e72c2346d366cc218f072ddc24cd9c13c6f5b6631f", size = 63887981, upload-time = "2026-01-06T14:25:51.285Z" },
-    { url = "https://files.pythonhosted.org/packages/c4/eb/9e0a5f04b305913af3cb0c19d218edfd12d1494234505a66e5120a960d1b/gs_madrona-0.0.7.post2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:64e4d448d0be9237940ade1382e558b7a5ce0f639bcc3423f74d5da96f840289", size = 63887898, upload-time = "2026-01-06T14:25:56.172Z" },
-    { url = "https://files.pythonhosted.org/packages/98/66/f37ae87d648cdd0e51de56b5afae42d3daf31e78a26443da87795963c7f3/gs_madrona-0.0.7.post2-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9ade022b34caffba60fca29d71b3322067abe4b7aaecf0e8aa3b231a2d676038", size = 63885535, upload-time = "2026-01-06T14:25:59.861Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/9d/f832d93ee28ff2a492ad1543c7109521d7c8133faefd86ccf645dc300c8c/gs_madrona-0.0.10-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6c6c9c6687f56f7ddea4b280d35ff0a9c20abba9e980b9eea7829553cea2d8f7", size = 37601622, upload-time = "2026-07-23T15:58:17.69Z" },
+    { url = "https://files.pythonhosted.org/packages/11/41/e274436f95c5b62132c9bfead0f6c9499990c30bebe7c101d3760f757a14/gs_madrona-0.0.10-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6c8ca61166ff4cfe4af460d1ae169f0f3fba71a7d5f425054d58080bc7c3f886", size = 37601343, upload-time = "2026-07-23T15:58:21.973Z" },
+    { url = "https://files.pythonhosted.org/packages/06/e3/b8daad98c6f859aefd38f0ac85fb778b8ecacf84d976b4de64198c953f7f/gs_madrona-0.0.10-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8a183a99d980ab3fff676c9d71ba61c2255b96ed301f579c40b7504e6c1c973b", size = 37599063, upload-time = "2026-07-23T15:58:26.103Z" },
+]
+
+[[package]]
+name = "gs-nyx"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/24/ec/b34b7674fca67d7a0a663c8ed197a842f8ca15bb6ac7971f4f8346c0be4f/gs_nyx-0.1.4-cp310-cp310-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl", hash = "sha256:28f210ec8a783d204b8146beafe61224da29986c12b6e8309a494d4814d60586", size = 77731968, upload-time = "2026-07-29T15:37:06.373Z" },
+    { url = "https://files.pythonhosted.org/packages/29/7a/5bdf72121b2be015f61cdb22c6dad619f68a7ccf9393cbf8597248dc825d/gs_nyx-0.1.4-cp310-cp310-win_amd64.whl", hash = "sha256:c8573a9604269b06b62e934ce7cf76212395dc1af352039c48b3b6dcda898f3e", size = 70069078, upload-time = "2026-07-29T15:37:11.362Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/7c/b42fa39d95fc018f6a351a820fb51578b321280a9efad4d865dc528f3ac5/gs_nyx-0.1.4-cp311-cp311-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl", hash = "sha256:9ab3c53e1aeff45ccff7c5597914c542aff6c773d3e6c9a5020371b4347ee34d", size = 77732590, upload-time = "2026-07-29T15:37:17.684Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/cb/b0ec682626332e5c0ee0075fa2d18861a0346a90821ebe1d01e1543a565b/gs_nyx-0.1.4-cp311-cp311-win_amd64.whl", hash = "sha256:3a1053d758d8300ca4b9ea75bb3d717c060290f371da75a67e68d26d5e006c02", size = 70068959, upload-time = "2026-07-29T15:37:23.19Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/e0/7d471c3c1841a2acbbe82ddeb56f354e805903f98a2ba0e95b81e8550fda/gs_nyx-0.1.4-cp312-abi3-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl", hash = "sha256:00af3b7a27674c3e2489abc8e014683b23730ffae8f483c13bce92d977d1bb26", size = 77723685, upload-time = "2026-07-29T15:37:28.638Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/4e/dfe7bda6f8aceb919feae88ef9f33e4f34f750da4100906dca336b4ec91e/gs_nyx-0.1.4-cp312-abi3-win_amd64.whl", hash = "sha256:c27a45a5af40979e4e76a3e6deaaa629af1e41f836fddde0cfb114c5542e6c2f", size = 70062735, upload-time = "2026-07-29T15:37:34.832Z" },
+]
+
+[[package]]
+name = "gs-nyx-plugin"
+version = "0.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "genesis-world" },
+    { name = "gs-nyx" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pydantic" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dd/42/e6252cab91dd6f53a6920c7344a45c25bbb3a5b809d021f004f0a7d623e5/gs_nyx_plugin-0.1.5-py3-none-any.whl", hash = "sha256:531a20b7b1bb872c2a6b35d314b0e78b67f365aa35a216127def83ecf0fd1ea1", size = 36256, upload-time = "2026-07-30T13:23:41.378Z" },
 ]
 
 [[package]]
@@ -4228,11 +4268,11 @@ wheels = [
 
 [[package]]
 name = "pytz"
-version = "2026.2"
+version = "2026.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ff/46/dd499ec9038423421951e4fad73051febaa13d2df82b4064f87af8b8c0c3/pytz-2026.2.tar.gz", hash = "sha256:0e60b47b29f21574376f218fe21abc009894a2321ea16c6754f3cad6eb7cdd6a", size = 320861, upload-time = "2026-05-04T01:35:29.667Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/ed/fa23d28713004418bbf2407127f80f385bfb0bf4e677bef02c25c27b00ee/pytz-2026.4.tar.gz", hash = "sha256:464303645bafafd72418898368b2429458f709cf1eb6a15372fbcc396b64da63", size = 318444, upload-time = "2026-09-24T03:58:40.443Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/dd/96da98f892250475bdf2328112d7468abdd4acc7b902b6af23f4ed958ea0/pytz-2026.2-py2.py3-none-any.whl", hash = "sha256:04156e608bee23d3792fd45c94ae47fae1036688e75032eea2e3bf0323d1f126", size = 510141, upload-time = "2026-05-04T01:35:27.408Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/11/e3df59614bebe0ca50c905442603eda64ae7ac19811d4e4f74aa2d51ca85/pytz-2026.4-py2.py3-none-any.whl", hash = "sha256:9d514388fbc89ca0833203464272ac485b8828568ab73532f5020f17e892a0ff", size = 506747, upload-time = "2026-09-24T03:58:38.629Z" },
 ]
 
 [[package]]
@@ -4361,7 +4401,7 @@ wheels = [
 
 [[package]]
 name = "quadrants"
-version = "0.8.0"
+version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cffi" },
@@ -4374,22 +4414,22 @@ dependencies = [
     { name = "setuptools" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/06/ea0abf674afdab049cb6de53b4a02b8a1578460c03c887876ad168a36af1/quadrants-0.8.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c1e697c7380af04e70c430574757850752d95e641906816533fb3a44048ca542", size = 30424268, upload-time = "2026-05-16T13:21:48.533Z" },
-    { url = "https://files.pythonhosted.org/packages/3d/0f/842bc4314b68477e79dc50f4fc1ffec7338b1512118dce230a3c5651a8dd/quadrants-0.8.0-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:cd1025b161150bf18ec0dccc7a57f68da73dc31686abdb731adcb59215f3885e", size = 44980845, upload-time = "2026-05-16T13:55:44.033Z" },
-    { url = "https://files.pythonhosted.org/packages/92/4a/75ef2cd41c5b4e69b606c21d9472c5ea200dc549085a63f32494014f3a37/quadrants-0.8.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e97b529116b4d8a97f003033cb2fdb33ef3988e82312b25379c5317578b8d706", size = 48075281, upload-time = "2026-05-16T13:55:37.835Z" },
-    { url = "https://files.pythonhosted.org/packages/50/dd/0faff307e01af242b8774c414e6ea054d3447c504f4fc286d802f5a3d7c8/quadrants-0.8.0-cp310-cp310-win_amd64.whl", hash = "sha256:215495882e5e5bb5e06d52ad21e33b1d58f8051b208ad6efd1c76278ee7ff995", size = 55617304, upload-time = "2026-05-16T12:53:46.253Z" },
-    { url = "https://files.pythonhosted.org/packages/66/7a/26dc04b9765a4cd8398c0ab0569fb9b2a25631e081e4e8a8c9f467ebac79/quadrants-0.8.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:d4911e2e34428afacae91c2bf577aec4e02f3fe4f60416e7030a84451c8456fd", size = 30430329, upload-time = "2026-05-16T13:21:48.526Z" },
-    { url = "https://files.pythonhosted.org/packages/5c/f2/83387190a07cc74b222800f9a507037e26c23dd6e096a657a08e51644e46/quadrants-0.8.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:0ca422e9a5c9869efb818778733d05b32f3f26b4fc5c972388b8d079eb52d5a2", size = 44981651, upload-time = "2026-05-16T13:55:39.101Z" },
-    { url = "https://files.pythonhosted.org/packages/69/e3/678803e8574d8bfcb6c3524faf6eecbabe85c79f8743a695fb139d8270c0/quadrants-0.8.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f0577238278f53345e34db90078491df744ead265a7ce333718288173d201474", size = 48077922, upload-time = "2026-05-16T13:55:37.353Z" },
-    { url = "https://files.pythonhosted.org/packages/dc/5c/69ad513d44ab85f56ae6235666b0e5e7f55519eb1951e62f35837adcf9d1/quadrants-0.8.0-cp311-cp311-win_amd64.whl", hash = "sha256:cdeba06aa5f1f35453a35a407afe410d6575ebaea4707aeac1140f970cab5e16", size = 55618222, upload-time = "2026-05-16T12:53:49.385Z" },
-    { url = "https://files.pythonhosted.org/packages/6d/69/728f33e16e8612de22f3e95d6291bce6f22131067c897d3b5eb7ea1706bf/quadrants-0.8.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:07e223958f51c75cabe4631b5446db0ec22fa9f9818a80c69581a8893db090dd", size = 30430357, upload-time = "2026-05-16T13:21:52.452Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/f7/f1b0ad69914a336f78d6f6d2d6658875f21b5060ebf80f29e847e3d2c442/quadrants-0.8.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:a979c495027d74f080563bd8bc1978fabdc23881d52b284516b3b658950034d3", size = 44981280, upload-time = "2026-05-16T13:55:39.155Z" },
-    { url = "https://files.pythonhosted.org/packages/05/c1/f3a8de448bfdef42507d82b97264b2f5c0383067ba10ec438d13a84243fe/quadrants-0.8.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6ee51b7299882dd78bdc04ce2385566dbcbb59bcf0b2ce0951af7a1ddfe51a40", size = 48082021, upload-time = "2026-05-16T13:55:42.327Z" },
-    { url = "https://files.pythonhosted.org/packages/3c/f7/b6bd12453bde9a73d49a2579aa5c0ac57dbadd45acec704f704d8958429f/quadrants-0.8.0-cp312-cp312-win_amd64.whl", hash = "sha256:897d654ac56ab087aabe43058a4ab5970460604e3a2129f52850d32ff97b3162", size = 55617168, upload-time = "2026-05-16T12:53:50.483Z" },
-    { url = "https://files.pythonhosted.org/packages/2e/e9/e19b9980713daabdd07955f673359728fe1c311bf4ec4c845f969c054536/quadrants-0.8.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:4ee69ff07aa84f5d28dd5c4f99cdbc67139dad45abedb0e7dbe7552a45017a53", size = 30430931, upload-time = "2026-05-16T13:21:52.342Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/e3/6998c451a1c2dea218906bd206b8e82a622a449fbe8022fa6905cb1decd8/quadrants-0.8.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:971c4bbd786a1a22412922e40865ce17821dcef0359e5ce7ac5cc9eab19d3062", size = 44982500, upload-time = "2026-05-16T13:55:38.463Z" },
-    { url = "https://files.pythonhosted.org/packages/f2/ca/19adad282cc3b500eb0cf08fc2ed1ea13ce697e5c31aafd06fecca182668/quadrants-0.8.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:58db773247a31ab7badb9bbdff3564b889892fa74b92b714ccd91a3f023d1c1c", size = 48082323, upload-time = "2026-05-16T13:55:46.648Z" },
-    { url = "https://files.pythonhosted.org/packages/25/42/97501f41456a977e3092244f1e7327a2e313d5ab58081f86b9eb860610f5/quadrants-0.8.0-cp313-cp313-win_amd64.whl", hash = "sha256:cded00f903f2d82d573c553c3d7fe16bdd29deba1679d66f67a95139065794ee", size = 55617709, upload-time = "2026-05-16T12:53:53.419Z" },
+    { url = "https://files.pythonhosted.org/packages/30/8c/950f556baa138449ff6a64d4b573e30239d0fbd9f442261b5dc7a8189fa0/quadrants-1.2.0-cp310-cp310-macosx_13_0_arm64.whl", hash = "sha256:29be9819e4cee5fe97f83f4fc261fc180ea6c7013cd45c6ebcadaa0f4fe14103", size = 26677254, upload-time = "2026-07-29T10:53:18.039Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/af/52c409bcfd2db4360c4eb28254cf49fafa91bf386865c087a69809d31e81/quadrants-1.2.0-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:ec40b26f834503c0344a916630ffd6277dc1f32c7c84da32aaf25d75e18cc34c", size = 38290892, upload-time = "2026-07-28T15:13:22.324Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/a2/478e4fa159513c035547fb78fa918c7554a6f80c60d52d4eac0e61717d65/quadrants-1.2.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:40efff5d152487e312f621d82bc55ff12d95418be01acdbd8c7176e8eb812452", size = 40977709, upload-time = "2026-07-28T15:13:15.956Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/65/eea9217645f8dbeba424dd9ea6ddb332c84cbf9057164550fe06175d29b8/quadrants-1.2.0-cp310-cp310-win_amd64.whl", hash = "sha256:896e1fa9657a882a75bafe166c51f2332a80ef006b67b89526a62e1d22d34ee7", size = 30981926, upload-time = "2026-07-28T13:57:32.715Z" },
+    { url = "https://files.pythonhosted.org/packages/11/57/8420b373d0e04b71e47e68fa6b124bf0e4a195d82530d90e11e8153b86bf/quadrants-1.2.0-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:2b07e5285015f7ba17662fa11b179430ea630b3292f5fcbfdcb34756eeb422c1", size = 26678020, upload-time = "2026-07-29T10:53:52.206Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/15/faf336e40125a1ce0a3c6fbc1f38d05ff0fdb781e1c0090e27a9def4f3bd/quadrants-1.2.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:7f1635cc1b6cba218eaa9bea76d18641c98d2efff007a0575c64c9af28b8ab5d", size = 38287989, upload-time = "2026-07-28T15:13:22.906Z" },
+    { url = "https://files.pythonhosted.org/packages/20/2a/f6e4a912f7d86d6de558081a446408616c8e0f59c55ccfd0244604bda309/quadrants-1.2.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:dc19ae6d4c62aca51adf405ab167b83f8463742e8758cb01247651c82c5f6a8b", size = 40976445, upload-time = "2026-07-28T15:13:16.521Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/82/b172342098c2851c52e798361a8ce554b88e72b32340650665353a207348/quadrants-1.2.0-cp311-cp311-win_amd64.whl", hash = "sha256:d4266a1128302b1a4837abe306b358da55be478c3e267296e030a43d71d7f777", size = 30982310, upload-time = "2026-07-28T13:57:27.392Z" },
+    { url = "https://files.pythonhosted.org/packages/82/3a/e5690471367ff9dcc2ed0673e19087e9e69ae9856eef7fe30e2025256d64/quadrants-1.2.0-cp312-cp312-macosx_13_0_arm64.whl", hash = "sha256:6b0ef33610e0a8c1760b5e10811e1da984755da251235d8fa082f8571539a4d2", size = 26677160, upload-time = "2026-07-29T10:54:26.324Z" },
+    { url = "https://files.pythonhosted.org/packages/79/ff/dfd67e31562ed0c3b5133bcacd43bed277a4213aa3ea327532ef9583e428/quadrants-1.2.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:2850f55d032a518434bfb0b3baf9cf2062a9ec1404d513f7664509ece08e4eb1", size = 38289055, upload-time = "2026-07-28T15:13:29.46Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/df/2cc0db8575f0d690c6d7f0231e540a3975a326649df6372a33c8ddb556e9/quadrants-1.2.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2f89d4d2748cce5520e48af347b27289937e26cfaf1b722f403117d9bd26fc99", size = 40971781, upload-time = "2026-07-28T15:13:11.786Z" },
+    { url = "https://files.pythonhosted.org/packages/77/fb/1928060ce26e28aaef7f9e9ab285032d1b7f0d485af9ec6b293d9763fe67/quadrants-1.2.0-cp312-cp312-win_amd64.whl", hash = "sha256:5b5637feff865cda4f22d598568747a0111e265c65f932bb55e34a3466a04103", size = 30983346, upload-time = "2026-07-28T13:57:40.909Z" },
+    { url = "https://files.pythonhosted.org/packages/93/82/da089914af926fcb4535999b8cee2814f6ec89a93c8db77cef8ecd748e96/quadrants-1.2.0-cp313-cp313-macosx_13_0_arm64.whl", hash = "sha256:2e1c01c5465b202a4949ff30e7716b7d249a788188af9b9f54ff584a6f0f9d26", size = 26678375, upload-time = "2026-07-29T10:55:00.973Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/4b/308a6e2df3cfaf68c3b04f807b286341c876661aaf35de9e5178ce3e0496/quadrants-1.2.0-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_34_aarch64.whl", hash = "sha256:3627dff09ea3446f7b428e41f07102d1b954e4466273ae6d0e873cce7627fccf", size = 38287510, upload-time = "2026-07-28T15:13:14.025Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/2b/87a11764590b9ac11e1cc3473c26f403ab9b1c4f0535a77a5f4de717caab/quadrants-1.2.0-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bb58bbd58e79d745c4876d55f7a1679256cdf9aed29ddc3df8c1d643f0764922", size = 40972535, upload-time = "2026-07-28T15:13:22.437Z" },
+    { url = "https://files.pythonhosted.org/packages/03/af/f9ab4316bb5becc4cca41636f03e968ec82da37f23e5645a79d3969cd4ca/quadrants-1.2.0-cp313-cp313-win_amd64.whl", hash = "sha256:449985fda810012b663b1a91a4f4a4ad9dc20cf29235990112478d2151f62bd0", size = 30983338, upload-time = "2026-07-28T13:57:38.536Z" },
 ]
 
 [[package]]
@@ -4567,6 +4607,8 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "genesis-world" },
+    { name = "gs-nyx" },
+    { name = "gs-nyx-plugin" },
     { name = "gymnasium" },
     { name = "h5py" },
     { name = "importlib-resources" },
@@ -4585,7 +4627,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "genesis-world", git = "https://github.com/Genesis-Embodied-AI/Genesis.git?rev=v0.4.7" },
+    { name = "genesis-world", specifier = "==1.3.1" },
+    { name = "gs-nyx", specifier = ">=0.1.4" },
+    { name = "gs-nyx-plugin", specifier = ">=0.1.5" },
     { name = "gymnasium", specifier = ">=1.0.0" },
     { name = "h5py", specifier = ">=2.2.6" },
     { name = "importlib-resources", specifier = ">=5.0.0" },

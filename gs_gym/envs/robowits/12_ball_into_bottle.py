@@ -27,6 +27,9 @@ class BallIntoBottleEnv(RoboWitsEnv):
     - Ball is not touching the table
     """
 
+    # MPM/SPH fill: far faster on the GPU backend.
+    preferred_genesis_backend = "cuda"
+
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
@@ -57,19 +60,19 @@ class BallIntoBottleEnv(RoboWitsEnv):
 
         # Set reachable areas for objects
         small_area = {"x_min": 0.25, "x_max": 0.65, "y_min": -0.4, "y_max": 0.4}
-        self._object_reachable_areas["small ball"] = small_area
-        self._object_reachable_areas["red bottle"] = small_area
+        self._object_reachable_areas["small_ball"] = small_area
+        self._object_reachable_areas["red_bottle"] = small_area
         self._object_reachable_areas["funnel"] = small_area
-        self._object_reachable_areas["ball container"] = small_area
+        self._object_reachable_areas["ball_container"] = small_area
 
     @property
     def placement_groups(self) -> PlacementGroups:
         """Bottle and funnel independent, ball container grouped with ball."""
-        return ("red bottle", "funnel", ("ball container", "small ball"))
+        return ("red_bottle", "funnel", ("ball_container", "small_ball"))
 
     def placement_entity_extra_hulls(self, name: str) -> list:
         """Force arm exclusion hulls for the bottle even though it is fixed."""
-        if name == "red bottle":
+        if name == "red_bottle":
             import numpy as np
 
             pad = 0.05
@@ -104,7 +107,7 @@ class BallIntoBottleEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(double_sided=True, color=(0.8, 0.2, 0.2)),
         )
-        self._entities["red bottle"] = {
+        self._entities["red_bottle"] = {
             "entity": bottle,
         }
 
@@ -140,7 +143,7 @@ class BallIntoBottleEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(color=(0.8, 0.9, 1.0), opacity=0.3, double_sided=True),
         )
-        self._entities["ball container"] = {
+        self._entities["ball_container"] = {
             "entity": container,
         }
 
@@ -155,7 +158,7 @@ class BallIntoBottleEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.2, 0.6, 0.9), double_sided=True),
         )
-        self._entities["small ball"] = {
+        self._entities["small_ball"] = {
             "entity": ball,
         }
 
@@ -165,8 +168,8 @@ class BallIntoBottleEnv(RoboWitsEnv):
 
         if not isinstance(objs_info, dict):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
-        ball = objs_info.get("small ball")
-        bottle = objs_info.get("red bottle")
+        ball = objs_info.get("small_ball")
+        bottle = objs_info.get("red_bottle")
         if ball is None or bottle is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
@@ -274,9 +277,9 @@ class BallIntoBottleEnv(RoboWitsEnv):
         APPROACH_THRESHOLD = 0.3
 
         FUNNEL = "funnel"
-        BALL_CONTAINER = "ball container"
-        RED_BOTTLE = "red bottle"
-        SMALL_BALL = "small ball"
+        BALL_CONTAINER = "ball_container"
+        RED_BOTTLE = "red_bottle"
+        SMALL_BALL = "small_ball"
 
         INITIAL_FUNNEL_POS = np.array([0.64, -0.08, 0.825], dtype=float)
         INITIAL_BALL_CONTAINER_POS = np.array([0.50, 0.14, 0.8601], dtype=float)

@@ -64,14 +64,14 @@ class HoldCupEnv(RoboWitsEnv):
         # Set reachable areas for objects
         closer_area = {"x_min": 0.2, "x_max": 0.55, "y_min": -0.5, "y_max": 0.5}
         farther_area = {"x_min": 0.45, "x_max": 0.65, "y_min": -0.25, "y_max": 0.25}
-        self._object_reachable_areas["target area"] = farther_area
+        self._object_reachable_areas["target_area"] = farther_area
         self._object_reachable_areas["coaster"] = closer_area
         self._object_reachable_areas["cup"] = closer_area
 
     @property
     def placement_groups(self) -> PlacementGroups:
         """Cup and coaster independent, target area grouped with slope."""
-        return ("cup", "coaster", ("target area", "slope"))
+        return ("cup", "coaster", ("target_area", "slope"))
 
     def _add_custom_entities(self) -> None:
         """Add cup, slope, coaster, and target area."""
@@ -144,7 +144,7 @@ class HoldCupEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.2, 0.8, 0.3), roughness=0.2),
         )
-        self._entities["target area"] = {
+        self._entities["target_area"] = {
             "entity": target_area,
         }
 
@@ -158,7 +158,7 @@ class HoldCupEnv(RoboWitsEnv):
         UPRIGHT_TOLERANCE_DEG = 20.0  # Max tilt from vertical
 
         cup = objs_info.get("cup")
-        target = objs_info.get("target area")
+        target = objs_info.get("target_area")
 
         if cup is None or target is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)

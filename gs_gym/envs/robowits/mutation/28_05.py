@@ -14,7 +14,7 @@ class MoveCubeMut5Env(MoveCubeEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("cube 1", "cube 2", "cube 3", "goal line", "smooth ramp")
+        return ("cube_1", "cube_2", "cube_3", "goal_line", "smooth_slope")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -30,7 +30,7 @@ class MoveCubeMut5Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.9, 0.2, 0.2), roughness=0.5),
         )
-        self._entities["cube 1"] = {"entity": _e}
+        self._entities["cube_1"] = {"entity": _e}
         # Code Block: cube 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -39,7 +39,7 @@ class MoveCubeMut5Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.2, 0.9, 0.2), roughness=0.5),
         )
-        self._entities["cube 2"] = {"entity": _e}
+        self._entities["cube_2"] = {"entity": _e}
         # Code Block: cube 3
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -48,7 +48,7 @@ class MoveCubeMut5Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.2, 0.2, 0.9), roughness=0.5),
         )
-        self._entities["cube 3"] = {"entity": _e}
+        self._entities["cube_3"] = {"entity": _e}
         # Code Block: goal line
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -57,8 +57,8 @@ class MoveCubeMut5Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.5),
             surface=gs.surfaces.Default(color=(1.0, 0.9, 0.1), roughness=0.3),
         )
-        self._entities["goal line"] = {"entity": _e}
-        # Code Block: smooth ramp
+        self._entities["goal_line"] = {"entity": _e}
+        # Code Block: smooth slope
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -72,4 +72,4 @@ class MoveCubeMut5Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Smooth(color=(0.8, 0.8, 0.85), double_sided=True),
         )
-        self._entities["smooth ramp"] = {"entity": _e}
+        self._entities["smooth_slope"] = {"entity": _e}

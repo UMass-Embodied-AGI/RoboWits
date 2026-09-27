@@ -14,7 +14,7 @@ class DifferentiateCubesMut3Env(DifferentiateCubesEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("mug", "wooden cube", "metal cube"), "target area", "eraser", "ruler")
+        return (("mug", "wooden_cube", "metal_cube"), "target_area", "eraser", "ruler")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -30,7 +30,7 @@ class DifferentiateCubesMut3Env(DifferentiateCubesEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.9),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: mug
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -54,7 +54,7 @@ class DifferentiateCubesMut3Env(DifferentiateCubesEnv):
             material=gs.materials.Rigid(rho=300.0, friction=0.8),
             surface=gs.surfaces.Default(color=(0.9, 0.1, 0.1), roughness=0.6),
         )
-        self._entities["wooden cube"] = {"entity": _e}
+        self._entities["wooden_cube"] = {"entity": _e}
         # Code Block: metal cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -63,7 +63,7 @@ class DifferentiateCubesMut3Env(DifferentiateCubesEnv):
             material=gs.materials.Rigid(rho=7800.0, friction=0.6),
             surface=gs.surfaces.Metal(color=(0.95, 0.9, 0.1), double_sided=False, metal_type="iron"),
         )
-        self._entities["metal cube"] = {"entity": _e}
+        self._entities["metal_cube"] = {"entity": _e}
         # Code Block: eraser
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

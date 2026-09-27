@@ -15,13 +15,13 @@ class RetrieveRollMut3Env(RetrieveRollEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "green target area",
-            "long rod",
-            "hollow roll",
-            "short ruler",
-            "rollerball pen",
-            "pen holder",
-            "basic funnel",
+            "green_target_area",
+            "long_rod",
+            "hollow_roll",
+            "short_ruler",
+            "rollerball_pen",
+            "pen_holder",
+            "basic_funnel",
         )
 
     def _add_custom_entities(self) -> None:
@@ -38,7 +38,7 @@ class RetrieveRollMut3Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=50.0, friction=1.0),
             surface=gs.surfaces.Smooth(color=(0.8, 0.7, 0.5), double_sided=False),
         )
-        self._entities["long rod"] = {"entity": _e}
+        self._entities["long_rod"] = {"entity": _e}
         # Code Block: green target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -47,7 +47,7 @@ class RetrieveRollMut3Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.6),
         )
-        self._entities["green target area"] = {"entity": _e}
+        self._entities["green_target_area"] = {"entity": _e}
         # Code Block: hollow roll
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -62,7 +62,7 @@ class RetrieveRollMut3Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=10.0, friction=1.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["hollow roll"] = {"entity": _e}
+        self._entities["hollow_roll"] = {"entity": _e}
         # Code Block: short ruler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -78,7 +78,7 @@ class RetrieveRollMut3Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=300.0, friction=0.7),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["short ruler"] = {"entity": _e}
+        self._entities["short_ruler"] = {"entity": _e}
         # Code Block: rollerball pen
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -93,7 +93,7 @@ class RetrieveRollMut3Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.6),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["rollerball pen"] = {"entity": _e}
+        self._entities["rollerball_pen"] = {"entity": _e}
         # Code Block: pen holder
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -108,7 +108,7 @@ class RetrieveRollMut3Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=400.0, friction=0.9),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["pen holder"] = {"entity": _e}
+        self._entities["pen_holder"] = {"entity": _e}
         # Code Block: basic funnel
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -123,4 +123,4 @@ class RetrieveRollMut3Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=250.0, friction=0.6),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["basic funnel"] = {"entity": _e}
+        self._entities["basic_funnel"] = {"entity": _e}

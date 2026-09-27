@@ -1,6 +1,6 @@
 """MoveCube environment for RoboWits.
 
-Task: Move any cube past the goal line using the slopes.
+Task: Move any cube beyond the goal line using the slopes.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
 
 @register_task("robowits/28-move-cube-v0")
 class MoveCubeEnv(RoboWitsEnv):
-    """Move a cube past the goal line using slopes with different friction.
+    """Move a cube beyond the goal line using slopes with different friction.
 
     This task requires the robot to understand and exploit the friction
     properties of different surfaces. The smooth slope has very low friction,
@@ -29,7 +29,7 @@ class MoveCubeEnv(RoboWitsEnv):
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
-        return "Move any of the three cubes to the left of the goal line."
+        return "Move any cube beyond the goal line."
 
     TABLE_Z = 0.76
 
@@ -54,7 +54,7 @@ class MoveCubeEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """Only cubes are randomized."""
-        return ("cube 1", "cube 2", "cube 3")
+        return ("cube_1", "cube_2", "cube_3")
 
     def _add_custom_entities(self) -> None:
         """Add three cubes, goal line, and two slopes."""
@@ -74,7 +74,7 @@ class MoveCubeEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.9, 0.2, 0.2), roughness=0.5),
         )
-        self._entities["cube 1"] = {
+        self._entities["cube_1"] = {
             "entity": cube1,
         }
 
@@ -90,7 +90,7 @@ class MoveCubeEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.2, 0.9, 0.2), roughness=0.5),
         )
-        self._entities["cube 2"] = {
+        self._entities["cube_2"] = {
             "entity": cube2,
         }
 
@@ -106,7 +106,7 @@ class MoveCubeEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.2, 0.2, 0.9), roughness=0.5),
         )
-        self._entities["cube 3"] = {
+        self._entities["cube_3"] = {
             "entity": cube3,
         }
 
@@ -122,7 +122,7 @@ class MoveCubeEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.5),
             surface=gs.surfaces.Default(color=(1.0, 0.9, 0.1), roughness=0.3),
         )
-        self._entities["goal line"] = {
+        self._entities["goal_line"] = {
             "entity": goal_line,
         }
 
@@ -140,7 +140,7 @@ class MoveCubeEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Smooth(color=(0.8, 0.8, 0.85), double_sided=True),
         )
-        self._entities["smooth slope"] = {
+        self._entities["smooth_slope"] = {
             "entity": smooth_slope,
         }
 
@@ -158,7 +158,7 @@ class MoveCubeEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1.5),
             surface=gs.surfaces.Rough(color=(0.5, 0.4, 0.3), double_sided=True),
         )
-        self._entities["rough slope"] = {
+        self._entities["rough_slope"] = {
             "entity": rough_slope,
         }
 
@@ -166,7 +166,7 @@ class MoveCubeEnv(RoboWitsEnv):
         """Check if task is successful: any cube past goal line."""
         objs_info = self.collect_objs_info()
 
-        cube_names = ["cube 1", "cube 2", "cube 3"]
+        cube_names = ["cube_1", "cube_2", "cube_3"]
 
         any_past_goal = False
         for cube_name in cube_names:
@@ -194,7 +194,7 @@ class MoveCubeEnv(RoboWitsEnv):
         objs_info = self.collect_objs_info()
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
 
-        cube_names = ["cube 1", "cube 2", "cube 3"]
+        cube_names = ["cube_1", "cube_2", "cube_3"]
         cube_infos = [objs_info.get(n) for n in cube_names]
         cube_poses = []
         for c in cube_infos:

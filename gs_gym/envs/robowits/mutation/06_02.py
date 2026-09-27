@@ -11,16 +11,18 @@ DominosEnv = _import("gs_gym.envs.robowits.06_dominos").DominosEnv
 
 @register_task("robowits/06_02-v0")
 class DominosMut2Env(DominosEnv):
+    # White block 4 is deliberately absent; the tennis ball is the reachable trigger.
+    TRIGGER_OBJ = "tennis_ball"
+
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "white block 4",
-            ("white block 3", "white block 2", "white block 1", "red block", "target area"),
+            ("white_block_3", "white_block_2", "white_block_1", "red_block", "target_area"),
             "screw",
-            "japanese vase",
-            "coffee mug",
-            "tennis ball",
+            "japanese_vase",
+            "coffee_mug",
+            "tennis_ball",
         )
 
     def _add_custom_entities(self) -> None:
@@ -37,7 +39,7 @@ class DominosMut2Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.6, ior=1.4),
         )
-        self._entities["white block 3"] = {"entity": _e}
+        self._entities["white_block_3"] = {"entity": _e}
         # Code Block: white block 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -46,7 +48,7 @@ class DominosMut2Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.6, ior=1.4),
         )
-        self._entities["white block 2"] = {"entity": _e}
+        self._entities["white_block_2"] = {"entity": _e}
         # Code Block: white block 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -55,7 +57,7 @@ class DominosMut2Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.6, ior=1.4),
         )
-        self._entities["white block 1"] = {"entity": _e}
+        self._entities["white_block_1"] = {"entity": _e}
         # Code Block: red block
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -64,7 +66,7 @@ class DominosMut2Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.9, 0.1, 0.1), roughness=0.5, ior=1.4),
         )
-        self._entities["red block"] = {"entity": _e}
+        self._entities["red_block"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -77,7 +79,7 @@ class DominosMut2Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.1, 0.7, 0.2), double_sided=True),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: japanese vase
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -92,7 +94,7 @@ class DominosMut2Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["japanese vase"] = {"entity": _e}
+        self._entities["japanese_vase"] = {"entity": _e}
         # Code Block: coffee mug
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -107,7 +109,7 @@ class DominosMut2Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["coffee mug"] = {"entity": _e}
+        self._entities["coffee_mug"] = {"entity": _e}
         # Code Block: screw
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -131,4 +133,4 @@ class DominosMut2Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.7, 0.9, 0.2), double_sided=True),
         )
-        self._entities["tennis ball"] = {"entity": _e}
+        self._entities["tennis_ball"] = {"entity": _e}

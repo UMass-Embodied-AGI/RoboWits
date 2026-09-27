@@ -88,10 +88,76 @@ def quat_mul_np(q: np.ndarray, r: np.ndarray) -> np.ndarray:
     )
 
 
+def rotate_vec_by_quat(v: np.ndarray, quat: np.ndarray) -> np.ndarray:
+    """Rotate a single 3D vector by a wxyz quaternion."""
+    q = torch.tensor(np.asarray(quat, dtype=np.float64).reshape(1, 4), dtype=torch.float64)
+    x = torch.tensor(np.asarray(v, dtype=np.float64).reshape(1, 3), dtype=torch.float64)
+    return quat_apply(q, x).detach().cpu().numpy().reshape(3)
+
+
 def rotate_xy_by_yaw(xy: np.ndarray, yaw: float) -> np.ndarray:
     """Rotate a 2D vector by yaw (radians) about the origin."""
     c, s = np.cos(yaw), np.sin(yaw)
     return np.array([c * xy[0] - s * xy[1], s * xy[0] + c * xy[1]])
+
+
+def apply_particle_transform(local: np.ndarray, pos, quat) -> np.ndarray:
+    """Map a cloud from its own frame into the world: ``pos + R(quat) @ local``.
+
+    The inverse of :func:`particle_transform_to_local`. Used both when replaying a stored
+    eval scene and when re-siting a cloud during random placement.
+    """
+    pts = np.asarray(local, dtype=np.float64)
+    if pts.size == 0 or pts.ndim != 2 or pts.shape[1] != 3:
+        return pts.astype(np.float32, copy=False)
+    n = int(pts.shape[0])
+    q = torch.tensor(np.asarray(quat, dtype=np.float64).reshape(4), dtype=torch.float64).view(1, 4).expand(n, -1)
+    rot = quat_apply(q, torch.tensor(pts, dtype=torch.float64)).detach().cpu().numpy()
+    return (np.asarray(pos, dtype=np.float64).reshape(1, 3) + rot).astype(np.float32, copy=False)
+
+
+def particle_transform_to_local(world: np.ndarray, pos, quat) -> np.ndarray:
+    """Express a world-space cloud in the frame ``(pos, quat)``: ``R(quat)^T @ (world - pos)``.
+
+    Applied once when a settled cloud is captured, so the stored file is reusable by every
+    scene of the task rather than only the one it was sampled from.
+    """
+    pts = np.asarray(world, dtype=np.float64)
+    if pts.size == 0 or pts.ndim != 2 or pts.shape[1] != 3:
+        return pts.astype(np.float64, copy=False)
+    q = np.asarray(quat, dtype=np.float64).reshape(4)
+    q_inv = np.array([q[0], -q[1], -q[2], -q[3]], dtype=np.float64)  # unit quat -> conjugate
+    rel = pts - np.asarray(pos, dtype=np.float64).reshape(1, 3)
+    n = int(rel.shape[0])
+    qq = torch.tensor(q_inv, dtype=torch.float64).view(1, 4).expand(n, -1)
+    return quat_apply(qq, torch.tensor(rel, dtype=torch.float64)).detach().cpu().numpy()
+
+
+def particle_frame_from_anchor(cloud_initial_pos, anchor_initial_pos, anchor_initial_quat, anchor_pos, anchor_quat):
+    """Frame a particle cloud occupies when its group anchor sits at ``(anchor_pos, anchor_quat)``.
+
+    ``place_group_together`` moves a cloud by the same rigid delta it applies to the group's
+    rigid members, so the cloud's frame is recoverable from the anchor's pose alone::
+
+        delta = anchor_quat ⊗ anchor_initial_quat⁻¹
+        pos   = anchor_pos + R(delta) @ (cloud_centroid₀ − anchor_pos₀)
+
+    Both the scene sampler and the dataset converter derive the stored transform this way,
+    from the anchor's *settled* pose rather than the pose placement asked for. Those differ
+    whenever the container is dynamic and gets nudged while the scene settles -- as task 15's
+    jar is by the sand pouring onto it -- and using the placement-time pose left the cloud
+    offset from the container it belongs to.
+    """
+    q0 = np.asarray(anchor_initial_quat, dtype=np.float64).reshape(4)
+    delta = quat_mul_np(
+        np.asarray(anchor_quat, dtype=np.float64).reshape(4),
+        np.array([q0[0], -q0[1], -q0[2], -q0[3]], dtype=np.float64),
+    )
+    offset = np.asarray(cloud_initial_pos, dtype=np.float64).reshape(3) - np.asarray(
+        anchor_initial_pos, dtype=np.float64
+    ).reshape(3)
+    pos = np.asarray(anchor_pos, dtype=np.float64).reshape(3) + rotate_vec_by_quat(offset, delta)
+    return pos, delta
 
 
 def transform_particles_like_group_anchor(
@@ -662,6 +728,7 @@ def place_single_object(
     max_attempts: int = 100,
     debug: dict | None = None,
     placement_target_names: AbstractSet[str] | None = None,
+    transform_sink: dict | None = None,
 ) -> None:
     """Place a single object randomly, avoiding collisions with placed objects.
 
@@ -688,15 +755,19 @@ def place_single_object(
 
     entity_info = entities[name]
     entity = entity_info["entity"]
-    if is_particle_fn(entity):
+    # A standalone cloud (task 08's dough, task 20's foam ball, 21_03's dough) is a task
+    # object in its own right, so it is placed by its own footprint like any rigid body.
+    # Only its final application differs: the whole point set is rigidly re-sited.
+    is_particle = is_particle_fn(entity)
+    if is_particle and entity_info.get("initial_particles") is None:
         return
 
     size = entity_info["size"]
     initial_pos = entity_info.get("initial_pos")
     initial_quat = entity_info.get("initial_quat")
     if initial_pos is None or initial_quat is None:
-        initial_pos = entity.get_pos()[0].cpu().numpy()
-        initial_quat = entity.get_quat()[0].cpu().numpy()
+        initial_pos = entity.get_pos(relative=False)[0].cpu().numpy()
+        initial_quat = entity.get_quat(relative=False)[0].cpu().numpy()
 
     d_roll, d_pitch, d_yaw = sample_euler_delta_rad(rng, rotation_range)
     quat = apply_additive_euler_delta_to_quat(initial_quat, d_roll, d_pitch, d_yaw)
@@ -793,10 +864,26 @@ def place_single_object(
             f"n_placed_hulls={len(placed_hulls)}{tried_summary})"
         )
 
-    pos_tensor = torch.tensor(pos, dtype=torch.float32, device=device).unsqueeze(0)
-    quat_tensor = torch.tensor(quat, dtype=torch.float32, device=device).unsqueeze(0)
-    entity.set_pos(pos_tensor)
-    entity.set_quat(quat_tensor)
+    if is_particle:
+        local = np.asarray(entity_info["initial_particles"], dtype=np.float64) - np.asarray(
+            initial_pos, dtype=np.float64
+        ).reshape(1, 3)
+        world = apply_particle_transform(local, pos, quat)
+        poss = torch.as_tensor(world, dtype=torch.float32, device=device)
+        entity.set_particles_pos(poss)
+        if hasattr(entity, "set_particles_vel"):
+            entity.set_particles_vel(torch.zeros_like(poss))
+    else:
+        pos_tensor = torch.tensor(pos, dtype=torch.float32, device=device).unsqueeze(0)
+        quat_tensor = torch.tensor(quat, dtype=torch.float32, device=device).unsqueeze(0)
+        entity.set_pos(pos_tensor, relative=False)
+        entity.set_quat(quat_tensor, relative=False)
+
+    if is_particle and transform_sink is not None:
+        transform_sink[name] = {
+            "pos": [float(v) for v in np.asarray(pos, dtype=np.float64).reshape(3)],
+            "quat": [float(v) for v in np.asarray(quat, dtype=np.float64).reshape(4)],
+        }
 
 
 def _compute_free_space_grid_group(
@@ -848,6 +935,7 @@ def place_group_together(
     debug: dict | None = None,
     ignored_hulls: set[str] | frozenset[str] | None = None,
     placement_target_names: AbstractSet[str] | None = None,
+    transform_sink: dict | None = None,
 ) -> None:
     """Place a group of objects together, maintaining relative positions.
 
@@ -879,8 +967,8 @@ def place_group_together(
         pos = entity_info.get("initial_pos")
         quat = entity_info.get("initial_quat")
         if pos is None or quat is None:
-            pos = entity.get_pos()[0].cpu().numpy()
-            quat = entity.get_quat()[0].cpu().numpy()
+            pos = entity.get_pos(relative=False)[0].cpu().numpy()
+            quat = entity.get_quat(relative=False)[0].cpu().numpy()
         initial_positions[name] = pos
         initial_quats[name] = quat
     valid_names = rigid_names
@@ -995,8 +1083,8 @@ def place_group_together(
         obj_pos = anchor_pos + rotated_offsets[name]
         pos_tensor = torch.tensor(obj_pos, dtype=torch.float32, device=device).unsqueeze(0)
         quat_tensor = torch.tensor(rotated_quats[name], dtype=torch.float32, device=device).unsqueeze(0)
-        entity.set_pos(pos_tensor)
-        entity.set_quat(quat_tensor)
+        entity.set_pos(pos_tensor, relative=False)
+        entity.set_quat(quat_tensor, relative=False)
 
     # Particle (e.g. MPM / SPH) members: anchor translation + full ``delta_quat`` on offsets from anchor.
     for name in group:
@@ -1004,13 +1092,20 @@ def place_group_together(
             continue
         if placement_target_names is not None and name not in placement_target_names:
             continue
-        entity = entities[name]["entity"]
+        info = entities[name]
+        entity = info["entity"]
         if not is_particle_fn(entity):
             continue
         if not hasattr(entity, "get_particles_pos") or not hasattr(entity, "set_particles_pos"):
             continue
-        t = entity.get_particles_pos().detach()
-        pos_np = t[0].cpu().numpy() if t.dim() == 3 else t.cpu().numpy()
+        # Prefer the cloud captured at scene build. Reading live positions instead is
+        # only correct because reset() precedes placement; anything that placed twice
+        # without an intervening reset would compound the offset.
+        pos_np = info.get("initial_particles")
+        if pos_np is None:
+            t = entity.get_particles_pos().detach()
+            pos_np = t[0].cpu().numpy() if t.dim() == 3 else t.cpu().numpy()
+        pos_np = np.asarray(pos_np, dtype=np.float64)
         if pos_np.size == 0:
             continue
         new_np = transform_particles_like_group_anchor(pos_np, anchor_initial, anchor_pos, delta_quat)
@@ -1018,3 +1113,14 @@ def place_group_together(
         entity.set_particles_pos(poss)
         if hasattr(entity, "set_particles_vel"):
             entity.set_particles_vel(torch.zeros_like(poss))
+        # Where this cloud's own frame ended up, so a sampler can store the scene as
+        # (shared cloud + rigid transform) instead of a full copy of the points.
+        if transform_sink is not None:
+            centroid0 = np.asarray(info.get("initial_pos", pos_np.mean(axis=0)), dtype=np.float64).reshape(3)
+            frame_pos = np.asarray(anchor_pos, dtype=np.float64).reshape(3) + rotate_vec_by_quat(
+                centroid0 - np.asarray(anchor_initial, dtype=np.float64).reshape(3), delta_quat
+            )
+            transform_sink[name] = {
+                "pos": [float(v) for v in frame_pos],
+                "quat": [float(v) for v in np.asarray(delta_quat, dtype=np.float64).reshape(4)],
+            }

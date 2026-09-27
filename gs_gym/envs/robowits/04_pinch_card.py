@@ -1,6 +1,6 @@
 """PinchCard environment for RoboWits.
 
-Task: Pick up a bank card from a small table surface using an eraser.
+Task: Pick up a bank card from a small table surface using an eraser and place it on the target area.
 """
 
 from __future__ import annotations
@@ -17,12 +17,12 @@ from gs_gym.envs.robowits.utils import check_being_held
 
 @register_task("robowits/04-pinch-card-v0")
 class PinchCardEnv(RoboWitsEnv):
-    """Pick up a bank card from a small table surface using an eraser.
+    """Pick up a bank card from a small table surface using an eraser and place it on the target area.
 
     The bank card is too thin and slippery for a standard gripper to push
     directly on a flat surface. The robot must utilize the friction and
     deformability of the eraser to create enough lateral force to move the
-    card to a position where it can be grasped.
+    card to a position where it can be grasped, then release it on the target.
 
     Success criteria:
     - Bank card's 2D footprint overlaps target area by at least 50%
@@ -33,7 +33,7 @@ class PinchCardEnv(RoboWitsEnv):
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
-        return "Pick the bank card up from the 'small table' surface."
+        return "Pick the bank card up and place it on the green target area."
 
     TABLE_Z = 0.76
 
@@ -41,7 +41,7 @@ class PinchCardEnv(RoboWitsEnv):
     # ``target cube`` / ``target area`` are landmarks used by the success
     # check; none of them should act as blocking hulls during random
     # placement. Declared here so all ``04_xx`` mutations inherit the rule.
-    placement_ignored_hulls = frozenset({"small table", "target cube", "target area"})
+    placement_ignored_hulls = frozenset({"small_table", "target_cube", "target_area"})
 
     def __init__(
         self,
@@ -66,13 +66,13 @@ class PinchCardEnv(RoboWitsEnv):
 
         # Set reachable areas for objects
         table_area = {"x_min": 0.3, "x_max": 0.6, "y_min": -0.15, "y_max": 0.15}
-        self._object_reachable_areas["bank card"] = table_area
+        self._object_reachable_areas["bank_card"] = table_area
         self._object_reachable_areas["eraser"] = table_area
 
     @property
     def placement_groups(self) -> PlacementGroups:
         """Bank card and eraser placed independently."""
-        return ("bank card", "eraser")
+        return ("bank_card", "eraser")
 
     def _add_custom_entities(self) -> None:
         """Add bank card, eraser, small table, and target area."""
@@ -94,7 +94,7 @@ class PinchCardEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.4),
             surface=gs.surfaces.Smooth(double_sided=True, color=(0.036, 0.177, 0.8)),
         )
-        self._entities["bank card"] = {
+        self._entities["bank_card"] = {
             "entity": bank_card,
         }
 
@@ -130,7 +130,7 @@ class PinchCardEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1.2),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small table"] = {
+        self._entities["small_table"] = {
             "entity": small_table,
         }
 
@@ -146,7 +146,7 @@ class PinchCardEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.4, ior=1.5),
         )
-        self._entities["target cube"] = {
+        self._entities["target_cube"] = {
             "entity": target_cube,
         }
 
@@ -162,7 +162,7 @@ class PinchCardEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.2, 0.8, 0.2), roughness=0.4, ior=1.5),
         )
-        self._entities["target area"] = {
+        self._entities["target_area"] = {
             "entity": target_area,
         }
 
@@ -171,8 +171,8 @@ class PinchCardEnv(RoboWitsEnv):
 
         objs_info = self.collect_objs_info()
 
-        card_name = "bank card"
-        target_name = "target area"
+        card_name = "bank_card"
+        target_name = "target_area"
         if card_name not in objs_info or target_name not in objs_info:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
@@ -298,9 +298,9 @@ class PinchCardEnv(RoboWitsEnv):
         HEIGHT_THRESHOLD = 0.03
         CARD_OUT_AREA_THRESHOLD = 0.10
         INITIAL_CARD_Z = 0.843
-        CARD = "bank card"
-        SMALL_TABLE = "small table"
-        TARGET = "target area"
+        CARD = "bank_card"
+        SMALL_TABLE = "small_table"
+        TARGET = "target_area"
 
         for n in [CARD, SMALL_TABLE, TARGET]:
             if n not in objs_info:
