@@ -14,7 +14,7 @@ class RetrieveRollMut6Env(RetrieveRollEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("green target area", "long rod", "hollow roll")
+        return ("green_target_area", "long_rod", "hollow_roll")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class RetrieveRollMut6Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=10.0, friction=1.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["hollow roll"] = {"entity": _e}
+        self._entities["hollow_roll"] = {"entity": _e}
         # Code Block: long rod
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -45,7 +45,7 @@ class RetrieveRollMut6Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=50.0, friction=1.0),
             surface=gs.surfaces.Smooth(color=(0.8, 0.7, 0.5), double_sided=False),
         )
-        self._entities["long rod"] = {"entity": _e}
+        self._entities["long_rod"] = {"entity": _e}
         # Code Block: green target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -54,4 +54,4 @@ class RetrieveRollMut6Env(RetrieveRollEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.6),
         )
-        self._entities["green target area"] = {"entity": _e}
+        self._entities["green_target_area"] = {"entity": _e}

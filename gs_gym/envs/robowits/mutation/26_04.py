@@ -18,13 +18,13 @@ class AlignChopsticksMut4Env(AlignChopsticksEnv):
             "pencil",
             "sponge",
             (
+                "first_chopstick",
+                "second_chopstick",
+                "third_chopstick",
+                "fourth_chopstick",
+                "fifth_chopstick",
+                "sixth_chopstick",
                 "board",
-                "first chopstick",
-                "second chopstick",
-                "third chopstick",
-                "fourth chopstick",
-                "fifth chopstick",
-                "sixth chopstick",
             ),
         )
 
@@ -76,7 +76,7 @@ class AlignChopsticksMut4Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["first chopstick"] = {"entity": _e}
+        self._entities["first_chopstick"] = {"entity": _e}
         # Code Block: second chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -90,7 +90,7 @@ class AlignChopsticksMut4Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["second chopstick"] = {"entity": _e}
+        self._entities["second_chopstick"] = {"entity": _e}
         # Code Block: third chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -104,7 +104,7 @@ class AlignChopsticksMut4Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["third chopstick"] = {"entity": _e}
+        self._entities["third_chopstick"] = {"entity": _e}
         # Code Block: fourth chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -118,7 +118,7 @@ class AlignChopsticksMut4Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["fourth chopstick"] = {"entity": _e}
+        self._entities["fourth_chopstick"] = {"entity": _e}
         # Code Block: fifth chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -132,7 +132,7 @@ class AlignChopsticksMut4Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["fifth chopstick"] = {"entity": _e}
+        self._entities["fifth_chopstick"] = {"entity": _e}
         # Code Block: sixth chopstick
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -146,7 +146,7 @@ class AlignChopsticksMut4Env(AlignChopsticksEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.7),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["sixth chopstick"] = {"entity": _e}
+        self._entities["sixth_chopstick"] = {"entity": _e}
         # Code Block: sponge
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

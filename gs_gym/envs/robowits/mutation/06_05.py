@@ -14,10 +14,10 @@ class DominosMut5Env(DominosEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "white block 4",
-            ("white block 3", "white block 2", "white block 1", "red block", "target area"),
-            "plastic straw",
-            "kitchen sponge",
+            "white_block_4",
+            ("white_block_3", "white_block_2", "white_block_1", "red_block", "target_area"),
+            "plastic_straw",
+            "kitchen_sponge",
         )
 
     def _add_custom_entities(self) -> None:
@@ -30,7 +30,7 @@ class DominosMut5Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=False),
         )
-        self._entities["white block 4"] = {"entity": _e}
+        self._entities["white_block_4"] = {"entity": _e}
         # Code Block: white block 3
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -39,7 +39,7 @@ class DominosMut5Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=False),
         )
-        self._entities["white block 3"] = {"entity": _e}
+        self._entities["white_block_3"] = {"entity": _e}
         # Code Block: white block 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -48,7 +48,7 @@ class DominosMut5Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=False),
         )
-        self._entities["white block 2"] = {"entity": _e}
+        self._entities["white_block_2"] = {"entity": _e}
         # Code Block: white block 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -57,7 +57,7 @@ class DominosMut5Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Smooth(color=(0.95, 0.95, 0.95), double_sided=False),
         )
-        self._entities["white block 1"] = {"entity": _e}
+        self._entities["white_block_1"] = {"entity": _e}
         # Code Block: red block
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -66,7 +66,7 @@ class DominosMut5Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Smooth(color=(0.9, 0.1, 0.1), double_sided=False),
         )
-        self._entities["red block"] = {"entity": _e}
+        self._entities["red_block"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -75,16 +75,21 @@ class DominosMut5Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.5),
             surface=gs.surfaces.Smooth(color=(0.1, 0.7, 0.2), double_sided=True),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: plastic straw
+        # radius 0.003 -> 0.008: at r=3mm this body is the smallest collision primitive in
+        # the benchmark and weighed 1.1 g against 45 g dominos (40:1). With dt=0.0333 and
+        # substeps=4 the rigid solver produced "Invalid constraint forces causing 'nan'" on
+        # 20-40% of episodes. At r=8mm it is 8 g (5.6:1) and conditions like 06_06's roll.
+        # The resting height moves with the radius, so pos z tracks it (table top 0.758).
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
-                pos=(0.66, 0.07, 0.763), euler=(90, 0, 0), radius=0.003, height=0.20, fixed=False, collision=True
+                pos=(0.66, 0.07, 0.768), euler=(90, 0, 0), radius=0.008, height=0.20, fixed=False, collision=True
             ),
             material=gs.materials.Rigid(rho=200.0, friction=0.4),
             surface=gs.surfaces.Smooth(color=(0.9, 0.9, 0.9), double_sided=False),
         )
-        self._entities["plastic straw"] = {"entity": _e}
+        self._entities["plastic_straw"] = {"entity": _e}
         # Code Block: kitchen sponge
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -93,4 +98,4 @@ class DominosMut5Env(DominosEnv):
             material=gs.materials.Rigid(rho=120.0, friction=0.6),
             surface=gs.surfaces.Smooth(color=(0.95, 0.85, 0.1), double_sided=False),
         )
-        self._entities["kitchen sponge"] = {"entity": _e}
+        self._entities["kitchen_sponge"] = {"entity": _e}

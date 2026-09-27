@@ -14,7 +14,7 @@ class DifferentiateCubesMut1Env(DifferentiateCubesEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("mug", "wooden cube", "metal cube"), "target area", ("water", "water pitcher"), "cat figurine")
+        return (("mug", "wooden_cube", "metal_cube"), "target_area", "cat_figurine")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -45,7 +45,7 @@ class DifferentiateCubesMut1Env(DifferentiateCubesEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(1.0, 0.9, 0.1), roughness=0.6),
         )
-        self._entities["wooden cube"] = {"entity": _e}
+        self._entities["wooden_cube"] = {"entity": _e}
         # Code Block: metal cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -54,14 +54,14 @@ class DifferentiateCubesMut1Env(DifferentiateCubesEnv):
             material=gs.materials.Rigid(rho=7800.0),
             surface=gs.surfaces.Metal(color=(0.9, 0.1, 0.1), double_sided=False, metal_type="iron"),
         )
-        self._entities["metal cube"] = {"entity": _e}
+        self._entities["metal_cube"] = {"entity": _e}
         # Code Block: water pitcher
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c242567e-052d-4561-b2c0-2fed8a5e576b/obj.glb", pattern_is_dir=False),
-                scale=1.0,
-                pos=(0.40, -0.05, 0.76 + 0.0721),
+                scale=1.5,
+                pos=(0.40, -0.05, 0.854),
                 euler=(0, 0, 180),
                 fixed=False,
                 collision=True,
@@ -69,7 +69,7 @@ class DifferentiateCubesMut1Env(DifferentiateCubesEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["water pitcher"] = {"entity": _e}
+        self._entities["pitcher"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -78,7 +78,7 @@ class DifferentiateCubesMut1Env(DifferentiateCubesEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.9),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: cat figurine
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -93,13 +93,15 @@ class DifferentiateCubesMut1Env(DifferentiateCubesEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["cat figurine"] = {"entity": _e}
+        self._entities["cat_figurine"] = {"entity": _e}
         # Code Block: pitcher water
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
-                pos=(0.40, -0.05, 0.83), euler=(0, 0, 0), radius=0.035, height=0.08, fixed=False, collision=True
+                pos=(0.40, -0.05, 1.105), euler=(0, 0, 0), radius=0.035, height=0.4, fixed=False, collision=True
             ),
-            material=gs.materials.MPM.Liquid(rho=1000.0, E=1e6, nu=0.2, viscous=True, sampler="pbs"),
+            material=gs.materials.SPH.Liquid(
+                rho=500.0, stiffness=8e5, exponent=7.0, mu=0.005, gamma=0.01, sampler="pbs"
+            ),
             surface=gs.surfaces.Rough(double_sided=True, vis_mode="recon"),
         )
-        self._entities["pitcher water"] = {"entity": _e}
+        self._entities["water"] = {"entity": _e}

@@ -57,7 +57,7 @@ class BalanceBoardEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """Small wall independent, board and support cube grouped."""
-        return ("small wall", ("board", "support cube"))
+        return ("small_wall", ("board", "support_cube"))
 
     def _add_custom_entities(self) -> None:
         """Add small wall, board, and support cube."""
@@ -77,7 +77,7 @@ class BalanceBoardEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=400.0),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.6),
         )
-        self._entities["small wall"] = {
+        self._entities["small_wall"] = {
             "entity": small_wall,
         }
 
@@ -111,7 +111,7 @@ class BalanceBoardEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.5),
         )
-        self._entities["support cube"] = {
+        self._entities["support_cube"] = {
             "entity": support_cube,
         }
 
@@ -123,7 +123,7 @@ class BalanceBoardEnv(RoboWitsEnv):
         TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
 
         board = objs_info.get("board")
-        wall = objs_info.get("small wall")
+        wall = objs_info.get("small_wall")
 
         if board is None or wall is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -227,7 +227,7 @@ class BalanceBoardEnv(RoboWitsEnv):
 
         objs_info = self.collect_objs_info()
         board = objs_info.get("board")
-        wall = objs_info.get("small wall")
+        wall = objs_info.get("small_wall")
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
         if board is None or wall is None:

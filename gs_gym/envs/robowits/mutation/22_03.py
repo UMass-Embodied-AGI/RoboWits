@@ -6,15 +6,15 @@ from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups
 
-StabilizeBottleEnv = _import("gs_gym.envs.robowits.22_stabilize_bottle").StabilizeBottleEnv
+StabilizeEggEnv = _import("gs_gym.envs.robowits.22_stabilize_egg").StabilizeEggEnv
 
 
 @register_task("robowits/22_03-v0")
-class StabilizeBottleMut3Env(StabilizeBottleEnv):
+class StabilizeEggMut3Env(StabilizeEggEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("block A", "tube", "bowl", "block B", "block C")
+        return ("block_A", "egg", "bowl", "block_B", "block_C")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -37,7 +37,7 @@ class StabilizeBottleMut3Env(StabilizeBottleEnv):
             surface=gs.surfaces.Smooth(double_sided=True),
         )
         self._entities["bowl"] = {"entity": _e}
-        # Code Block: tube
+        # Code Block: egg
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -51,7 +51,7 @@ class StabilizeBottleMut3Env(StabilizeBottleEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["tube"] = {"entity": _e}
+        self._entities["egg"] = {"entity": _e}
         # Code Block: block A
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -64,7 +64,7 @@ class StabilizeBottleMut3Env(StabilizeBottleEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.76, 0.60, 0.42), double_sided=True),
         )
-        self._entities["block A"] = {"entity": _e}
+        self._entities["block_A"] = {"entity": _e}
         # Code Block: block B
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -77,7 +77,7 @@ class StabilizeBottleMut3Env(StabilizeBottleEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.76, 0.60, 0.42), double_sided=True),
         )
-        self._entities["block B"] = {"entity": _e}
+        self._entities["block_B"] = {"entity": _e}
         # Code Block: block C
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -90,4 +90,4 @@ class StabilizeBottleMut3Env(StabilizeBottleEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.76, 0.60, 0.42), double_sided=True),
         )
-        self._entities["block C"] = {"entity": _e}
+        self._entities["block_C"] = {"entity": _e}

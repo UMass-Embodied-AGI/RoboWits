@@ -14,7 +14,7 @@ class BalanceBoardMut4Env(BalanceBoardEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("small wall", ("board", "support cube"), "paperweight")
+        return ("small_wall", ("board", "support_cube"), "paperweight")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -30,7 +30,7 @@ class BalanceBoardMut4Env(BalanceBoardEnv):
             material=gs.materials.Rigid(rho=400.0),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.6),
         )
-        self._entities["small wall"] = {"entity": _e}
+        self._entities["small_wall"] = {"entity": _e}
         # Code Block: board
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -54,7 +54,7 @@ class BalanceBoardMut4Env(BalanceBoardEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.5),
         )
-        self._entities["support cube"] = {"entity": _e}
+        self._entities["support_cube"] = {"entity": _e}
         # Code Block: paperweight
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(

@@ -75,7 +75,7 @@ class FlatScene:
                 camera_pos=(3, -1, 1.5),
                 camera_lookat=(0.0, 0.0, 0.5),
                 camera_fov=30,
-                max_FPS=60,
+                refresh_rate=60,
             ),
             show_viewer=show_viewer,
         )

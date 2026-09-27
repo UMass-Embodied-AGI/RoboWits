@@ -15,10 +15,10 @@ class DominosMut1Env(DominosEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "white block 4",
-            ("white block 3", "white block 2", "white block 1", "red block", "target area"),
+            "white_block_4",
+            ("white_block_3", "white_block_2", "white_block_1", "red_block", "target_area"),
             "ruler",
-            "tv remote control",
+            "tv_remote_control",
         )
 
     def _add_custom_entities(self) -> None:
@@ -35,7 +35,7 @@ class DominosMut1Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Default(color=(0.9, 0.1, 0.1), roughness=0.6),
         )
-        self._entities["red block"] = {"entity": _e}
+        self._entities["red_block"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -44,7 +44,7 @@ class DominosMut1Env(DominosEnv):
             material=gs.materials.Rigid(rho=100.0),
             surface=gs.surfaces.Default(color=(0.1, 0.7, 0.2), roughness=0.8),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: white block 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -53,7 +53,7 @@ class DominosMut1Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.4),
         )
-        self._entities["white block 1"] = {"entity": _e}
+        self._entities["white_block_1"] = {"entity": _e}
         # Code Block: white block 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -62,7 +62,7 @@ class DominosMut1Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.4),
         )
-        self._entities["white block 2"] = {"entity": _e}
+        self._entities["white_block_2"] = {"entity": _e}
         # Code Block: white block 3
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -71,7 +71,7 @@ class DominosMut1Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.4),
         )
-        self._entities["white block 3"] = {"entity": _e}
+        self._entities["white_block_3"] = {"entity": _e}
         # Code Block: white block 4
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -80,7 +80,7 @@ class DominosMut1Env(DominosEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.4),
         )
-        self._entities["white block 4"] = {"entity": _e}
+        self._entities["white_block_4"] = {"entity": _e}
         # Code Block: ruler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -111,4 +111,4 @@ class DominosMut1Env(DominosEnv):
             material=gs.materials.Rigid(rho=600.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["tv remote control"] = {"entity": _e}
+        self._entities["tv_remote_control"] = {"entity": _e}

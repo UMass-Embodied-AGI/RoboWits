@@ -20,15 +20,23 @@ class GenesisGymEnv(gym.Env, ABC):
     multiple instances with gym.vector.VectorEnv.
     """
 
-    def __init__(self, config_name: str = "default", device: str = "auto", genesis_backend: str = "cpu", **kwargs):
+    #: Backend this task runs best on, used when ``genesis_backend="auto"``. CPU wins on rigid
+    #: scenes (~1.3x faster than CUDA there, measured on tasks 01/06/13), so it is the default;
+    #: tasks with SPH/MPM particle or deformable physics override this with "cuda". Declaring it
+    #: on the task means callers do not need their own list of slow tasks, and mutation variants
+    #: inherit the right answer from the seed env they subclass.
+    preferred_genesis_backend: str = "cpu"
+
+    def __init__(self, config_name: str = "default", device: str = "auto", genesis_backend: str = "auto", **kwargs):
         """Initialize Genesis gym environment.
 
         Args:
             config_name: Name of configuration file to load
             device: PyTorch device for robot controller tensors ("auto", "cpu", "cuda", "mps")
-                    Defaults to "auto" which uses CUDA if available for performance
-            genesis_backend: Genesis physics backend ("cpu", "cuda", "gpu", "vulkan")
-                             Defaults to "cpu" for stability and LeRobot compatibility
+                    Defaults to "auto", which follows the resolved Genesis backend
+            genesis_backend: Genesis physics backend ("auto", "cpu", "cuda", "gpu", "vulkan")
+                             Defaults to "auto", which uses this task's
+                             ``preferred_genesis_backend`` ("cpu" unless the task overrides it)
             **kwargs: Additional arguments passed to subclasses
         """
         # Single environment only (n_envs=1 internally with Genesis)
@@ -48,8 +56,9 @@ class GenesisGymEnv(gym.Env, ABC):
             "render_modes": ["rgb_array"],
         }
 
-        # Store Genesis backend preference (before _resolve_device which reads it)
-        self._genesis_backend = genesis_backend
+        # Resolve "auto" to this task's preference before _resolve_device, which reads the
+        # stored value and would see the unresolved string otherwise.
+        self._genesis_backend = self._resolve_backend_preference(genesis_backend)
 
         # Resolve device for robot controller computations
         self._device = self._resolve_device(device)
@@ -76,8 +85,22 @@ class GenesisGymEnv(gym.Env, ABC):
             # Newer versions of genesis may not have _initialized attribute
             is_initialized = False
         if not is_initialized:
-            gs_backend = self._resolve_genesis_backend(genesis_backend)
+            gs_backend = self._resolve_genesis_backend(self._genesis_backend)
             gs.init(backend=gs_backend)
+
+    def _resolve_backend_preference(self, genesis_backend: str) -> str:
+        """Resolve "auto" to this task's ``preferred_genesis_backend``.
+
+        Args:
+            genesis_backend: Requested backend, possibly "auto"
+
+        Returns:
+            A concrete backend string ("cpu", "cuda", "gpu" or "vulkan")
+        """
+        if genesis_backend != "auto":
+            return genesis_backend
+        preferred = type(self).preferred_genesis_backend
+        return "cpu" if preferred == "auto" else preferred
 
     def _resolve_device(self, device: str) -> torch.device:
         """Resolve device string to torch.device for robot controller computations.

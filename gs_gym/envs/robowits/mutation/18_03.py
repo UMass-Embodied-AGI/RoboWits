@@ -6,15 +6,15 @@ from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups
 
-CylinderThroughHoleEnv = _import("gs_gym.envs.robowits.18_cylinder_through_hole").CylinderThroughHoleEnv
+InsertCylinderEnv = _import("gs_gym.envs.robowits.18_insert_cylinder").InsertCylinderEnv
 
 
 @register_task("robowits/18_03-v0")
-class CylinderThroughHoleMut3Env(CylinderThroughHoleEnv):
+class InsertCylinderMut3Env(InsertCylinderEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("cylindrical_peg", ("collection_zone", "hole_plate"), "hammer", "kitchen_towel")
+        return ("cylindrical_peg", "hammer", "kitchen_towel")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""

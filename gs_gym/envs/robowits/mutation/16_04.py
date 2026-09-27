@@ -14,7 +14,7 @@ class StandBulbMut4Env(StandBulbEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("target patch", "plastic_lid", "tall object with curved bottom")
+        return ("target_patch", "stabilizing_ring", "tall_object_with_curved_bottom")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -22,7 +22,7 @@ class StandBulbMut4Env(StandBulbEnv):
             threshold=0.01, preprocess_resolution=80, max_convex_hull=20, decimate=True
         )
 
-        # Code Block: target_patch
+        # Code Block: target patch
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
                 pos=(0.50, 0.00, 0.761), euler=(0, 0, 0), radius=0.09, height=0.002, fixed=True, collision=False
@@ -31,7 +31,7 @@ class StandBulbMut4Env(StandBulbEnv):
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.6, ior=1.5),
         )
         self._entities["target_patch"] = {"entity": _e}
-        # Code Block: plastic_lid
+        # Code Block: stabilizing ring (a plastic lid takes the ring's stabilizing role here)
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -45,7 +45,7 @@ class StandBulbMut4Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["plastic_lid"] = {"entity": _e}
+        self._entities["stabilizing_ring"] = {"entity": _e}
         # Code Block: tall object with curved bottom
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -63,4 +63,4 @@ class StandBulbMut4Env(StandBulbEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["tall object with curved bottom"] = {"entity": _e}
+        self._entities["tall_object_with_curved_bottom"] = {"entity": _e}

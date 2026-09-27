@@ -56,7 +56,7 @@ class PlaceTallBoxEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """Tall box independent, obstacles grouped together."""
-        return ("tall cardboard box", ("support block left", "support block right", "beam plank", "target area"))
+        return ("tall_cardboard_box", ("support_block_left", "support_block_right", "beam_plank", "target_area"))
 
     def _add_custom_entities(self) -> None:
         """Add tall box, support blocks, beam, and target area."""
@@ -78,7 +78,7 @@ class PlaceTallBoxEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["tall cardboard box"] = {
+        self._entities["tall_cardboard_box"] = {
             "entity": box,
         }
 
@@ -94,7 +94,7 @@ class PlaceTallBoxEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.6, 0.6), roughness=0.6, ior=1.5),
         )
-        self._entities["support block left"] = {
+        self._entities["support_block_left"] = {
             "entity": support_left,
         }
 
@@ -110,7 +110,7 @@ class PlaceTallBoxEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.6, 0.6), roughness=0.6, ior=1.5),
         )
-        self._entities["support block right"] = {
+        self._entities["support_block_right"] = {
             "entity": support_right,
         }
 
@@ -126,7 +126,7 @@ class PlaceTallBoxEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.7, 0.55, 0.3), roughness=0.7, ior=1.5),
         )
-        self._entities["beam plank"] = {
+        self._entities["beam_plank"] = {
             "entity": beam,
         }
 
@@ -142,7 +142,7 @@ class PlaceTallBoxEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.2, 0.8, 0.2), roughness=0.4, ior=1.5),
         )
-        self._entities["target area"] = {
+        self._entities["target_area"] = {
             "entity": target,
         }
 
@@ -153,8 +153,8 @@ class PlaceTallBoxEnv(RoboWitsEnv):
         TABLE_BOUNDS = {"x_min": 0.21, "x_max": 1.00, "y_min": -0.69, "y_max": 0.69}
         EPS = 1e-6
 
-        box_name = "tall cardboard box"
-        target_name = "target area"
+        box_name = "tall_cardboard_box"
+        target_name = "target_area"
         if box_name not in objs_info or target_name not in objs_info:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
@@ -278,11 +278,11 @@ class PlaceTallBoxEnv(RoboWitsEnv):
         TOUCH_THRESHOLD = 0.05
         ROTATION_THRESHOLD = 30.0
 
-        BOX = "tall cardboard box"
-        TARGET = "target area"
-        SUPPORT_LEFT = "support block left"
-        SUPPORT_RIGHT = "support block right"
-        PLANK = "beam plank"
+        BOX = "tall_cardboard_box"
+        TARGET = "target_area"
+        SUPPORT_LEFT = "support_block_left"
+        SUPPORT_RIGHT = "support_block_right"
+        PLANK = "beam_plank"
         OBSTACLES = [SUPPORT_LEFT, SUPPORT_RIGHT, PLANK]
         TABLE_Z = 0.76
 

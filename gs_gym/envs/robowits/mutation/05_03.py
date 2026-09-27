@@ -14,7 +14,7 @@ class RollUpBallMut3Env(RollUpBallEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("long board", "box", "high basket", "metal ruler", "calendar cube decoration")
+        return ("long_board", "box", "high_basket", "metal_ruler", "calendar_cube_decoration")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class RollUpBallMut3Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["high basket"] = {"entity": _e}
+        self._entities["high_basket"] = {"entity": _e}
         # Code Block: long board
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -51,7 +51,7 @@ class RollUpBallMut3Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["long board"] = {"entity": _e}
+        self._entities["long_board"] = {"entity": _e}
         # Code Block: box
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -76,7 +76,7 @@ class RollUpBallMut3Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.2),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["metal ruler"] = {"entity": _e}
+        self._entities["metal_ruler"] = {"entity": _e}
         # Code Block: calendar cube decoration
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -91,4 +91,4 @@ class RollUpBallMut3Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["calendar cube decoration"] = {"entity": _e}
+        self._entities["calendar_cube_decoration"] = {"entity": _e}

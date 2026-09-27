@@ -28,7 +28,7 @@ class RetrieveCubeEnv(RoboWitsEnv):
     - Cube's 2D footprint overlaps target area by at least 50%
     - Objects remain within table bounds
 
-    Note: Works with both "deep narrow container" and "wide open container" variants.
+    Note: Works with both "deep_narrow_container" and "wide_open_container" variants.
     """
 
     @property
@@ -63,7 +63,7 @@ class RetrieveCubeEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """Placement groups with nested tuple: cube stays relative to container."""
-        return (("deep narrow container", "cube"), "target area")
+        return (("deep_narrow_container", "cube"), "target_area")
 
     def _add_custom_entities(self) -> None:
         """Add container, cube, and target area to the scene."""
@@ -88,7 +88,7 @@ class RetrieveCubeEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(color=(0.9, 0.95, 1.0), double_sided=True),
         )
-        self._entities["deep narrow container"] = {
+        self._entities["deep_narrow_container"] = {
             "entity": container,
         }
 
@@ -120,7 +120,7 @@ class RetrieveCubeEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.1, 0.8, 0.1), double_sided=True),
         )
-        self._entities["target area"] = {
+        self._entities["target_area"] = {
             "entity": target,
         }
 
@@ -134,8 +134,8 @@ class RetrieveCubeEnv(RoboWitsEnv):
         TABLE_Z = 0.76
 
         CUBE = "cube"
-        TARGET = "target area"
-        CONTAINERS = ["deep narrow container", "wide open container"]
+        TARGET = "target_area"
+        CONTAINERS = ["deep_narrow_container", "wide_open_container"]
 
         EPS_XY = 1e-2
         Z_TOL_BELOW = 0.01
@@ -314,10 +314,10 @@ class RetrieveCubeEnv(RoboWitsEnv):
         TARGET_OVERLAP_PARTIAL = 0.25
         MAX_TRANSPORT_DIST = 0.40
 
-        _CONTAINER_NAMES = ["deep narrow container", "wide open container"]
+        _CONTAINER_NAMES = ["deep_narrow_container", "wide_open_container"]
         CONTAINER = next((c for c in _CONTAINER_NAMES if c in objs_info), None)
         CUBE = "cube"
-        TARGET = "target area"
+        TARGET = "target_area"
 
         TARGET_CENTER = np.array([0.68, 0.12], dtype=float)
 

@@ -6,22 +6,21 @@ from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups
 
-CylinderThroughHoleEnv = _import("gs_gym.envs.robowits.18_cylinder_through_hole").CylinderThroughHoleEnv
+InsertCylinderEnv = _import("gs_gym.envs.robowits.18_insert_cylinder").InsertCylinderEnv
 
 
 @register_task("robowits/18_01-v0")
-class CylinderThroughHoleMut1Env(CylinderThroughHoleEnv):
+class InsertCylinderMut1Env(InsertCylinderEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
             "cylindrical_peg",
-            ("collection_zone", "hole_plate"),
-            "thick dowel",
-            "square rod",
-            "used paint can",
-            "coffee cup",
-            "wooden stick 2",
+            "thick_dowel",
+            "square_rod",
+            "used_paint_can",
+            "coffee_cup",
+            "wooden_stick_2",
         )
 
     def _add_custom_entities(self) -> None:
@@ -70,7 +69,7 @@ class CylinderThroughHoleMut1Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Smooth(color=(0.8, 0.8, 0.0), double_sided=True),
         )
-        self._entities["cylindrical peg"] = {"entity": _e}
+        self._entities["cylindrical_peg"] = {"entity": _e}
         # Code Block: thick dowel
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -79,7 +78,7 @@ class CylinderThroughHoleMut1Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Rough(color=(0.6, 0.5, 0.4), double_sided=True),
         )
-        self._entities["thick dowel"] = {"entity": _e}
+        self._entities["thick_dowel"] = {"entity": _e}
         # Code Block: square rod
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -88,7 +87,7 @@ class CylinderThroughHoleMut1Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Smooth(color=(0.8, 0.8, 0.8), double_sided=True),
         )
-        self._entities["square rod"] = {"entity": _e}
+        self._entities["square_rod"] = {"entity": _e}
         # Code Block: used paint can
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -103,7 +102,7 @@ class CylinderThroughHoleMut1Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=600.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["used paint can"] = {"entity": _e}
+        self._entities["used_paint_can"] = {"entity": _e}
         # Code Block: coffee cup
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -118,7 +117,7 @@ class CylinderThroughHoleMut1Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=400.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["coffee cup"] = {"entity": _e}
+        self._entities["coffee_cup"] = {"entity": _e}
         # Code Block: wooden stick 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -133,4 +132,4 @@ class CylinderThroughHoleMut1Env(CylinderThroughHoleEnv):
             material=gs.materials.Rigid(rho=500.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["wooden stick 2"] = {"entity": _e}
+        self._entities["wooden_stick_2"] = {"entity": _e}

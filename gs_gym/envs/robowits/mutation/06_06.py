@@ -14,9 +14,9 @@ class DominosMut6Env(DominosEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "white block 4",
-            ("white block 3", "white block 2", "white block 1", "red block", "target area"),
-            "paper towel roll",
+            "white_block_4",
+            ("white_block_3", "white_block_2", "white_block_1", "red_block", "target_area"),
+            "paper_towel_roll",
         )
 
     def _add_custom_entities(self) -> None:
@@ -29,7 +29,7 @@ class DominosMut6Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.1, 0.7, 0.2), roughness=0.6, ior=1.5),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: white block 3
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -38,7 +38,7 @@ class DominosMut6Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.5, ior=1.5),
         )
-        self._entities["white block 3"] = {"entity": _e}
+        self._entities["white_block_3"] = {"entity": _e}
         # Code Block: white block 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -47,7 +47,7 @@ class DominosMut6Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.5, ior=1.5),
         )
-        self._entities["white block 2"] = {"entity": _e}
+        self._entities["white_block_2"] = {"entity": _e}
         # Code Block: white block 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -56,7 +56,7 @@ class DominosMut6Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.5, ior=1.5),
         )
-        self._entities["white block 1"] = {"entity": _e}
+        self._entities["white_block_1"] = {"entity": _e}
         # Code Block: red block
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -65,7 +65,7 @@ class DominosMut6Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.9, 0.1, 0.1), roughness=0.5, ior=1.5),
         )
-        self._entities["red block"] = {"entity": _e}
+        self._entities["red_block"] = {"entity": _e}
         # Code Block: white block 4
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -74,7 +74,7 @@ class DominosMut6Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.5, ior=1.5),
         )
-        self._entities["white block 4"] = {"entity": _e}
+        self._entities["white_block_4"] = {"entity": _e}
         # Code Block: paper towel roll
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -83,4 +83,4 @@ class DominosMut6Env(DominosEnv):
             material=gs.materials.Rigid(rho=100.0),
             surface=gs.surfaces.Default(color=(0.59, 0.37, 0.2), roughness=0.7, ior=1.5),
         )
-        self._entities["paper towel roll"] = {"entity": _e}
+        self._entities["paper_towel_roll"] = {"entity": _e}

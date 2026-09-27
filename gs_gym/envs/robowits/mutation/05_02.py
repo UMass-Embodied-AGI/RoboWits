@@ -14,7 +14,7 @@ class RollUpBallMut2Env(RollUpBallEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("coffee mug", "box", "high basket", "glass tumbler", "screwdriver")
+        return ("coffee_mug", "box", "high_basket", "glass_tumbler", "screwdriver")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class RollUpBallMut2Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["high basket"] = {"entity": _e}
+        self._entities["high_basket"] = {"entity": _e}
         # Code Block: box
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -60,7 +60,7 @@ class RollUpBallMut2Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["coffee mug"] = {"entity": _e}
+        self._entities["coffee_mug"] = {"entity": _e}
         # Code Block: glass tumbler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -75,7 +75,7 @@ class RollUpBallMut2Env(RollUpBallEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["glass tumbler"] = {"entity": _e}
+        self._entities["glass_tumbler"] = {"entity": _e}
         # Code Block: screwdriver
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

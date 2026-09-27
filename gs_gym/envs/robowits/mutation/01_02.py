@@ -15,13 +15,13 @@ class AlignBlocksMut2Env(AlignBlocksEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "first target cube",
-            "second target cube",
-            "third target cube",
-            "long rigid ruler",
-            "kitchen sponge",
-            "cat figurine",
-            "usb a wall charger",
+            "first_target_cube",
+            "second_target_cube",
+            "third_target_cube",
+            "long_rigid_ruler",
+            "kitchen_sponge",
+            "cat_figurine",
+            "usb_a_wall_charger",
         )
 
     def _add_custom_entities(self) -> None:
@@ -38,7 +38,7 @@ class AlignBlocksMut2Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.7, 0.9), roughness=0.5),
         )
-        self._entities["first target cube"] = {"entity": _e}
+        self._entities["first_target_cube"] = {"entity": _e}
         # Code Block: second target cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -47,7 +47,7 @@ class AlignBlocksMut2Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.7, 0.9), roughness=0.5),
         )
-        self._entities["second target cube"] = {"entity": _e}
+        self._entities["second_target_cube"] = {"entity": _e}
         # Code Block: third target cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -56,7 +56,7 @@ class AlignBlocksMut2Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.6, 0.7, 0.9), roughness=0.5),
         )
-        self._entities["third target cube"] = {"entity": _e}
+        self._entities["third_target_cube"] = {"entity": _e}
         # Code Block: long rigid ruler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -72,7 +72,7 @@ class AlignBlocksMut2Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["long rigid ruler"] = {"entity": _e}
+        self._entities["long_rigid_ruler"] = {"entity": _e}
         # Code Block: kitchen sponge
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -87,7 +87,7 @@ class AlignBlocksMut2Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["kitchen sponge"] = {"entity": _e}
+        self._entities["kitchen_sponge"] = {"entity": _e}
         # Code Block: cat figurine
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -102,7 +102,7 @@ class AlignBlocksMut2Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["cat figurine"] = {"entity": _e}
+        self._entities["cat_figurine"] = {"entity": _e}
         # Code Block: usb a wall charger
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -117,4 +117,4 @@ class AlignBlocksMut2Env(AlignBlocksEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["usb a wall charger"] = {"entity": _e}
+        self._entities["usb_a_wall_charger"] = {"entity": _e}

@@ -14,7 +14,10 @@ class MoveCubeMut2Env(MoveCubeEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("cube 1", "cube 2", "cube 3", "goal line", "ruler", "rough slope", "coffee mug", "rubber duck")
+        # "goal_line" and "rough_slope" are fixed=True landmarks: the goal line is
+        # a 1.3 m marker at x=0.9, outside the reachable area, so randomizing it
+        # made every placement pass fail and fall back to the canonical layout.
+        return ("cube_1", "cube_2", "cube_3", "ruler", "coffee_mug")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -30,28 +33,28 @@ class MoveCubeMut2Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.5),
             surface=gs.surfaces.Default(color=(1.0, 0.9, 0.1), roughness=0.3),
         )
-        self._entities["goal line"] = {"entity": _e}
+        self._entities["goal_line"] = {"entity": _e}
         # Code Block: cube 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(pos=(0.40, 0.00, 0.78), euler=(0, 0, 0), size=(0.04, 0.04, 0.04)),
             material=gs.materials.Rigid(rho=400.0, friction=0.2),
             surface=gs.surfaces.Default(color=(0.9, 0.2, 0.2), roughness=0.5),
         )
-        self._entities["cube 1"] = {"entity": _e}
+        self._entities["cube_1"] = {"entity": _e}
         # Code Block: cube 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(pos=(0.46, -0.10, 0.78), euler=(0, 0, 0), size=(0.04, 0.04, 0.04)),
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.2, 0.9, 0.2), roughness=0.5),
         )
-        self._entities["cube 2"] = {"entity": _e}
+        self._entities["cube_2"] = {"entity": _e}
         # Code Block: cube 3
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(pos=(0.52, 0.10, 0.78), euler=(0, 0, 0), size=(0.04, 0.04, 0.04)),
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.2, 0.2, 0.9), roughness=0.5),
         )
-        self._entities["cube 3"] = {"entity": _e}
+        self._entities["cube_3"] = {"entity": _e}
         # Code Block: ruler
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(pos=(0.34, 0.45, 0.763), euler=(0, 0, 0), size=(0.30, 0.03, 0.005)),
@@ -73,7 +76,7 @@ class MoveCubeMut2Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1.5),
             surface=gs.surfaces.Rough(color=(0.5, 0.4, 0.3), double_sided=True),
         )
-        self._entities["rough slope"] = {"entity": _e}
+        self._entities["rough_slope"] = {"entity": _e}
         # Code Block: coffee mug
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -88,11 +91,4 @@ class MoveCubeMut2Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=500.0, friction=0.6),
             surface=gs.surfaces.Smooth(),
         )
-        self._entities["coffee mug"] = {"entity": _e}
-        # Code Block: rubber duck
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Sphere(pos=(0.50, 0.45, 0.795), euler=(0, 0, 0), radius=0.035),
-            material=gs.materials.Rigid(rho=200.0, friction=0.6),
-            surface=gs.surfaces.Smooth(color=(1.0, 0.9, 0.0)),
-        )
-        self._entities["rubber duck"] = {"entity": _e}
+        self._entities["coffee_mug"] = {"entity": _e}

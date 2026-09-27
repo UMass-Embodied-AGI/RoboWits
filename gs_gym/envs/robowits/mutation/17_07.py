@@ -14,7 +14,7 @@ class BallOntoTowerMut7Env(BallOntoTowerEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("tower base", "large ring", "medium ring"), "small ring", "ball", "bottle cap", "coaster")
+        return (("tower_base", "large_ring", "medium_ring"), "small_ring", "ball", "bottle_cap", "coaster")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -38,7 +38,7 @@ class BallOntoTowerMut7Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["tower base"] = {"entity": _e}
+        self._entities["tower_base"] = {"entity": _e}
         # Code Block: large ring
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -55,7 +55,7 @@ class BallOntoTowerMut7Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["large ring"] = {"entity": _e}
+        self._entities["large_ring"] = {"entity": _e}
         # Code Block: medium ring
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -72,7 +72,7 @@ class BallOntoTowerMut7Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["medium ring"] = {"entity": _e}
+        self._entities["medium_ring"] = {"entity": _e}
         # Code Block: small ring
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -89,7 +89,7 @@ class BallOntoTowerMut7Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small ring"] = {"entity": _e}
+        self._entities["small_ring"] = {"entity": _e}
         # Code Block: ball
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -118,7 +118,7 @@ class BallOntoTowerMut7Env(BallOntoTowerEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.2, 0.4, 0.9), double_sided=True),
         )
-        self._entities["bottle cap"] = {"entity": _e}
+        self._entities["bottle_cap"] = {"entity": _e}
         # Code Block: coaster
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(

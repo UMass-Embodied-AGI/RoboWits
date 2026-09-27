@@ -6,9 +6,20 @@ geometry helpers moved from RoboWitsEnv.
 
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import torch
 from numpy.typing import NDArray
+
+# Re-exported: these used to be defined here, duplicating math_utils. They are
+# general rotation math, so they live there now and are imported for the task
+# modules that already reach for them via this module.
+from gs_gym.common.utils.math_utils import axis_angle_to_quat, quat_to_axis_angle, quat_to_euler
+
+logger = logging.getLogger(__name__)
+
+__all__ = ["axis_angle_to_quat", "quat_to_axis_angle", "quat_to_euler"]
 
 # ---------------------------------------------------------------------------
 # Task registry helpers
@@ -135,6 +146,45 @@ def intersection_area(poly_a: NDArray, poly_b: NDArray) -> float:
 
 
 # ---------------------------------------------------------------------------
+# Reward / success prerequisites
+# ---------------------------------------------------------------------------
+
+
+def require_objs(env, objs_info: dict, names: list[str]) -> bool:
+    """Assert that a reward or success check can see the entities it needs.
+
+    A name absent from ``env._entities`` is a scene-definition bug — typically a
+    mutation variant that renamed or dropped an object its inherited reward still
+    references. That pins the progress score at exactly 0.0 for every episode of
+    that variant, which is indistinguishable from a policy that never moves, so it
+    raises rather than scoring 0.
+
+    A name that *is* registered but missing from ``objs_info`` means state
+    collection skipped it this step (``collect_objs_info`` swallows per-entity
+    errors). That is transient, so it warns and returns False, letting the caller
+    score 0.0 for the step.
+    """
+    missing = [n for n in names if n not in objs_info]
+    if not missing:
+        return True
+
+    registered = set(getattr(env, "_entities", {}))
+    unregistered = [n for n in missing if n not in registered]
+    if unregistered:
+        raise RuntimeError(
+            f"{type(env).__name__}: reward/success requires entities {unregistered} that this scene never "
+            f"registers. Registered entities: {sorted(registered)}. Either add them in _add_custom_entities() "
+            f"under these exact names, or override get_reward()/_check_success() for this variant."
+        )
+
+    logger.warning(
+        f"{type(env).__name__}: entities {missing} are registered but absent from collect_objs_info() this "
+        f"step; scoring 0.0 for this step."
+    )
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Grasp / held detection
 # ---------------------------------------------------------------------------
 
@@ -188,7 +238,11 @@ def check_being_held(
 
 
 def is_particle_entity(entity) -> bool:
-    """Return True if entity is a particle-based (MPM) entity."""
+    """Return True if entity is a particle-based (MPM or SPH) entity.
+
+    Both ``MPMEntity`` and ``SPHEntity`` subclass ``ParticleEntity``, which has
+    ``set_particles_pos``/``set_position`` but no ``set_pos``/``set_quat``.
+    """
     try:
         from genesis.engine.entities.particle_entity import ParticleEntity
 
@@ -219,57 +273,6 @@ def is_particle_entity(entity) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Quaternion / rotation helpers
-# ---------------------------------------------------------------------------
-
-
-def quat_to_axis_angle(quat: torch.Tensor) -> torch.Tensor:
-    """Convert quaternion (wxyz) to axis-angle."""
-    quat = torch.where(quat[..., :1] < 0, -quat, quat)
-    w, xyz = quat[..., 0:1], quat[..., 1:4]
-    norm = torch.norm(xyz, dim=-1, keepdim=True).clamp(min=1e-8)
-    angle = 2.0 * torch.atan2(norm, w)
-    return (xyz / norm) * angle
-
-
-def axis_angle_to_quat(axis_angle: torch.Tensor) -> torch.Tensor:
-    """Convert axis-angle to quaternion (wxyz)."""
-    angle = torch.norm(axis_angle, dim=-1, keepdim=True).clamp(min=1e-8)
-    axis = axis_angle / angle
-    half = angle * 0.5
-    return torch.cat([torch.cos(half), axis * torch.sin(half)], dim=-1)
-
-
-def quat_to_euler(quat: torch.Tensor) -> torch.Tensor:
-    """Convert quaternion [w, x, y, z] to euler angles [roll, pitch, yaw] in radians.
-
-    Args:
-        quat: (4,) quaternion tensor in wxyz format
-
-    Returns:
-        (3,) euler angles tensor in radians
-    """
-    w, x, y, z = quat[0], quat[1], quat[2], quat[3]
-
-    sinr_cosp = 2 * (w * x + y * z)
-    cosr_cosp = 1 - 2 * (x * x + y * y)
-    roll = torch.atan2(sinr_cosp, cosr_cosp)
-
-    sinp = 2 * (w * y - z * x)
-    pitch = torch.where(
-        torch.abs(sinp) >= 1,
-        torch.sign(sinp) * torch.tensor(np.pi / 2, device=quat.device),
-        torch.asin(sinp),
-    )
-
-    siny_cosp = 2 * (w * z + x * y)
-    cosy_cosp = 1 - 2 * (y * y + z * z)
-    yaw = torch.atan2(siny_cosp, cosy_cosp)
-
-    return torch.stack([roll, pitch, yaw])
-
-
-# ---------------------------------------------------------------------------
 # Geometry helpers (Genesis entity operations)
 # ---------------------------------------------------------------------------
 
@@ -290,8 +293,8 @@ def get_AABB(entity, device) -> torch.Tensor:
 
     from trimesh.transformations import quaternion_matrix, transform_points
 
-    all_pos = entity.get_pos().cpu().numpy()  # (n_envs, 3)
-    all_quat = entity.get_quat().cpu().numpy()  # (n_envs, 4)
+    all_pos = entity.get_pos(relative=False).cpu().numpy()  # (n_envs, 3)
+    all_quat = entity.get_quat(relative=False).cpu().numpy()  # (n_envs, 4)
     n_envs = all_pos.shape[0]
 
     aabb_list = []
@@ -355,8 +358,8 @@ def compute_2d_convex_hull(entity, env_idx: int = 0) -> NDArray | None:
     from scipy.spatial import ConvexHull
 
     try:
-        pos = entity.get_pos()[env_idx].cpu().numpy()
-        quat = entity.get_quat()[env_idx].cpu().numpy()
+        pos = entity.get_pos(relative=False)[env_idx].cpu().numpy()
+        quat = entity.get_quat(relative=False)[env_idx].cpu().numpy()
 
         from trimesh.transformations import quaternion_matrix, transform_points
 

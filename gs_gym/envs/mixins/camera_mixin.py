@@ -4,11 +4,11 @@ Provides shared camera infrastructure that can be mixed into environment classes
 to add visual observation support.
 """
 
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar
 
 import torch
 
-CameraType = Literal["rasterizer", "batch"]
+from gs_gym.sensors.camera_factory import CameraType, make_camera_options
 
 
 class CameraMixin:
@@ -21,6 +21,7 @@ class CameraMixin:
     Camera Types:
         - "rasterizer": Uses RasterizerCameraOptions, works with both CUDA and Vulkan backends
         - "batch": Uses BatchRendererCameraOptions, requires CUDA backend (faster for parallel envs)
+        - "nyx": Uses NyxCameraOptions (path traced). Offline renders only — far slower per frame.
 
     Usage:
         class MyEnv(GenesisGymEnv, CameraMixin):
@@ -89,17 +90,6 @@ class CameraMixin:
             ValueError: If camera_name is not in CAMERA_CONFIGS or camera_type is invalid
             AttributeError: If _scene is not available (must be called after scene creation)
         """
-        if camera_type == "rasterizer":
-            from genesis.options.sensors import RasterizerCameraOptions
-
-            CameraOptionsClass = RasterizerCameraOptions
-        elif camera_type == "batch":
-            from genesis.options.sensors import BatchRendererCameraOptions
-
-            CameraOptionsClass = BatchRendererCameraOptions
-        else:
-            raise ValueError(f"Unknown camera_type '{camera_type}'. Available types: 'rasterizer', 'batch'")
-
         self._cameras = {}
         self._camera_names = camera_names
         self._camera_width = width
@@ -112,7 +102,8 @@ class CameraMixin:
                 available = list(self.CAMERA_CONFIGS.keys())
                 raise ValueError(f"Unknown camera '{name}'. Available cameras: {available}")
 
-            camera_options = CameraOptionsClass(
+            camera_options = make_camera_options(
+                camera_type,
                 pos=config["pos"],
                 lookat=config["lookat"],
                 fov=config["fov"],

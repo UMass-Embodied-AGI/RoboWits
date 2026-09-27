@@ -25,8 +25,11 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
 
     Success criteria:
     - All five marbles are inside the jar's 3D AABB
-    - At least 80% of sand particles are outside the jar's 3D AABB
+    - At least 80% of sand particles are outside the jar's XY footprint
     """
+
+    # MPM sand plus marbles: far faster on the GPU backend.
+    preferred_genesis_backend = "cuda"
 
     @property
     def task_description(self) -> str:
@@ -71,10 +74,17 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         )
         return args
 
+    # The jar and everything it holds move as one rigid cluster. Exposed as a class
+    # attribute so the mutations can extend it instead of re-declaring it: their
+    # hand-written copies had drifted to listing "sand" first, which silently made
+    # ``marble_1`` the group anchor (``place_group_together`` skips particles when
+    # choosing one) rather than the jar that defines the cluster.
+    JAR_CLUSTER = ("jar", "marble_1", "marble_2", "marble_3", "marble_4", "marble_5", "sand")
+
     @property
     def placement_groups(self) -> PlacementGroups:
         """Colander and bowl placed independently; jar, marbles, and sand move as one cluster (MPM sand follows)."""
-        return ("colander", "bowl", ("jar", "marble 1", "marble 2", "marble 3", "marble 4", "marble 5", "sand"))
+        return ("colander", "bowl", self.JAR_CLUSTER)
 
     def _add_custom_entities(self) -> None:
         """Add colander, bowl, jar, marbles, and sand."""
@@ -127,9 +137,9 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
                     pattern_is_dir=False,
                 ),
                 scale=1,
-                pos=(0.68, 0.07, 0.855),
+                pos=(0.68, 0.07, 0.824),
                 euler=(90.0, 0.0, 0.0),
-                fixed=True,
+                fixed=False,
                 collision=True,
                 convexify=False,
             ),
@@ -141,12 +151,14 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         }
 
         # Marbles (5 mesh objects)
+        # Stacked inside the cup: the lowest marble clears the interior floor (0.76)
+        # and the highest stays under the rim (0.888).
         marble_positions = [
-            (0.68, 0.07, 0.79),
+            (0.68, 0.07, 0.775),
+            (0.68, 0.07, 0.795),
             (0.68, 0.07, 0.815),
-            (0.68, 0.07, 0.84),
-            (0.68, 0.07, 0.865),
-            (0.68, 0.07, 0.89),
+            (0.68, 0.07, 0.835),
+            (0.68, 0.07, 0.855),
         ]
         for i, pos in enumerate(marble_positions, start=1):
             marble = self._scene.scene.add_entity(
@@ -164,7 +176,7 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
                 material=gs.materials.Rigid(rho=1200.0, friction=0.6),
                 surface=gs.surfaces.Smooth(double_sided=True),
             )
-            self._entities[f"marble {i}"] = {
+            self._entities[f"marble_{i}"] = {
                 "entity": marble,
             }
 
@@ -194,7 +206,7 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
 
         jar = objs_info.get("jar")
         sand = objs_info.get("sand")
-        marble_names = [f"marble {i}" for i in range(1, 6)]
+        marble_names = [f"marble_{i}" for i in range(1, 6)]
         marbles = [objs_info.get(n) for n in marble_names]
 
         if jar is None or any(m is None for m in marbles) or sand is None:
@@ -236,10 +248,14 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         if sand_pos.shape[0] == 0:
             frac_sand_outside_jar = 1.0
         else:
+            # Sand counts as "in jar" if within the jar's XY column at any height.
+            # Using the full 3D AABB would count sand that leaked straight down out of
+            # the fixed cup onto the table below (z < jar AABB floor ≈ table surface) as
+            # "removed" without any real separation — a reward hack. Requiring horizontal
+            # displacement out of the jar footprint measures genuine sand removal.
             inside_x = (sand_pos[:, 0] >= lo[0] - 1e-4) & (sand_pos[:, 0] <= hi[0] + 1e-4)
             inside_y = (sand_pos[:, 1] >= lo[1] - 1e-4) & (sand_pos[:, 1] <= hi[1] + 1e-4)
-            inside_z = (sand_pos[:, 2] >= lo[2] - 1e-4) & (sand_pos[:, 2] <= hi[2] + 1e-4)
-            sand_inside_mask = inside_x & inside_y & inside_z
+            sand_inside_mask = inside_x & inside_y
             frac_sand_outside_jar = 1.0 - np.mean(sand_inside_mask.astype(float))
 
         sand_condition = frac_sand_outside_jar >= 0.8 - 1e-6
@@ -287,7 +303,7 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         objs_info = self.collect_objs_info()
         jar = objs_info.get("jar")
         sand = objs_info.get("sand")
-        marble_names = [f"marble {i}" for i in range(1, 6)]
+        marble_names = [f"marble_{i}" for i in range(1, 6)]
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
         if jar is None or sand is None:
@@ -318,13 +334,13 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         if sand_pos is not None:
             sand_pos = np.asarray(sand_pos)
             if sand_pos.ndim == 2 and sand_pos.shape[1] == 3 and sand_pos.shape[0] > 0:
+                # In-jar = within the jar's XY column (see _check_success): avoids
+                # crediting sand that leaked straight down out of the fixed cup as removed.
                 inside = (
                     (sand_pos[:, 0] >= lo[0] - 1e-4)
                     & (sand_pos[:, 0] <= hi[0] + 1e-4)
                     & (sand_pos[:, 1] >= lo[1] - 1e-4)
                     & (sand_pos[:, 1] <= hi[1] + 1e-4)
-                    & (sand_pos[:, 2] >= lo[2] - 1e-4)
-                    & (sand_pos[:, 2] <= hi[2] + 1e-4)
                 )
                 frac_sand_outside = float(1.0 - np.mean(inside))
             else:

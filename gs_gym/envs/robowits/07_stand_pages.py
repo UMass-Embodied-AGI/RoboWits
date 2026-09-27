@@ -1,6 +1,6 @@
 """StandPages environment for RoboWits.
 
-Task: Assemble two pages using a stabilizing bar to create a standing hinge structure.
+Task: Stand two pages up stably, using a stabilizing bar to form a hinge structure.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
 
 @register_task("robowits/07-stand-pages-v0")
 class StandPagesEnv(RoboWitsEnv):
-    """Assemble two pages using a stabilizing bar to create a standing hinge structure.
+    """Stand two pages up stably, using a stabilizing bar to form a hinge structure.
 
     Individually, the pages lack the base width to overcome tipping forces.
     The robot must transform these 2D objects into a stable 3D structure by
@@ -35,7 +35,7 @@ class StandPagesEnv(RoboWitsEnv):
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
-        return "Assemble the two pages using the stabilizing bar to create a standing hinge structure."
+        return "Stand up the two pages stably."
 
     TABLE_Z = 0.76
     ANGLE_TOL_DEG = 15.0
@@ -62,7 +62,7 @@ class StandPagesEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """Pages and bar grouped together."""
-        return (("page A with eyelets", "page B with eyelets", "stabilizing bar"),)
+        return (("page_A_with_eyelets", "page_B_with_eyelets", "stabilizing_bar"),)
 
     def _add_custom_entities(self) -> None:
         """Add pages and stabilizing bar."""
@@ -84,7 +84,7 @@ class StandPagesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.7, 0.7, 0.7), double_sided=True),
         )
-        self._entities["page A with eyelets"] = {
+        self._entities["page_A_with_eyelets"] = {
             "entity": page_a,
         }
 
@@ -102,7 +102,7 @@ class StandPagesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.7, 0.7, 0.7), double_sided=True),
         )
-        self._entities["page B with eyelets"] = {
+        self._entities["page_B_with_eyelets"] = {
             "entity": page_b,
         }
 
@@ -118,7 +118,7 @@ class StandPagesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=500.0, friction=0.8),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.2, ior=1.5),
         )
-        self._entities["stabilizing bar"] = {
+        self._entities["stabilizing_bar"] = {
             "entity": bar,
         }
 
@@ -160,7 +160,7 @@ class StandPagesEnv(RoboWitsEnv):
             z_min = float(bounds[0][2])
             return abs(z_min - self.TABLE_Z) <= self.Z_CONTACT_TOL
 
-        required_pages = ["page A with eyelets", "page B with eyelets"]
+        required_pages = ["page_A_with_eyelets", "page_B_with_eyelets"]
 
         for name in required_pages:
             info = objs_info.get(name)
@@ -193,9 +193,9 @@ class StandPagesEnv(RoboWitsEnv):
         TOUCH_THRESHOLD = 0.05
         APPROACH_THRESHOLD = 0.3
 
-        PAGE_A = "page A with eyelets"
-        PAGE_B = "page B with eyelets"
-        BAR = "stabilizing bar"
+        PAGE_A = "page_A_with_eyelets"
+        PAGE_B = "page_B_with_eyelets"
+        BAR = "stabilizing_bar"
         ASSEMBLY = [PAGE_A, PAGE_B, BAR]
 
         def dist_to_right_angle(angle_deg: float) -> float:

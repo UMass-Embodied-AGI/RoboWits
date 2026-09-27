@@ -14,7 +14,7 @@ class RoundDoughSheetMut5Env(RoundDoughSheetEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("dough ball", "large flat board", "round cutter", "rolling pin")
+        return ("dough_ball", "large_flat_board", "round_cutter", "rolling_pin")
 
     def _config_to_env_args(self, config):
         args = super()._config_to_env_args(config)
@@ -28,13 +28,23 @@ class RoundDoughSheetMut5Env(RoundDoughSheetEnv):
 
         # Code Block: dough ball
         _e = self._scene.scene.add_entity(
-            gs.morphs.Sphere(pos=(0.35, 0.00, 0.812), radius=0.04, fixed=False, collision=True),
+            gs.morphs.Box(
+                pos=(0.35, 0.00, 0.812),
+                euler=(0, 0, 0),
+                size=(0.08, 0.08, 0.08),
+                fixed=False,
+                collision=True,
+            ),
             material=gs.materials.MPM.ElastoPlastic(
-                E=2e5, nu=0.3, rho=800.0, sampler="pbs", von_mises_yield_stress=500.0
+                E=1e4,
+                nu=0.25,
+                rho=200.0,
+                sampler="pbs",
+                von_mises_yield_stress=100.0,
             ),
             surface=gs.surfaces.Default(color=(0.95, 0.85, 0.65), vis_mode="recon"),
         )
-        self._entities["dough ball"] = {"entity": _e}
+        self._entities["dough_ball"] = {"entity": _e}
         # Code Block: large flat board
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -51,7 +61,7 @@ class RoundDoughSheetMut5Env(RoundDoughSheetEnv):
             ),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["large flat board"] = {"entity": _e}
+        self._entities["large_flat_board"] = {"entity": _e}
         # Code Block: rolling pin
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -62,7 +72,7 @@ class RoundDoughSheetMut5Env(RoundDoughSheetEnv):
             ),
             surface=gs.surfaces.Smooth(color=(0.76, 0.58, 0.35), double_sided=True),
         )
-        self._entities["rolling pin"] = {"entity": _e}
+        self._entities["rolling_pin"] = {"entity": _e}
         # Code Block: round cutter
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -73,4 +83,4 @@ class RoundDoughSheetMut5Env(RoundDoughSheetEnv):
             ),
             surface=gs.surfaces.Smooth(color=(0.72, 0.45, 0.20), double_sided=True),
         )
-        self._entities["round cutter"] = {"entity": _e}
+        self._entities["round_cutter"] = {"entity": _e}

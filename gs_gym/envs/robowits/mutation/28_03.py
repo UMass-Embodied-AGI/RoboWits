@@ -15,15 +15,15 @@ class MoveCubeMut3Env(MoveCubeEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "cube 1",
-            "cube 2",
-            "cube 3",
-            "goal line",
-            "smooth ramp",
-            "wooden ruler",
-            "pen holder",
-            "pen organizer",
-            "pen stand",
+            "cube_1",
+            "cube_2",
+            "cube_3",
+            "goal_line",
+            "smooth_slope",
+            "wooden_ruler",
+            "pen_holder",
+            "pen_organizer",
+            "pen_stand",
         )
 
     def _add_custom_entities(self) -> None:
@@ -32,7 +32,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             threshold=0.01, preprocess_resolution=80, max_convex_hull=20, decimate=True
         )
 
-        # Code Block: smooth ramp
+        # Code Block: smooth slope
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -46,7 +46,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Smooth(color=(0.8, 0.8, 0.85), double_sided=True),
         )
-        self._entities["rough slope"] = {"entity": _e}
+        self._entities["smooth_slope"] = {"entity": _e}
         # Code Block: goal line
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -55,7 +55,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.5),
             surface=gs.surfaces.Default(color=(1.0, 0.9, 0.1), roughness=0.3),
         )
-        self._entities["goal line"] = {"entity": _e}
+        self._entities["goal_line"] = {"entity": _e}
         # Code Block: cube 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -68,7 +68,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.9, 0.2, 0.2), roughness=0.5),
         )
-        self._entities["cube 1"] = {"entity": _e}
+        self._entities["cube_1"] = {"entity": _e}
         # Code Block: cube 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -81,7 +81,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.2, 0.9, 0.2), roughness=0.5),
         )
-        self._entities["cube 2"] = {"entity": _e}
+        self._entities["cube_2"] = {"entity": _e}
         # Code Block: cube 3
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -94,7 +94,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.01),
             surface=gs.surfaces.Default(color=(0.2, 0.2, 0.9), roughness=0.5),
         )
-        self._entities["cube 3"] = {"entity": _e}
+        self._entities["cube_3"] = {"entity": _e}
         # Code Block: wooden ruler
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -107,7 +107,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.6),
             surface=gs.surfaces.Rough(color=(0.72, 0.55, 0.35), double_sided=True),
         )
-        self._entities["wooden ruler"] = {"entity": _e}
+        self._entities["wooden_ruler"] = {"entity": _e}
         # Code Block: pen holder
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -122,7 +122,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["pen holder"] = {"entity": _e}
+        self._entities["pen_holder"] = {"entity": _e}
         # Code Block: pen organizer
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -137,7 +137,7 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["pen organizer"] = {"entity": _e}
+        self._entities["pen_organizer"] = {"entity": _e}
         # Code Block: pen stand
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -152,4 +152,4 @@ class MoveCubeMut3Env(MoveCubeEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["pen stand"] = {"entity": _e}
+        self._entities["pen_stand"] = {"entity": _e}

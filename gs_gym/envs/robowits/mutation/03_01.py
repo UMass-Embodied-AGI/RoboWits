@@ -11,14 +11,17 @@ GapRetrieveEnv = _import("gs_gym.envs.robowits.03_gap_retrieve").GapRetrieveEnv
 
 @register_task("robowits/03_01-v0")
 class GapRetrieveMut1Env(GapRetrieveEnv):
+    # The left wall is deliberately absent, so there is no channel to widen.
+    CHANNEL_BLOCKS = ("right_boundary_block",)
+
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            ("lemon", "right boundary block"),
-            "target area",
-            "scan tool box",
-            "brown leather wallet",
+            ("lemon", "right_boundary_block"),
+            "target_area",
+            "scan_tool_box",
+            "brown_leather_wallet",
             "pear",
         )
 
@@ -40,7 +43,7 @@ class GapRetrieveMut1Env(GapRetrieveEnv):
             material=gs.materials.Rigid(rho=500.0, friction=1.0),
             surface=gs.surfaces.Rough(color=(0.6, 0.6, 0.6), double_sided=False),
         )
-        self._entities["right boundary block"] = {"entity": _e}
+        self._entities["right_boundary_block"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -55,7 +58,7 @@ class GapRetrieveMut1Env(GapRetrieveEnv):
                 color=(0.1, 0.8, 0.1), roughness=0.9, ior=1.4, double_sided=True, vis_mode="visual"
             ),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: lemon
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -100,7 +103,7 @@ class GapRetrieveMut1Env(GapRetrieveEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["brown leather wallet"] = {"entity": _e}
+        self._entities["brown_leather_wallet"] = {"entity": _e}
         # Code Block: scan tool box
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -115,4 +118,4 @@ class GapRetrieveMut1Env(GapRetrieveEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["scan tool box"] = {"entity": _e}
+        self._entities["scan_tool_box"] = {"entity": _e}

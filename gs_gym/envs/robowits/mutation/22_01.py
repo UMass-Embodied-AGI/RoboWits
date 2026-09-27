@@ -6,15 +6,15 @@ from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups
 
-StabilizeBottleEnv = _import("gs_gym.envs.robowits.22_stabilize_bottle").StabilizeBottleEnv
+StabilizeEggEnv = _import("gs_gym.envs.robowits.22_stabilize_egg").StabilizeEggEnv
 
 
 @register_task("robowits/22_01-v0")
-class StabilizeBottleMut1Env(StabilizeBottleEnv):
+class StabilizeEggMut1Env(StabilizeEggEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("sand_container", "dry_sand"), "tube", "bowl", "coins", "rollerball_pen", "cutting_board")
+        return (("sand_container", "dry_sand"), "egg", "bowl", "coins", "rollerball_pen", "cutting_board")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -55,13 +55,13 @@ class StabilizeBottleMut1Env(StabilizeBottleEnv):
         # Code Block: dry_sand
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
-                pos=(0.36, -0.10, 0.82), euler=(0, 0, 0), radius=0.022, height=0.07, fixed=False, collision=True
+                pos=(0.36, -0.1, 0.82), euler=(0, 0, 0), radius=0.022, height=0.070, fixed=False, collision=True
             ),
-            material=gs.materials.MPM.Sand(rho=1000.0, sampler="random", friction_angle=45),
+            material=gs.materials.MPM.Sand(rho=800.0, sampler="pbs", friction_angle=30),
             surface=gs.surfaces.Default(color=(0.9, 0.8, 0.3), vis_mode="particle"),
         )
         self._entities["dry_sand"] = {"entity": _e}
-        # Code Block: tube
+        # Code Block: egg
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -75,7 +75,7 @@ class StabilizeBottleMut1Env(StabilizeBottleEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["tube"] = {"entity": _e}
+        self._entities["egg"] = {"entity": _e}
         # Code Block: coins
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(

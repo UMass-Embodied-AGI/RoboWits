@@ -57,16 +57,16 @@ class CoverWithLidEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """All objects placed independently."""
-        return ("pot without lid", "small lid", "lid medium", "lid large")
+        return ("pot_without_lid", "small_lid", "lid_medium", "lid_large")
 
     @property
     def _object_reachable_areas(self) -> dict:
-        # 'lid large' starts at y=0.44 and has a large footprint that exceeds the default
+        # 'lid_large' starts at y=0.44 and has a large footprint that exceeds the default
         # y[-0.25, 0.25] bounds. Widen y for all lids so placement sampling succeeds.
         return {
-            "small lid": {"y_min": -0.45, "y_max": 0.45},
-            "lid medium": {"y_min": -0.45, "y_max": 0.45},
-            "lid large": {"y_min": -0.45, "y_max": 0.45},
+            "small_lid": {"y_min": -0.45, "y_max": 0.45},
+            "lid_medium": {"y_min": -0.45, "y_max": 0.45},
+            "lid_large": {"y_min": -0.45, "y_max": 0.45},
         }
 
     def _add_custom_entities(self) -> None:
@@ -91,7 +91,7 @@ class CoverWithLidEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["pot without lid"] = {
+        self._entities["pot_without_lid"] = {
             "entity": pot,
         }
 
@@ -111,7 +111,7 @@ class CoverWithLidEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small lid"] = {
+        self._entities["small_lid"] = {
             "entity": small_lid,
         }
 
@@ -131,7 +131,7 @@ class CoverWithLidEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["lid medium"] = {
+        self._entities["lid_medium"] = {
             "entity": medium_lid,
         }
 
@@ -151,7 +151,7 @@ class CoverWithLidEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=500, friction=1.5),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["lid large"] = {
+        self._entities["lid_large"] = {
             "entity": large_lid,
         }
 
@@ -197,7 +197,7 @@ class CoverWithLidEnv(RoboWitsEnv):
             inter_area = _utils.intersection_area(hull1, hull2)
             return inter_area / area1
 
-        pot = objs_info.get("pot without lid")
+        pot = objs_info.get("pot_without_lid")
         if pot is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
@@ -214,7 +214,7 @@ class CoverWithLidEnv(RoboWitsEnv):
 
         pot_z = float(pot["pos"][2])
 
-        lid_names = ["small lid", "lid medium", "lid large"]
+        lid_names = ["small_lid", "lid_medium", "lid_large"]
         valid_candidates = []
 
         for lname in lid_names:
@@ -317,10 +317,10 @@ class CoverWithLidEnv(RoboWitsEnv):
         GRASP_GRIPPER_WIDTH = 0.04
         HEIGHT_LIFT_THRESHOLD = 0.02
 
-        POT = "pot without lid"
-        LID_MEDIUM = "lid medium"
-        LID_SMALL = "small lid"
-        LID_LARGE = "lid large"
+        POT = "pot_without_lid"
+        LID_MEDIUM = "lid_medium"
+        LID_SMALL = "small_lid"
+        LID_LARGE = "lid_large"
 
         INITIAL_HEIGHTS = {
             LID_SMALL: 0.7668,

@@ -14,7 +14,7 @@ class BallIntoJarMut3Env(BallIntoJarEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("glass jar", "foam ball", "pestle")
+        return ("glass_jar", "foam_ball", "pestle")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -28,7 +28,7 @@ class BallIntoJarMut3Env(BallIntoJarEnv):
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/f4777d21-c966-40dd-872c-8bf28e00d3ee/obj.glb", pattern_is_dir=False),
                 scale=0.80,
-                pos=(0.65, 0.00, 0.81334),
+                pos=(0.65, 0.00, 0.8350),
                 euler=(0, 0, 0),
                 fixed=True,
                 collision=True,
@@ -36,14 +36,19 @@ class BallIntoJarMut3Env(BallIntoJarEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8, coup_friction=0.2),
             surface=gs.surfaces.Glass(color=(0.85, 0.9, 0.95), double_sided=True),
         )
-        self._entities["glass jar"] = {"entity": _e}
+        self._entities["glass_jar"] = {"entity": _e}
         # Code Block: foam ball
         _e = self._scene.scene.add_entity(
-            gs.morphs.Sphere(pos=(0.46, -0.10, 0.84), radius=0.05, fixed=False, collision=True),
+            gs.morphs.Sphere(
+                pos=(0.46, -0.10, 0.8420),
+                radius=0.06,
+                fixed=False,
+                collision=True,
+            ),
             material=gs.materials.MPM.Elastic(E=5e4, nu=0.2, rho=200.0, sampler="pbs"),
             surface=gs.surfaces.Smooth(color=(1.0, 0.9, 0.1), double_sided=True, vis_mode="recon"),
         )
-        self._entities["foam ball"] = {"entity": _e}
+        self._entities["foam_ball"] = {"entity": _e}
         # Code Block: pestle
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(

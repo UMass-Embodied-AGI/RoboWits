@@ -60,11 +60,11 @@ StackCubesEnv = _import(f"{_pkg}.14_stack_cubes").StackCubesEnv
 SeparateMarblesAndSandEnv = _import(f"{_pkg}.15_separate_marbles_and_sand").SeparateMarblesAndSandEnv
 StandBulbEnv = _import(f"{_pkg}.16_stand_bulb").StandBulbEnv
 BallOntoTowerEnv = _import(f"{_pkg}.17_ball_onto_tower").BallOntoTowerEnv
-CylinderThroughHoleEnv = _import(f"{_pkg}.18_cylinder_through_hole").CylinderThroughHoleEnv
+InsertCylinderEnv = _import(f"{_pkg}.18_insert_cylinder").InsertCylinderEnv
 StackBowlsEnv = _import(f"{_pkg}.19_stack_bowls").StackBowlsEnv
 BallIntoJarEnv = _import(f"{_pkg}.20_ball_into_jar").BallIntoJarEnv
 SealColanderEnv = _import(f"{_pkg}.21_seal_colander").SealColanderEnv
-StabilizeBottleEnv = _import(f"{_pkg}.22_stabilize_bottle").StabilizeBottleEnv
+StabilizeEggEnv = _import(f"{_pkg}.22_stabilize_egg").StabilizeEggEnv
 PlaceBookEnv = _import(f"{_pkg}.23_place_book").PlaceBookEnv
 RaisePlatformEnv = _import(f"{_pkg}.24_raise_platform").RaisePlatformEnv
 WaterIntoMugEnv = _import(f"{_pkg}.25_water_into_mug").WaterIntoMugEnv
@@ -97,11 +97,11 @@ __all__ = [
     "SeparateMarblesAndSandEnv",
     "StandBulbEnv",
     "BallOntoTowerEnv",
-    "CylinderThroughHoleEnv",
+    "InsertCylinderEnv",
     "StackBowlsEnv",
     "BallIntoJarEnv",
     "SealColanderEnv",
-    "StabilizeBottleEnv",
+    "StabilizeEggEnv",
     "PlaceBookEnv",
     "RaisePlatformEnv",
     "WaterIntoMugEnv",

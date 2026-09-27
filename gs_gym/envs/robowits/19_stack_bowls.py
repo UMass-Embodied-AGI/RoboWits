@@ -56,13 +56,13 @@ class StackBowlsEnv(RoboWitsEnv):
 
         # Set reachable areas for objects
         smaller_area = {"x_min": 0.1, "x_max": 0.7, "y_min": -0.45, "y_max": 0.45}
-        self._object_reachable_areas["large bowl"] = smaller_area
-        self._object_reachable_areas["medium bowl"] = smaller_area
+        self._object_reachable_areas["large_bowl"] = smaller_area
+        self._object_reachable_areas["medium_bowl"] = smaller_area
 
     @property
     def placement_groups(self) -> PlacementGroups:
         """Both bowls placed independently."""
-        return ("large bowl", "medium bowl")
+        return ("large_bowl", "medium_bowl")
 
     def _add_custom_entities(self) -> None:
         """Add large and medium bowls."""
@@ -84,7 +84,7 @@ class StackBowlsEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["large bowl"] = {
+        self._entities["large_bowl"] = {
             "entity": large_bowl,
         }
 
@@ -102,7 +102,7 @@ class StackBowlsEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["medium bowl"] = {
+        self._entities["medium_bowl"] = {
             "entity": medium_bowl,
         }
 
@@ -159,8 +159,8 @@ class StackBowlsEnv(RoboWitsEnv):
                 return not (y < TABLE_Y_MIN - TABLE_TOL or y > TABLE_Y_MAX + TABLE_TOL)
             return False
 
-        large = get_obj("large bowl")
-        medium = get_obj("medium bowl")
+        large = get_obj("large_bowl")
+        medium = get_obj("medium_bowl")
         if large is None or medium is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
@@ -184,8 +184,8 @@ class StackBowlsEnv(RoboWitsEnv):
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        large = objs_info.get("large bowl")
-        medium = objs_info.get("medium bowl")
+        large = objs_info.get("large_bowl")
+        medium = objs_info.get("medium_bowl")
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
         if large is None or medium is None:

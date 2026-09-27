@@ -14,7 +14,7 @@ class StackBowlsMut6Env(StackBowlsEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("large bowl", "medium bowl", "candy dish")
+        return ("large_bowl", "medium_bowl", "candy_dish")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class StackBowlsMut6Env(StackBowlsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["large bowl"] = {"entity": _e}
+        self._entities["large_bowl"] = {"entity": _e}
         # Code Block: medium bowl
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -51,7 +51,7 @@ class StackBowlsMut6Env(StackBowlsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["medium bowl"] = {"entity": _e}
+        self._entities["medium_bowl"] = {"entity": _e}
         # Code Block: candy dish
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -66,4 +66,4 @@ class StackBowlsMut6Env(StackBowlsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["candy dish"] = {"entity": _e}
+        self._entities["candy_dish"] = {"entity": _e}

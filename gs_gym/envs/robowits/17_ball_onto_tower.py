@@ -63,17 +63,17 @@ class BallOntoTowerEnv(RoboWitsEnv):
 
         # Set reachable areas for objects
         tower_area = {"x_min": 0.40, "x_max": 0.6, "y_min": -0.2, "y_max": 0.2}
-        self._object_reachable_areas["tower base"] = tower_area
-        self._object_reachable_areas["large ring"] = tower_area
-        self._object_reachable_areas["medium ring"] = tower_area
+        self._object_reachable_areas["tower_base"] = tower_area
+        self._object_reachable_areas["large_ring"] = tower_area
+        self._object_reachable_areas["medium_ring"] = tower_area
         small_area = {"x_min": 0.35, "x_max": 0.6, "y_min": -0.4, "y_max": 0.4}
-        self._object_reachable_areas["small ring"] = small_area
+        self._object_reachable_areas["small_ring"] = small_area
         self._object_reachable_areas["ball"] = small_area
 
     @property
     def placement_groups(self) -> PlacementGroups:
         """Small ring and ball independent, tower components grouped."""
-        return ("small ring", "ball", ("tower base", "large ring", "medium ring"))
+        return ("small_ring", "ball", ("tower_base", "large_ring", "medium_ring"))
 
     def _add_custom_entities(self) -> None:
         """Add tower base, rings, and ball."""
@@ -97,7 +97,7 @@ class BallOntoTowerEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["tower base"] = {
+        self._entities["tower_base"] = {
             "entity": tower_base,
         }
 
@@ -117,7 +117,7 @@ class BallOntoTowerEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["large ring"] = {
+        self._entities["large_ring"] = {
             "entity": large_ring,
         }
 
@@ -137,7 +137,7 @@ class BallOntoTowerEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["medium ring"] = {
+        self._entities["medium_ring"] = {
             "entity": medium_ring,
         }
 
@@ -157,7 +157,7 @@ class BallOntoTowerEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small ring"] = {
+        self._entities["small_ring"] = {
             "entity": small_ring,
         }
 
@@ -187,7 +187,7 @@ class BallOntoTowerEnv(RoboWitsEnv):
         TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
         TABLE_TOL = 1e-3
 
-        base = objs_info.get("tower base")
+        base = objs_info.get("tower_base")
         ball = objs_info.get("ball")
 
         if base is None or ball is None:
@@ -268,9 +268,9 @@ class BallOntoTowerEnv(RoboWitsEnv):
         """Compute dense reward based on milestone-based progress score."""
         objs_info = self.collect_objs_info()
 
-        SMALL_RING = "small ring"
+        SMALL_RING = "small_ring"
         BALL = "ball"
-        TOWER_BASE = "tower base"
+        TOWER_BASE = "tower_base"
 
         REACH_THRESHOLD = 0.15
         TOUCH_THRESHOLD = 0.05

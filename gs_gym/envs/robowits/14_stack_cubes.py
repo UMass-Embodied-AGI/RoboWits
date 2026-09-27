@@ -60,15 +60,15 @@ class StackCubesEnv(RoboWitsEnv):
         # Set reachable areas for objects
         target_area = {"x_min": 0.4, "x_max": 0.5, "y_min": -0.2, "y_max": 0.2}
         smaller_reachable_area = {"x_min": 0.3, "x_max": 0.6, "y_min": -0.3, "y_max": 0.3}
-        self._object_reachable_areas["base cube 1"] = smaller_reachable_area
-        self._object_reachable_areas["base cube 2"] = smaller_reachable_area
-        self._object_reachable_areas["apex cube"] = smaller_reachable_area
-        self._object_reachable_areas["apex target"] = target_area
+        self._object_reachable_areas["base_cube_1"] = smaller_reachable_area
+        self._object_reachable_areas["base_cube_2"] = smaller_reachable_area
+        self._object_reachable_areas["apex_cube"] = smaller_reachable_area
+        self._object_reachable_areas["apex_target"] = target_area
 
     @property
     def placement_groups(self) -> PlacementGroups:
         """All objects placed independently."""
-        return ("base cube 1", "base cube 2", "apex cube", "apex target")
+        return ("base_cube_1", "base_cube_2", "apex_cube", "apex_target")
 
     def _add_custom_entities(self) -> None:
         """Add cubes and target marker."""
@@ -85,7 +85,7 @@ class StackCubesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Default(color=(0.1, 0.8, 0.2), roughness=0.4),
         )
-        self._entities["apex target"] = {
+        self._entities["apex_target"] = {
             "entity": target,
         }
 
@@ -101,7 +101,7 @@ class StackCubesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1.0),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
         )
-        self._entities["base cube 1"] = {
+        self._entities["base_cube_1"] = {
             "entity": base1,
         }
 
@@ -117,7 +117,7 @@ class StackCubesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1.0),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
         )
-        self._entities["base cube 2"] = {
+        self._entities["base_cube_2"] = {
             "entity": base2,
         }
 
@@ -133,7 +133,7 @@ class StackCubesEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1.0),
             surface=gs.surfaces.Default(color=(0.9, 0.1, 0.1), roughness=0.4),
         )
-        self._entities["apex cube"] = {
+        self._entities["apex_cube"] = {
             "entity": apex,
         }
 
@@ -141,10 +141,10 @@ class StackCubesEnv(RoboWitsEnv):
         """Check if task is successful."""
         objs_info = self.collect_objs_info()
 
-        b1 = objs_info.get("base cube 1")
-        b2 = objs_info.get("base cube 2")
-        apex = objs_info.get("apex cube")
-        target = objs_info.get("apex target")
+        b1 = objs_info.get("base_cube_1")
+        b2 = objs_info.get("base_cube_2")
+        apex = objs_info.get("apex_cube")
+        target = objs_info.get("apex_target")
 
         if any(x is None for x in [b1, b2, apex, target]):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -188,10 +188,10 @@ class StackCubesEnv(RoboWitsEnv):
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        b1 = objs_info.get("base cube 1")
-        b2 = objs_info.get("base cube 2")
-        apex = objs_info.get("apex cube")
-        target = objs_info.get("apex target")
+        b1 = objs_info.get("base_cube_1")
+        b2 = objs_info.get("base_cube_2")
+        apex = objs_info.get("apex_cube")
+        target = objs_info.get("apex_target")
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
         if any(x is None for x in [b1, b2, apex, target]):

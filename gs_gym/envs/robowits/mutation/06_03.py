@@ -11,13 +11,15 @@ DominosEnv = _import("gs_gym.envs.robowits.06_dominos").DominosEnv
 
 @register_task("robowits/06_03-v0")
 class DominosMut3Env(DominosEnv):
+    # White block 4 is deliberately absent; the tennis ball is the reachable trigger.
+    TRIGGER_OBJ = "tennis_ball"
+
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            "white block 4",
-            ("white block 3", "white block 2", "white block 1", "red block", "target area"),
-            "tennis ball",
+            ("white_block_3", "white_block_2", "white_block_1", "red_block", "target_area"),
+            "tennis_ball",
         )
 
     def _add_custom_entities(self) -> None:
@@ -34,7 +36,7 @@ class DominosMut3Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.1, 0.7, 0.2), roughness=0.8),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: white block 3
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -43,7 +45,7 @@ class DominosMut3Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.6),
         )
-        self._entities["white block 3"] = {"entity": _e}
+        self._entities["white_block_3"] = {"entity": _e}
         # Code Block: white block 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -52,7 +54,7 @@ class DominosMut3Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.6),
         )
-        self._entities["white block 2"] = {"entity": _e}
+        self._entities["white_block_2"] = {"entity": _e}
         # Code Block: white block 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -61,7 +63,7 @@ class DominosMut3Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.6),
         )
-        self._entities["white block 1"] = {"entity": _e}
+        self._entities["white_block_1"] = {"entity": _e}
         # Code Block: red block
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -70,7 +72,7 @@ class DominosMut3Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.9, 0.1, 0.1), roughness=0.6),
         )
-        self._entities["red block"] = {"entity": _e}
+        self._entities["red_block"] = {"entity": _e}
         # Code Block: tennis ball
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -85,4 +87,4 @@ class DominosMut3Env(DominosEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["tennis ball"] = {"entity": _e}
+        self._entities["tennis_ball"] = {"entity": _e}

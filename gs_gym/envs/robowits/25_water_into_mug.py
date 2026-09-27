@@ -57,6 +57,9 @@ class WaterIntoMugEnv(RoboWitsEnv):
     - At least 70% of water particles remain over the table
     """
 
+    # SPH liquid: far faster on the GPU backend.
+    preferred_genesis_backend = "cuda"
+
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""

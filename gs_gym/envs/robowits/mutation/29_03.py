@@ -14,7 +14,7 @@ class BalanceBoardMut3Env(BalanceBoardEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("small wall", ("board", "support cube"), "paper towel roll", "coin purse", "calendar cube decoration")
+        return ("small_wall", ("board", "support_cube"), "paper_towel_roll", "coin_purse", "calendar_cube_decoration")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -30,7 +30,7 @@ class BalanceBoardMut3Env(BalanceBoardEnv):
             material=gs.materials.Rigid(rho=400.0),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.6),
         )
-        self._entities["small wall"] = {"entity": _e}
+        self._entities["small_wall"] = {"entity": _e}
         # Code Block: board
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -54,7 +54,7 @@ class BalanceBoardMut3Env(BalanceBoardEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1),
             surface=gs.surfaces.Default(color=(0.95, 0.95, 0.95), roughness=0.5),
         )
-        self._entities["support cube"] = {"entity": _e}
+        self._entities["support_cube"] = {"entity": _e}
         # Code Block: paper towel roll
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -69,7 +69,7 @@ class BalanceBoardMut3Env(BalanceBoardEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["paper towel roll"] = {"entity": _e}
+        self._entities["paper_towel_roll"] = {"entity": _e}
         # Code Block: three tier office filing tray
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -84,7 +84,7 @@ class BalanceBoardMut3Env(BalanceBoardEnv):
             material=gs.materials.Rigid(rho=350.0, friction=0.9),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["three tier office filing tray"] = {"entity": _e}
+        self._entities["three_tier_office_filing_tray"] = {"entity": _e}
         # Code Block: coin purse
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -99,7 +99,7 @@ class BalanceBoardMut3Env(BalanceBoardEnv):
             material=gs.materials.Rigid(rho=300.0, friction=0.9),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["coin purse"] = {"entity": _e}
+        self._entities["coin_purse"] = {"entity": _e}
         # Code Block: calendar cube decoration
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -114,4 +114,4 @@ class BalanceBoardMut3Env(BalanceBoardEnv):
             material=gs.materials.Rigid(rho=400.0, friction=0.9),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["calendar cube decoration"] = {"entity": _e}
+        self._entities["calendar_cube_decoration"] = {"entity": _e}

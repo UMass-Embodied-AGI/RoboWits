@@ -25,9 +25,11 @@ robot:
   action_scale: 1.0
   max_joint_velocity: 2.0
 
-# Reachable bounds for object placement (x_range, y_range)
+# Reachable bounds for object placement (x_range, y_range).
+# x_min must stay behind the table's front edge (x = 0.211): at 0.2 the sampler could
+# anchor an object just off the table, which settles as a fall rather than a placement.
 reachable_bounds:
-  x: [0.2, 0.7]
+  x: [0.23, 0.7]
   y: [-0.45, 0.45]
 
 termination:

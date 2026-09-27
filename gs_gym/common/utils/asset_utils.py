@@ -40,9 +40,7 @@ def get_asset_path(
             if dir_path and os.path.exists(os.path.join(dir_path, asset_name)):
                 return os.path.join(dir_path, asset_name)
 
-    raise FileNotFoundError(
-        f"Asset '{asset_name}' not found in {_LOCAL_ASSETS_DIR} or GS_GYM_ASSET_PATHS."
-    )
+    raise FileNotFoundError(f"Asset '{asset_name}' not found in {_LOCAL_ASSETS_DIR} or GS_GYM_ASSET_PATHS.")
 
 
 def get_table_path() -> str:

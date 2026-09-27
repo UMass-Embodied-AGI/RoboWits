@@ -14,7 +14,7 @@ class CollectScrewsMut3Env(CollectScrewsEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("screw", "dustpan", "container", "funnel", "paper sheet")
+        return ("screw", "dustpan", "container", "funnel", "paper_sheet")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -90,4 +90,4 @@ class CollectScrewsMut3Env(CollectScrewsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.95, 0.9, 0.75), roughness=0.8, ior=1.5),
         )
-        self._entities["paper sheet"] = {"entity": _e}
+        self._entities["paper_sheet"] = {"entity": _e}

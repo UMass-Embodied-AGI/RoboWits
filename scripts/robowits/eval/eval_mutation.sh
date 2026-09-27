@@ -5,7 +5,8 @@ set -e
 
 CONFIG=${CONFIG:-"EE_ABS"}
 OBSERVATION_MODE=${OBSERVATION_MODE:-"EE"}
-EVAL_JSON_DIR=${EVAL_JSON_DIR:-"dataset/robowits/eval_dataset_mutation_10"}
+ENV_DEVICE=${ENV_DEVICE:-"auto"}  # auto = each task's own backend; cpu/cuda forces one
+EVAL_JSON_DIR=${EVAL_JSON_DIR:-"dataset/robowits/eval_dataset_mutation"}
 N_EPISODES=${N_EPISODES:-5}
 SPLIT=${SPLIT:-""}
 _step=$(basename "$(dirname "${CHECKPOINT_PATH}")")
@@ -24,6 +25,7 @@ for TASK_ID in $TASK_IDS; do
         --env.video=false \
         --env.control_mode="${CONFIG}" \
         --env.observation_mode="${OBSERVATION_MODE}" \
+        --env.device="${ENV_DEVICE}" \
         --env.eval_dataset_json="${EVAL_JSON_DIR}" \
         ${MUTATION_IDS:+--env.task_ids="${MUTATION_IDS}"} \
         --policy.path="${CHECKPOINT_PATH:?Set CHECKPOINT_PATH to policy checkpoint path}" \

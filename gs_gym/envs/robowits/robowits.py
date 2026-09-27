@@ -9,18 +9,20 @@ import json
 import logging
 import os
 from abc import abstractmethod
-from typing import Any
+from typing import Any, ClassVar
 
 import genesis as gs
 import gymnasium as gym
 import numpy as np
 import torch
 
+from gs_gym.common.utils.math_utils import quat_to_rot6d
 from gs_gym.envs.base_gym_env import GenesisGymEnv
 from gs_gym.envs.robowits import utils as _utils
 from gs_gym.envs.robowits.placement import _is_fixed_entity
 from gs_gym.robots.bimanual_marvin import BimanualMarvinRobot
 from gs_gym.scenes.flat_scene import FlatScene
+from gs_gym.sensors.camera_factory import GALLERY_CAM_FOV, GALLERY_CAM_LOOKAT, GALLERY_CAM_POS
 
 logger = logging.getLogger(__name__)
 
@@ -58,15 +60,19 @@ class RoboWitsEnv(GenesisGymEnv):
     ARM_FULL_BBOX_RIGHT = {"x": (0.000, 0.622), "y": (-0.334, -0.037), "z": (0.857, 1.200)}
     ARM_FULL_BBOX_LEFT = {"x": (0.000, 0.619), "y": (0.037, 0.332), "z": (0.842, 1.200)}
 
-    # Default reachable bounds (x, y) for object placement
+    # Default reachable bounds (x, y) for object placement. x_min stays behind the
+    # table's front edge (x = 0.211); at 0.2 an anchor could land just off the table.
     DEFAULT_REACHABLE_BOUNDS = (
-        (0.2, 0.75),  # x range
+        (0.23, 0.75),  # x range
         (-0.45, 0.45),  # y range
     )
 
     # Maximum number of times to retry the whole random-placement pass when an
     # individual ``place_*`` call fails to find a collision-free arrangement.
-    MAX_PLACEMENT_RETRIES: int = 50
+    # Crowded scenes need many samples to find a collision-free layout; a retry
+    # is pure geometry, so a bigger budget costs little and avoids silently
+    # falling back to the canonical layout.
+    MAX_PLACEMENT_RETRIES: int = 200
 
     # Table configuration
     TABLE_HEIGHT = 0.76  # Objects spawn at this height + half their height
@@ -79,9 +85,15 @@ class RoboWitsEnv(GenesisGymEnv):
     def placement_entity_extra_hulls(self, name: str) -> list:
         """Return arm exclusion hulls for entities tall enough to collide with the arm at rest.
 
-        The forearm/wrist/gripper links sit at z ≈ 0.84–0.93 m. Any entity whose
-        top (TABLE_HEIGHT + height) exceeds the arm's lowest link gets arm exclusion
-        hulls injected into its placement collision check. Short entities are unconstrained.
+        The forearm/wrist/gripper links sit at z ≈ 0.84–0.93 m. An entity whose top
+        (TABLE_HEIGHT + height) reaches into an arm's band gets that arm's exclusion
+        hull injected into its placement collision check. Short entities are unconstrained.
+
+        The test is per arm: the two forearms rest at different heights (left 0.842 m,
+        right 0.857 m), so taking the lower of the two excluded both bands for objects
+        that only ever reach the left one. Task 15_03's bowl and colander (tops at
+        0.847 / 0.848 m) are exactly that case, and losing both bands left no feasible
+        layout at all — every reset fell back to the canonical scene.
 
         Fixed entities are skipped: they are structural task elements (beams, platforms,
         target markers) that the arm is designed to work around, not freely-placed objects.
@@ -89,10 +101,8 @@ class RoboWitsEnv(GenesisGymEnv):
         entity_info = self._entities.get(name)
         if entity_info and _is_fixed_entity(entity_info["entity"]):
             return []
-        arm_z_min = min(self.ARM_FOREARM_BBOX_RIGHT["z"][0], self.ARM_FOREARM_BBOX_LEFT["z"][0])
         size = (entity_info or {}).get("size") or (0, 0, 0)
-        if self.TABLE_HEIGHT + size[2] <= arm_z_min:
-            return []
+        top = self.TABLE_HEIGHT + size[2]
         pad = 0.05
 
         def _hull(bbox):
@@ -100,7 +110,7 @@ class RoboWitsEnv(GenesisGymEnv):
             y0, y1 = bbox["y"][0] - pad, bbox["y"][1] + pad
             return np.array([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], dtype=float)
 
-        return [_hull(self.ARM_FOREARM_BBOX_RIGHT), _hull(self.ARM_FOREARM_BBOX_LEFT)]
+        return [_hull(bbox) for bbox in (self.ARM_FOREARM_BBOX_RIGHT, self.ARM_FOREARM_BBOX_LEFT) if top > bbox["z"][0]]
 
     def __init__(
         self,
@@ -113,6 +123,15 @@ class RoboWitsEnv(GenesisGymEnv):
         observation_mode: str = "EE",
         config_overrides: dict[str, Any] | None = None,
         eval_dataset_json: str | None = None,
+        camera_type: str | None = None,
+        camera_kwargs: dict[str, Any] | None = None,
+        gallery_camera: bool = False,
+        gallery_res: tuple[int, int] = (1696, 960),
+        gallery_pos: tuple[float, float, float] | None = None,
+        gallery_lookat: tuple[float, float, float] | None = None,
+        gallery_fov: float | None = None,
+        add_walls: bool = False,
+        show_ground: bool = True,
         **kwargs,
     ):
         """Initialize the RoboWits environment.
@@ -127,13 +146,32 @@ class RoboWitsEnv(GenesisGymEnv):
                 - "JOINT_DELTA": 16D delta joint position control (radians, added to current)
                 - "EE_DELTA": 14D delta EE control
                 - "EE_ABS": 14D absolute EE control (IK handled internally)
+                - "EE_ABS_ROT6D": 20D absolute EE control with 6D rotations (IK handled internally)
             observation_mode: Observation state format. Options:
                 - "EE": 14D (ee_pos + ee_axis_angle + gripper)
+                - "EE_ROT6D": 20D (ee_pos + ee_rot6d + gripper)
                 - "JOINT": 16D (joints + gripper)
             config_overrides: Optional dictionary of config values to override.
                               Supports nested keys via dict merging.
             eval_dataset_json: Optional path to evaluation dataset JSON file.
                                If provided, overrides the config-based evaluation settings.
+            camera_type: Renderer backing the ego + wrist cameras: "rasterizer", "batch", or
+                         "nyx". Training and eval run on "rasterizer"; "nyx" is a path tracer
+                         meant for offline stills/videos, not rollout observations. Defaults to
+                         $GS_GYM_CAMERA_TYPE, else "rasterizer" — the env var is how callers that
+                         build envs through a fixed kwargs dict (lerobot-eval, whose GsGymEnv
+                         config has no field for this) can still pick the renderer.
+            camera_kwargs: Extra renderer-specific camera options, e.g. {"spp": 128} or
+                           {"render_mode": "RefPathTracer"} for Nyx.
+            gallery_camera: Add a wide third-person "gallery" camera for presentation renders.
+                            Not part of the observation dict; read it via render_frame("gallery").
+            gallery_res: Resolution of the gallery camera.
+            add_walls: Add visual-only room walls. Usually unnecessary for path-traced renders —
+                       the environment map already provides a room — and they hide it. collision=False,
+                       so physics is unchanged either way.
+            show_ground: Add the ground plane. Turn it off for presentation renders so the
+                         environment map becomes the visible floor and backdrop instead of the
+                         default checkerboard.
             **kwargs: Additional arguments
         """
         self._n_envs = 1  # Always single env now (vectorization handled externally)
@@ -141,6 +179,21 @@ class RoboWitsEnv(GenesisGymEnv):
         self._observation_mode = observation_mode
         self._config_overrides = config_overrides
         self._eval_dataset_json = eval_dataset_json
+        self._camera_type = camera_type or os.environ.get("GS_GYM_CAMERA_TYPE", "rasterizer")
+        self._camera_kwargs = camera_kwargs or {}
+        self._gallery_camera = gallery_camera
+        self._gallery_res = gallery_res
+        self._gallery_pos = gallery_pos or GALLERY_CAM_POS
+        self._gallery_lookat = gallery_lookat or GALLERY_CAM_LOOKAT
+        self._gallery_fov = gallery_fov or GALLERY_CAM_FOV
+        self._add_walls = add_walls
+        self._show_ground = show_ground
+        # Per-object placement areas, keyed by entity name. Declared here so every
+        # env (and any subclass adding clutter) can populate it without first
+        # checking whether the seed task happened to create it. Tasks 05 and 13
+        # expose it as a read-only property instead, so leave those alone.
+        if not hasattr(type(self), "_object_reachable_areas"):
+            self._object_reachable_areas: dict[str, dict[str, float]] = {}
 
         super().__init__(config_name=config_name, **kwargs)
 
@@ -163,13 +216,13 @@ class RoboWitsEnv(GenesisGymEnv):
             args=self._args.scene_args,
             show_viewer=show_viewer,
             enable_collision=True,
-            add_ground_plane=True,
+            add_ground_plane=show_ground,
         )
         self.dt = self._args.scene_args.dt
 
         # Create robot
         # Validate control_mode
-        valid_modes = ("JOINT_ABS", "JOINT_DELTA", "EE_ABS", "EE_DELTA")
+        valid_modes = ("JOINT_ABS", "JOINT_DELTA", "EE_ABS", "EE_ABS_ROT6D", "EE_DELTA")
         if control_mode not in valid_modes:
             raise ValueError(f"Unknown control_mode '{control_mode}'. Available: {valid_modes}")
 
@@ -192,6 +245,9 @@ class RoboWitsEnv(GenesisGymEnv):
         # Add the table entity (required for RoboWits coordinate system)
         self._add_table()
 
+        if self._add_walls:
+            self._add_room_walls()
+
         # Let subclasses add custom entities
         self._add_custom_entities()
 
@@ -208,6 +264,14 @@ class RoboWitsEnv(GenesisGymEnv):
         self._eval_dataset_keys: list[str] = []
         self._eval_dataset_idx: int = 0
         self._eval_particles: dict[str, np.ndarray] = {}
+        # "local": clouds are in their own placement frame and each scene supplies the
+        # transform. "world": legacy absolute clouds, valid only for the scene they came from.
+        self._eval_particles_frame: str = "world"
+        # Rigid transform applied to each particle cloud by the last placement pass,
+        # as {name: {"pos": (3,), "quat": (4,)}}. The scene sampler stores these.
+        self._particle_transforms: dict[str, dict[str, list[float]]] = {}
+        # Entities whose stored particle data failed to apply (warn once each).
+        self._particle_restore_warned: set[str] = set()
         self._load_eval_dataset()
 
         # Initialize auxiliary variables
@@ -217,21 +281,24 @@ class RoboWitsEnv(GenesisGymEnv):
         """Create ego + wrist cameras before scene.build(). Wrist cameras
         use entity_idx / link_idx_local / offset_T to attach to robot links.
         """
-        from genesis.options.sensors import RasterizerCameraOptions
+        from gs_gym.sensors.camera_factory import make_camera_options
 
         scene = self._scene.scene
+        cam_type = self._camera_type
 
         # ── Ego camera (static world-view) ──
         # entity_idx=None: not attached to any entity. Must be explicit because
-        # RasterizerCameraOptions defaults entity_idx to -1 (Python last-element
+        # the camera options default entity_idx to -1 (Python last-element
         # indexing), which fails validation when the last scene entity is an MPM entity.
         self._cameras["ego"] = scene.add_sensor(
-            RasterizerCameraOptions(
+            make_camera_options(
+                cam_type,
                 pos=(0.1468, -0.0175, 1.4),
                 lookat=(0.4208, -0.0175, 1.0735),
                 fov=65,
                 res=(848, 480),
                 entity_idx=None,
+                **self._camera_kwargs,
             )
         )
 
@@ -254,25 +321,68 @@ class RoboWitsEnv(GenesisGymEnv):
         left_link = robot_entity.get_link(self._robot.GRIPPER_BASE_LINK_LEFT)
 
         self._cameras["wrist_right"] = scene.add_sensor(
-            RasterizerCameraOptions(
+            make_camera_options(
+                cam_type,
                 res=(848, 480),
                 fov=58,
                 up=(0.0, 0.0, 1.0),
                 entity_idx=entity_idx,
                 link_idx_local=right_link.idx_local,
                 offset_T=wrist_offset_T,
+                **self._camera_kwargs,
             )
         )
         self._cameras["wrist_left"] = scene.add_sensor(
-            RasterizerCameraOptions(
+            make_camera_options(
+                cam_type,
                 res=(848, 480),
                 fov=58,
                 up=(0.0, 0.0, 1.0),
                 entity_idx=entity_idx,
                 link_idx_local=left_link.idx_local,
                 offset_T=wrist_offset_T,
+                **self._camera_kwargs,
             )
         )
+
+        # ── Gallery camera (wide third-person view, for presentation renders) ──
+        if self._gallery_camera:
+            self._cameras["gallery"] = scene.add_sensor(
+                make_camera_options(
+                    cam_type,
+                    pos=self._gallery_pos,
+                    lookat=self._gallery_lookat,
+                    fov=self._gallery_fov,
+                    res=self._gallery_res,
+                    entity_idx=None,
+                    **self._camera_kwargs,
+                )
+            )
+
+    #: Room walls for presentation renders: (name, lower, upper). Placed well outside the
+    #: workspace, behind and to the side of the robot, so they bound the scene without
+    #: appearing in the ego or wrist views.
+    WALLS: ClassVar[tuple[tuple[str, tuple[float, float, float], tuple[float, float, float]], ...]] = (
+        ("wall_back", (-0.9, -2.0, 0.0), (-0.8, 2.5, 4.0)),
+        ("wall_side", (-1.0, 2.5, 0.0), (4.0, 2.6, 4.0)),
+    )
+
+    def _add_room_walls(self) -> None:
+        """Add visual-only walls so path-traced renders have surfaces to bounce light off.
+
+        collision=False keeps them out of the physics entirely: no contacts, no collision pairs,
+        no effect on task dynamics or success criteria. They exist purely for the renderer.
+
+        They are deliberately NOT registered in ``self._entities``: that dict drives object
+        placement, ``collect_objs_info`` and the eval-scene dumps, and decor must not leak into
+        any of them.
+        """
+        self._decor_entities: dict[str, Any] = {}
+        for name, lower, upper in self.WALLS:
+            self._decor_entities[name] = self._scene.scene.add_entity(
+                morph=gs.morphs.Box(lower=lower, upper=upper, fixed=True, collision=False),
+                surface=gs.surfaces.Rough(color=(1.0, 1.0, 0.8)),
+            )
 
     def _add_table(self) -> None:
         """Add table entity to the scene."""
@@ -366,17 +476,32 @@ class RoboWitsEnv(GenesisGymEnv):
 
         Must be called after scene.build() to ensure entities have their morph positions.
         Stores initial_pos and initial_quat in each entity dict for use during placement.
-        Particle entities (MPM) do not support get_pos/get_quat and are skipped.
+
+        Particle entities (MPM/SPH) have no get_pos/get_quat, so their "pose" is taken
+        from the cloud itself: ``initial_particles`` is the build-time point set,
+        ``initial_pos`` its centroid and ``size`` its AABB extent. That gives a standalone
+        cloud (a dough ball, a foam ball) a footprint to be placed by, and gives every
+        cloud a reference frame to express stored eval particles relative to.
         """
         for _name, entity_info in self._entities.items():
             entity = entity_info["entity"]
             if _utils.is_particle_entity(entity):
-                # Particle entities don't support get_pos/get_quat; their state is
-                # restored by scene.reset() and they are not repositioned via set_pos.
+                try:
+                    pts = entity.get_particles_pos().detach()
+                    pts = pts[0] if pts.dim() == 3 else pts
+                    pts = pts.cpu().numpy()
+                except Exception:
+                    continue
+                if pts.size == 0:
+                    continue
+                entity_info["initial_particles"] = pts.copy()
+                entity_info["initial_pos"] = pts.mean(axis=0)
+                entity_info["initial_quat"] = np.array([1.0, 0.0, 0.0, 0.0], dtype=float)
+                entity_info["size"] = tuple(float(v) for v in (pts.max(axis=0) - pts.min(axis=0)))
                 continue
             # Get the position/quat that was set in the morph definition
-            pos = entity.get_pos()[0].cpu().numpy()
-            quat = entity.get_quat()[0].cpu().numpy()
+            pos = entity.get_pos(relative=False)[0].cpu().numpy()
+            quat = entity.get_quat(relative=False)[0].cpu().numpy()
             entity_info["initial_pos"] = pos.copy()
             entity_info["initial_quat"] = quat.copy()
             # Always compute size from AABB so hardcoded values are never needed
@@ -394,7 +519,7 @@ class RoboWitsEnv(GenesisGymEnv):
             entity = entity_info["entity"]
             if _utils.is_particle_entity(entity):
                 continue
-            entity_info["spawn_pos"] = entity.get_pos()[0].cpu().numpy().copy()
+            entity_info["spawn_pos"] = entity.get_pos(relative=False)[0].cpu().numpy().copy()
 
     def _load_eval_dataset(self) -> None:
         """Load evaluation dataset from eval_dataset_json path if provided."""
@@ -414,14 +539,35 @@ class RoboWitsEnv(GenesisGymEnv):
         self._eval_dataset_idx = 0
         logger.info(f"Loaded eval dataset with {len(self._eval_dataset_keys)} entries from {json_path}")
 
-        # Load companion particle positions file if present ({stem}_particles.npz)
+        # Load the particle file. Scene entries may name it via ``particles_file`` so
+        # tasks that share a container can share one cloud (the whole 15 family builds an
+        # identical jar); otherwise fall back to the {stem}_particles.npz convention.
         from pathlib import Path as _Path
 
-        particles_path = _Path(json_path).with_name(_Path(json_path).stem + "_particles.npz")
+        named = {
+            info["particles_file"]
+            for entry in self._eval_dataset.values()
+            for info in (entry.get("objs_info") or {}).values()
+            if isinstance(info, dict) and info.get("particles_file")
+        }
+        if len(named) > 1:
+            raise ValueError(f"{json_path}: scenes name more than one particle file: {sorted(named)}")
+        # ``particles_file`` is resolved relative to the JSON's directory and may include a
+        # path, so families split across dataset directories (a seed task and its mutations)
+        # can point at one file instead of keeping byte-identical copies side by side.
+        particles_path = (
+            (_Path(json_path).parent / next(iter(named))).resolve()
+            if named
+            else _Path(json_path).with_name(_Path(json_path).stem + "_particles.npz")
+        )
         if particles_path.exists():
             loaded = np.load(str(particles_path))
-            self._eval_particles = {k: loaded[k] for k in loaded.files}
-            logger.info(f"Loaded particle data for {list(self._eval_particles.keys())} from {particles_path}")
+            frame = str(loaded["_frame"]) if "_frame" in loaded.files else "world"
+            self._eval_particles = {k: loaded[k] for k in loaded.files if k != "_frame"}
+            self._eval_particles_frame = frame
+            logger.info(
+                f"Loaded {frame}-frame particle data for {list(self._eval_particles.keys())} from {particles_path}"
+            )
 
     def set_eval_dataset_idx(self, idx: int) -> None:
         """Set the eval dataset index (for resuming evaluation from a specific episode).
@@ -461,16 +607,72 @@ class RoboWitsEnv(GenesisGymEnv):
         self._success = torch.tensor(False, dtype=torch.bool, device=self._device)  # Scalar tensor
 
         # Action buffer - size depends on control mode (still batched for Genesis internal use)
-        action_dim = 14 if self._control_mode in ("EE_DELTA", "EE_ABS") else self.ROBOT_DOF  # JOINT_ABS, JOINT_DELTA
+        action_dim = self._robot.action_dim
         self.action_buf = torch.zeros((1, action_dim), device=self._device)  # (1, action_dim) for Genesis
 
-    def _restore_eval_particles(self) -> None:
-        """Restore canonical particle positions from the companion .npz file (no-op if none loaded)."""
+    def _restore_eval_particles(self, objs_info: dict[str, Any] | None = None) -> bool:
+        """Restore stored particle positions (no-op if no companion .npz was loaded).
+
+        Two file layouts are supported, distinguished by the ``_frame`` sentinel written
+        alongside the arrays:
+
+        ``local`` (current)
+            The cloud is a settled point set expressed in its own placement frame, and
+            the scene entry carries the rigid ``transform`` that maps it into the world::
+
+                world = transform.pos + R(transform.quat) @ local
+
+            One cloud therefore serves every scene of a task -- and every task sharing
+            the same container, via the entry's ``particles_file``.
+
+        ``world`` (legacy)
+            The cloud is absolute world coordinates captured from one scene, so it only
+            lines up with the scene it came from. Applied as-is for backwards
+            compatibility; those datasets place sand outside its jar on every other scene.
+
+        Args:
+            objs_info: The eval scene entry being replayed, read for per-entity
+                ``transform`` blocks. ``None`` (random placement) restores the stored
+                cloud unchanged.
+
+        Returns:
+            True if every stored entity was restored. False if any could not be applied
+            -- typically a resolution mismatch between the file and what the env now
+            builds, e.g. ``Invalid input shape: (50, 3) ... len(particles_idx)=4875``.
+            A stale file must not abort the episode: the caller falls back to random
+            placement, which is strictly better than losing the task entirely.
+        """
+        from gs_gym.envs.robowits.placement import apply_particle_transform
+
+        ok = True
         for entity_name, positions in self._eval_particles.items():
             if entity_name not in self._entities:
                 continue
-            poss = torch.tensor(positions, dtype=torch.float32, device=self._device)
-            self._entities[entity_name]["entity"].set_particles_pos(poss)
+            try:
+                pts = np.asarray(positions, dtype=np.float64)
+                entry = (objs_info or {}).get(entity_name) or {}
+                transform = entry.get("transform")
+                if self._eval_particles_frame == "local":
+                    if transform is None:
+                        # A local cloud with no transform would land at the origin.
+                        raise ValueError(
+                            f"particle file is in the 'local' frame but scene entry for "
+                            f"'{entity_name}' carries no transform"
+                        )
+                    pts = apply_particle_transform(pts, transform["pos"], transform["quat"])
+                poss = torch.tensor(pts, dtype=torch.float32, device=self._device)
+                self._entities[entity_name]["entity"].set_particles_pos(poss)
+            except Exception as e:
+                ok = False
+                # Warn once per entity; this is per-reset and would otherwise spam.
+                if entity_name not in self._particle_restore_warned:
+                    self._particle_restore_warned.add(entity_name)
+                    logger.warning(
+                        f"Could not restore stored particle positions for '{entity_name}' ({e}). "
+                        "The eval particle data does not match this env's particle count; "
+                        "falling back to random placement for episodes of this task."
+                    )
+        return ok
 
     def _place_objects(self) -> None:
         """Place objects: uses eval dataset positions if available, otherwise random placement.
@@ -492,6 +694,13 @@ class RoboWitsEnv(GenesisGymEnv):
             place_single_object,
         )
 
+        # Cleared on every placement pass; set only if the random placement gave
+        # up and restored canonical poses (see the fallback at the end).
+        self.placement_fell_back = False
+        # Rigid transform applied to each particle cloud this pass, so a scene sampler
+        # can record (shared cloud + transform) rather than a copy of the point set.
+        self._particle_transforms = {}
+
         # Eval dataset placement
         objs_info = self._get_next_eval_data()
         if objs_info is not None:
@@ -499,21 +708,64 @@ class RoboWitsEnv(GenesisGymEnv):
                 if obj_name not in self._entities:
                     continue
                 entity = self._entities[obj_name]["entity"]
+                # Particle entities (MPM/SPH) have no set_pos/set_quat; their state
+                # comes from the companion {stem}_particles.npz below. Without this
+                # guard a fluid in the dataset raises AttributeError at reset
+                # (e.g. task 02_08: 'SPHEntity' object has no attribute 'set_pos').
+                if _utils.is_particle_entity(entity):
+                    continue
                 if "pos" in obj_info:
-                    entity.set_pos(torch.tensor(obj_info["pos"], dtype=torch.float32, device=self._device).unsqueeze(0))
+                    entity.set_pos(
+                        torch.tensor(obj_info["pos"], dtype=torch.float32, device=self._device).unsqueeze(0),
+                        relative=False,
+                    )
                 if "quat" in obj_info:
                     entity.set_quat(
-                        torch.tensor(obj_info["quat"], dtype=torch.float32, device=self._device).unsqueeze(0)
+                        torch.tensor(obj_info["quat"], dtype=torch.float32, device=self._device).unsqueeze(0),
+                        relative=False,
                     )
                 elif "euler" in obj_info:
                     quat = euler_to_quat(torch.tensor(obj_info["euler"], dtype=torch.float32, device=self._device))
-                    entity.set_quat(quat.unsqueeze(0))
-            self._restore_eval_particles()
-            return
+                    entity.set_quat(quat.unsqueeze(0), relative=False)
+            if self._restore_eval_particles(objs_info):
+                return
+            # Stored particle data was unusable, so this episode cannot reproduce
+            # the dataset scene. Fall through and sample the whole scene randomly
+            # rather than running with a half-restored initial state.
+            logger.warning("Falling back to random placement because eval particle data could not be applied.")
 
         # Random placement
         groups = self.placement_groups
         if groups is None:
+            self._restore_eval_particles()
+            return
+
+        # Drop names this env does not have, so a subclass can reuse its parent's
+        # groups even when it omits one of the parent's entities (e.g. the 23_*
+        # mutations inherit the shelf cluster but have no "board").
+        def _present(group):
+            if isinstance(group, tuple):
+                kept = tuple(n for n in group if n in self._entities)
+                return kept or None
+            return group if group in self._entities else None
+
+        # A name that matches no entity is silently dropped above, which hides typos:
+        # task 22_05 asked for "sand_container"/"dry_sand" while its entities were
+        # "sand container"/"dry sand", so its whole group evaporated and nothing moved,
+        # and 30_01 named its liquid "pitcher water" against a group saying "water",
+        # leaving the water behind while its pitcher was relocated. Warn once per env.
+        if not getattr(self, "_warned_unknown_placement_names", False):
+            requested = {n for g in groups for n in (g if isinstance(g, tuple) else [g])}
+            unknown = sorted(requested - set(self._entities))
+            if unknown:
+                logger.warning(
+                    f"placement_groups names {unknown} match no entity in "
+                    f"{type(self).__name__} (have: {sorted(self._entities)}); they will not be placed."
+                )
+            self._warned_unknown_placement_names = True
+
+        groups = [g for g in (_present(g) for g in groups) if g is not None]
+        if not groups:
             self._restore_eval_particles()
             return
 
@@ -625,6 +877,7 @@ class RoboWitsEnv(GenesisGymEnv):
                             debug=attempt_debug,
                             ignored_hulls=ignored_hulls,
                             placement_target_names=mentioned,
+                            transform_sink=self._particle_transforms,
                         )
                     else:
                         bounds = get_object_reachable_area(
@@ -649,6 +902,7 @@ class RoboWitsEnv(GenesisGymEnv):
                             rotation_range=rotation_range,
                             debug=attempt_debug,
                             placement_target_names=mentioned,
+                            transform_sink=self._particle_transforms,
                         )
 
                     if entity_extra:
@@ -681,6 +935,10 @@ class RoboWitsEnv(GenesisGymEnv):
         if debug_dir:
             self._dump_placement_debug(debug_dir, debug_attempts, default_bounds, groups, render=debug_render)
 
+        # Callers cannot tell a fallback reset from a randomized one by looking at
+        # the scene -- it is simply the canonical layout every time. Flag it so
+        # scene samplers can reject the episode instead of recording duplicates.
+        self.placement_fell_back = True
         logger.warning(
             f"Failed to find a valid random placement after {self.MAX_PLACEMENT_RETRIES} attempts "
             f"({last_error}). Falling back to initial poses."
@@ -694,8 +952,16 @@ class RoboWitsEnv(GenesisGymEnv):
             initial_quat = info.get("initial_quat")
             if entity is None or initial_pos is None or initial_quat is None:
                 continue
-            entity.set_pos(torch.tensor(initial_pos, dtype=torch.float32, device=self._device).unsqueeze(0))
-            entity.set_quat(torch.tensor(initial_quat, dtype=torch.float32, device=self._device).unsqueeze(0))
+            if _utils.is_particle_entity(entity):
+                # scene.reset() already restored the build-time cloud, and a particle
+                # entity has no set_pos to call with the initial_pos captured for it.
+                continue
+            entity.set_pos(
+                torch.tensor(initial_pos, dtype=torch.float32, device=self._device).unsqueeze(0), relative=False
+            )
+            entity.set_quat(
+                torch.tensor(initial_quat, dtype=torch.float32, device=self._device).unsqueeze(0), relative=False
+            )
         self._restore_eval_particles()
 
     def _dump_placement_debug(
@@ -825,6 +1091,7 @@ class RoboWitsEnv(GenesisGymEnv):
             - JOINT_ABS: 16D absolute joint positions [R_arm(7), R_grip(1), L_arm(7), L_grip(1)]
             - JOINT_DELTA: 16D delta joint positions (added to current)
             - EE_ABS: 14D absolute EE poses [R_pos(3), L_pos(3), R_aa(3), L_aa(3), R_grip(1), L_grip(1)]
+            - EE_ABS_ROT6D: 20D absolute EE poses [R_pos(3), L_pos(3), R_rot6d(6), L_rot6d(6), R_grip(1), L_grip(1)]
             - EE_DELTA: 14D delta EE control (robot handles scaling)
         """
         # Expand action to (1, action_dim) for Genesis internal use
@@ -845,7 +1112,7 @@ class RoboWitsEnv(GenesisGymEnv):
         Returns:
             dict: Observations with:
                 - "agent_pos": robot state (dimension depends on observation_mode)
-                    - EE: 14D, JOINT: 16D
+                    - EE: 14D, EE_ROT6D: 20D, JOINT: 16D
                 - "pixels": dict of (H, W, 3) camera images
         """
         robot = self._robot
@@ -861,20 +1128,33 @@ class RoboWitsEnv(GenesisGymEnv):
 
         right_joints = dofs[:, :7]
         left_joints = dofs[:, 9:16]
-        right_ee_pos = robot.ee_link_right.get_pos() - robot_base_pos
-        left_ee_pos = robot.ee_link_left.get_pos() - robot_base_pos
-        right_ee_aa = _utils.quat_to_axis_angle(robot.ee_link_right.get_quat())
-        left_ee_aa = _utils.quat_to_axis_angle(robot.ee_link_left.get_quat())
+        right_ee_pos = robot.ee_link_right.get_pos(relative=False) - robot_base_pos
+        left_ee_pos = robot.ee_link_left.get_pos(relative=False) - robot_base_pos
+        right_ee_quat = robot.ee_link_right.get_quat(relative=False)
+        left_ee_quat = robot.ee_link_left.get_quat(relative=False)
+        right_ee_aa = _utils.quat_to_axis_angle(right_ee_quat)
+        left_ee_aa = _utils.quat_to_axis_angle(left_ee_quat)
+        right_ee_rot6d = quat_to_rot6d(right_ee_quat)
+        left_ee_rot6d = quat_to_rot6d(left_ee_quat)
 
         state_joint = torch.cat([right_joints, right_gripper, left_joints, left_gripper], dim=-1)
         state_ee = torch.cat([right_ee_pos, left_ee_pos, right_ee_aa, left_ee_aa, right_gripper, left_gripper], dim=-1)
+        state_ee_rot6d = torch.cat(
+            [right_ee_pos, left_ee_pos, right_ee_rot6d, left_ee_rot6d, right_gripper, left_gripper], dim=-1
+        )
 
-        state = state_joint if self._observation_mode == "JOINT" else state_ee
+        if self._observation_mode == "JOINT":
+            state = state_joint
+        elif self._observation_mode == "EE_ROT6D":
+            state = state_ee_rot6d
+        else:
+            state = state_ee
 
         obs = {
             "agent_pos": state[0].cpu().numpy(),
             "agent_pos_joint": state_joint[0].cpu().numpy(),
             "agent_pos_ee": state_ee[0].cpu().numpy(),
+            "agent_pos_ee_rot6d": state_ee_rot6d[0].cpu().numpy(),
         }
 
         pixels = {}
@@ -925,8 +1205,8 @@ class RoboWitsEnv(GenesisGymEnv):
             return centroid, identity_quat
         else:
             # Rigid entity - use standard get_pos/get_quat
-            pos = entity.get_pos()
-            quat = entity.get_quat()
+            pos = entity.get_pos(relative=False)
+            quat = entity.get_quat(relative=False)
             return pos, quat
 
     def get_reward(self) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
@@ -1033,7 +1313,7 @@ class RoboWitsEnv(GenesisGymEnv):
         """Collect object info squeezed to a single env for use in _check_success().
 
         Returned shapes:
-        - rigid:    pos (3,), vel (3,), euler (3,), bounds (2, 3), convex_hull_2d ndarray or None
+        - rigid:    pos (3,), vel (3,), quat (4,), euler (3,), bounds (2, 3), convex_hull_2d ndarray or None
         - particle: pos (n_particles, 3), vel (n_particles, 3), bounds (2, 3)
         """
         from genesis.engine.entities.particle_entity import ParticleEntity
@@ -1051,13 +1331,17 @@ class RoboWitsEnv(GenesisGymEnv):
             try:
                 if isinstance(entity, RigidEntity):
                     bounds = _utils.get_AABB(entity, self._device).cpu().numpy()[env_idx]
-                    quat = entity.get_quat()[env_idx]
+                    quat = entity.get_quat(relative=False)[env_idx]
                     euler = _utils.quat_to_euler(quat).cpu().numpy()
                     convex_hull_2d = _utils.compute_2d_convex_hull(entity, env_idx=env_idx)
                     objs_info[name] = {
                         "material": "rigid",
-                        "pos": entity.get_pos().cpu().numpy()[env_idx],
+                        "pos": entity.get_pos(relative=False).cpu().numpy()[env_idx],
                         "vel": entity.get_vel().cpu().numpy()[env_idx],
+                        # ``quat`` is the authoritative orientation: ``_place_objects`` prefers
+                        # it over ``euler`` when replaying a dumped scene, so orientation
+                        # survives round-tripping regardless of Euler edge cases.
+                        "quat": quat.cpu().numpy(),
                         "euler": euler,
                         "bounds": bounds,
                         "convex_hull_2d": convex_hull_2d,
@@ -1071,6 +1355,9 @@ class RoboWitsEnv(GenesisGymEnv):
                         "pos": pos,
                         "vel": vel,
                         "bounds": bounds,
+                        # Rigid transform placement applied to this cloud, so a scene can
+                        # be stored as (shared cloud + transform) instead of N points.
+                        **({"transform": t} if (t := self._particle_transforms.get(name)) else {}),
                     }
                 else:
                     # Fallback: try particle-style access (MPM entities not matching ParticleEntity)
@@ -1082,6 +1369,9 @@ class RoboWitsEnv(GenesisGymEnv):
                         "pos": pos,
                         "vel": vel,
                         "bounds": bounds,
+                        # Rigid transform placement applied to this cloud, so a scene can
+                        # be stored as (shared cloud + transform) instead of N points.
+                        **({"transform": t} if (t := self._particle_transforms.get(name)) else {}),
                     }
             except Exception:
                 pass  # Skip entities that fail (e.g. fixed markers with no dynamics)
@@ -1121,9 +1411,10 @@ class RoboWitsEnv(GenesisGymEnv):
         """Get space information from config."""
         # Action space depends on control mode:
         # EE_DELTA / EE_ABS: 14-DOF [right: 3 pos + 3 rot + 1 gripper, left: same]
+        # EE_ABS_ROT6D: 20-DOF [right: 3 pos + 6 rot + 1 gripper, left: same]
         # JOINT_ABS / JOINT_DELTA: 16-DOF [right: 7 arm + 1 gripper, left: same]
-        if self._control_mode in ("EE_DELTA", "EE_ABS"):
-            action_dim = 14
+        if self._control_mode in ("EE_DELTA", "EE_ABS", "EE_ABS_ROT6D"):
+            action_dim = 20 if self._control_mode == "EE_ABS_ROT6D" else 14
             if self._control_mode == "EE_DELTA":
                 # lo=-1.0, hi=1.0
                 action_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(action_dim,), dtype=np.float32)
@@ -1138,17 +1429,19 @@ class RoboWitsEnv(GenesisGymEnv):
             action_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(action_dim,), dtype=np.float32)
         else:
             raise ValueError(
-                f"Unknown control_mode '{self._control_mode}'. Available: JOINT_ABS, JOINT_DELTA, EE_ABS, EE_DELTA"
+                f"Unknown control_mode '{self._control_mode}'. "
+                "Available: JOINT_ABS, JOINT_DELTA, EE_ABS, EE_ABS_ROT6D, EE_DELTA"
             )
 
         # State dimension depends on observation_mode
-        state_dim = 16 if self._observation_mode == "JOINT" else 14
+        state_dim = {"JOINT": 16, "EE_ROT6D": 20}.get(self._observation_mode, 14)
 
         observation_space = gym.spaces.Dict(
             {
                 "agent_pos": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(state_dim,), dtype=np.float32),
                 "agent_pos_joint": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32),
                 "agent_pos_ee": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(14,), dtype=np.float32),
+                "agent_pos_ee_rot6d": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32),
                 "pixels": gym.spaces.Dict(
                     {
                         "ego": gym.spaces.Box(low=0, high=255, shape=(480, 848, 3), dtype=np.uint8),

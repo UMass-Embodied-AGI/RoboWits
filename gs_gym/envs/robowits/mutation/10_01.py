@@ -11,10 +11,25 @@ CollectScrewsEnv = _import("gs_gym.envs.robowits.10_collect_screws").CollectScre
 
 @register_task("robowits/10_01-v0")
 class CollectScrewsMut1Env(CollectScrewsEnv):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Distractors only have to sit on the table, not within arm reach, so give
+        # them the wider surface: with everything squeezed into the default
+        # reachable box, placement could not fit them and fell back to the
+        # canonical layout on nearly every reset.
+        clutter_area = {"x_min": 0.25, "x_max": 0.88, "y_min": -0.62, "y_max": 0.62}
+        for name in (
+            "funnel",
+            "silicone_funnel",
+            "glass_tumbler",
+            "hook_stylized",
+        ):
+            self._object_reachable_areas[name] = clutter_area
+
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("screw", "dustpan", "container", "funnel", "silicone funnel", "glass tumbler", "hook stylized")
+        return ("screw", "dustpan", "container", "funnel", "silicone_funnel", "glass_tumbler", "hook_stylized")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -81,7 +96,7 @@ class CollectScrewsMut1Env(CollectScrewsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.3, 0.8, 0.7), double_sided=True),
         )
-        self._entities["silicone funnel"] = {"entity": _e}
+        self._entities["silicone_funnel"] = {"entity": _e}
         # Code Block: glass tumbler
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -96,7 +111,7 @@ class CollectScrewsMut1Env(CollectScrewsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.7, 0.85, 0.95), double_sided=True),
         )
-        self._entities["glass tumbler"] = {"entity": _e}
+        self._entities["glass_tumbler"] = {"entity": _e}
         # Code Block: hook stylized
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -111,7 +126,7 @@ class CollectScrewsMut1Env(CollectScrewsEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(color=(0.3, 0.6, 0.3), double_sided=True),
         )
-        self._entities["hook stylized"] = {"entity": _e}
+        self._entities["hook_stylized"] = {"entity": _e}
         # Code Block: screw
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

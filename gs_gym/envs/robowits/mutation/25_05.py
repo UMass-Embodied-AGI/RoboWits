@@ -16,8 +16,15 @@ mug_pos_relative_to_pitcher = _wim.mug_pos_relative_to_pitcher
 class WaterIntoMugMut5Env(WaterIntoMugEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
-        """Define placement groups for random initialization."""
-        return (("pitcher", "water", "mug"), "heavy_large_object", "ping pong ball")
+        """Reuse the seed's groups, plus this variant's clutter.
+
+        The pitcher is ``fixed=True`` and the task is "collect water without moving the
+        pitcher", so it must not be randomized. Grouping it with the water and mug also
+        detached it from the invisible collision cage that actually holds the liquid --
+        13 unregistered fixed bodies at the authored pose, which placement cannot move,
+        leaving the pitcher 7 cm from its own walls.
+        """
+        return (*super().placement_groups, "ping_pong_ball")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -26,13 +33,13 @@ class WaterIntoMugMut5Env(WaterIntoMugEnv):
         )
 
         # Code Block: pitcher
-        _pitcher_yaw_deg = 90.0
+        _pitcher_yaw_deg = -90.0
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("hf_assets/pitcher.glb", pattern_is_dir=False),
                 scale=1.525,
-                pos=(0.52, 0.00, 0.8715),
+                pos=(0.50, -0.03, 0.8715),
                 euler=(0.0, 0.0, _pitcher_yaw_deg),
                 fixed=True,
                 collision=True,
@@ -40,10 +47,10 @@ class WaterIntoMugMut5Env(WaterIntoMugEnv):
             material=gs.materials.Rigid(rho=800.0, friction=None),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        _px, _py = 0.52, 0.00
+        _px, _py = 0.50, -0.03
         self._scene.scene.add_entity(
             gs.morphs.Cylinder(
-                pos=(_px, _py - 0.02, 0.82),
+                pos=(_px, _py + 0.02, 0.82),
                 radius=0.11,
                 height=0.05,
                 fixed=True,
@@ -52,27 +59,27 @@ class WaterIntoMugMut5Env(WaterIntoMugEnv):
             ),
         )
         for rot in [0, 30, 60, 120, 150, 180, 210, 240, 270, 300, 330]:
-            sin_rot, cos_rot = np.sin(np.deg2rad(rot + 180)), np.cos(np.deg2rad(rot + 180))
+            sin_rot, cos_rot = np.sin(np.deg2rad(rot)), np.cos(np.deg2rad(rot))
             self._scene.scene.add_entity(
                 gs.morphs.Box(
-                    pos=(_px + 0.09 * cos_rot, _py - 0.015 + 0.09 * sin_rot, 0.97 - 0.08),
+                    pos=(_px + 0.09 * cos_rot, _py + 0.015 + 0.09 * sin_rot, 0.97 - 0.08),
                     euler=(0.0, 0.0, rot),
                     size=(0.01, 0.05, 0.15),
                     fixed=True,
                     visualization=False,
                     collision=True,
-                )
+                ),
             )
-        sin_rot, cos_rot = np.sin(np.deg2rad(90 + 180)), np.cos(np.deg2rad(90 + 180))
+        sin_rot, cos_rot = np.sin(np.deg2rad(90)), np.cos(np.deg2rad(90))
         self._scene.scene.add_entity(
             gs.morphs.Box(
-                pos=(_px + 0.09 * cos_rot, _py - 0.015 + 0.09 * sin_rot, 0.95 - 0.08),
+                pos=(_px + 0.09 * cos_rot, _py + 0.015 + 0.09 * sin_rot, 0.95 - 0.08),
                 euler=(0.0, 0.0, 90.0),
                 size=(0.01, 0.05, 0.1),
                 fixed=True,
                 visualization=False,
                 collision=True,
-            )
+            ),
         )
         self._entities["pitcher"] = {"entity": _e}
         # Code Block: mug (offset from pitcher rotates with pitcher mesh euler Z)
@@ -95,7 +102,7 @@ class WaterIntoMugMut5Env(WaterIntoMugEnv):
         # Code Block: water
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
-                radius=0.06, height=0.3, pos=(0.52, 0.01, 0.9915), euler=(0.0, 0.0, 0.0), fixed=False, collision=True
+                radius=0.06, height=0.3, pos=(0.50, -0.02, 0.9915), euler=(0.0, 0.0, 0.0), fixed=False, collision=True
             ),
             material=gs.materials.SPH.Liquid(
                 rho=1000.0, stiffness=5000.0, exponent=7.0, mu=0.01, gamma=0.02, sampler="pbs"
@@ -117,7 +124,7 @@ class WaterIntoMugMut5Env(WaterIntoMugEnv):
             material=gs.materials.Rigid(rho=500.0, friction=0.8),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["heavy large object"] = {"entity": _e}
+        self._entities["heavy_large_object"] = {"entity": _e}
         # Code Block: ping pong ball
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -132,4 +139,4 @@ class WaterIntoMugMut5Env(WaterIntoMugEnv):
             material=gs.materials.Rigid(rho=120.0, friction=None),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["ping pong ball"] = {"entity": _e}
+        self._entities["ping_pong_ball"] = {"entity": _e}

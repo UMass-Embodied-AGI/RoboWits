@@ -30,7 +30,7 @@ class CollectScrewsEnv(RoboWitsEnv):
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
-        return "Collect the screw into the container"
+        return "Collect the screw into the container."
 
     TABLE_Z = 0.76
 

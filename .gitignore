@@ -39,3 +39,4 @@ assets/blender_kit/
 assets/hf_assets/
 *.zip
 *.log
+__nyx_cache__/

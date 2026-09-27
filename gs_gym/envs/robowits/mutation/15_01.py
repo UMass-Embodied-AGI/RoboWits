@@ -14,14 +14,7 @@ class SeparateMarblesAndSandMut1Env(SeparateMarblesAndSandEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (
-            ("sand", "marble 1", "marble 2", "marble 3", "marble 4", "marble 5", "jar", "jar_inner"),
-            "colander",
-            "bowl",
-            "wooden pencil case",
-            "sunglasses",
-            "pentel eraser",
-        )
+        return (*super().placement_groups, "wooden_pencil_case", "sunglasses", "pentel_eraser")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -34,13 +27,13 @@ class SeparateMarblesAndSandMut1Env(SeparateMarblesAndSandEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/633e9459-f7ed-4507-ad97-ce2783b06a02/obj.glb", pattern_is_dir=False),
-                scale=0.764,
-                pos=(0.38, -0.18, 0.76 + 0.0739 * 0.585),
+                scale=0.864,
+                pos=(0.38, -0.18, 0.8038),
                 euler=(180, 0, 0),
                 fixed=False,
                 collision=True,
             ),
-            material=gs.materials.Rigid(rho=200.0),
+            material=gs.materials.Rigid(rho=300.0, friction=1.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["colander"] = {"entity": _e}
@@ -49,13 +42,13 @@ class SeparateMarblesAndSandMut1Env(SeparateMarblesAndSandEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c652cf0f-d2eb-44bd-9e68-a2ceca698591/obj.glb", pattern_is_dir=False),
-                scale=1.227,
-                pos=(0.38, 0.18, 0.76 + 0.0739 * 0.585),
+                scale=1.38,
+                pos=(0.38, 0.18, 0.808576),
                 euler=(0, 0, 0),
                 fixed=False,
                 collision=True,
             ),
-            material=gs.materials.Rigid(rho=200.0),
+            material=gs.materials.Rigid(rho=300.0, friction=1.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["bowl"] = {"entity": _e}
@@ -64,10 +57,10 @@ class SeparateMarblesAndSandMut1Env(SeparateMarblesAndSandEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("hf_assets/simplify_red_cup.obj", pattern_is_dir=False),
-                scale=1.5,
-                pos=(0.58, 0.0, 0.855),
+                scale=1,
+                pos=(0.58, 0.0, 0.824),
                 euler=(90.0, 0.0, 0.0),
-                fixed=True,
+                fixed=False,
                 collision=True,
                 convexify=False,
             ),
@@ -75,88 +68,38 @@ class SeparateMarblesAndSandMut1Env(SeparateMarblesAndSandEnv):
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["jar"] = {"entity": _e}
-        # Code Block: marble 1
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/5cd459e5-fccb-44c5-a368-9249218e10ff/obj.glb", pattern_is_dir=False),
-                scale=0.1467,
-                pos=(0.565, 0.0, 0.811118 - 0.015),
-                euler=(0, 0, 0),
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0),
-            surface=gs.surfaces.Smooth(double_sided=True),
-        )
-        self._entities["marble 1"] = {"entity": _e}
-        # Code Block: marble 2
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/5cd459e5-fccb-44c5-a368-9249218e10ff/obj.glb", pattern_is_dir=False),
-                scale=0.1467,
-                pos=(0.595, 0.0, 0.811118 - 0.015),
-                euler=(0, 0, 0),
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0),
-            surface=gs.surfaces.Smooth(double_sided=True),
-        )
-        self._entities["marble 2"] = {"entity": _e}
-        # Code Block: marble 3
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/5cd459e5-fccb-44c5-a368-9249218e10ff/obj.glb", pattern_is_dir=False),
-                scale=0.1467,
-                pos=(0.58, 0.015, 0.811118 - 0.015),
-                euler=(0, 0, 0),
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0),
-            surface=gs.surfaces.Smooth(double_sided=True),
-        )
-        self._entities["marble 3"] = {"entity": _e}
-        # Code Block: marble 4
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/5cd459e5-fccb-44c5-a368-9249218e10ff/obj.glb", pattern_is_dir=False),
-                scale=0.1467,
-                pos=(0.58 - 0.015, -0.015, 0.811118 - 0.003),
-                euler=(0, 0, 0),
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0),
-            surface=gs.surfaces.Smooth(double_sided=True),
-        )
-        self._entities["marble 4"] = {"entity": _e}
-        # Code Block: marble 5
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/5cd459e5-fccb-44c5-a368-9249218e10ff/obj.glb", pattern_is_dir=False),
-                scale=0.1467,
-                pos=(0.58 + 0.015, 0.015, 0.811118 - 0.003),
-                euler=(0, 0, 0),
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0),
-            surface=gs.surfaces.Smooth(double_sided=True),
-        )
-        self._entities["marble 5"] = {"entity": _e}
+        # Code Block: marbles
+        marble_positions = [
+            (0.58, 0.0, 0.775),
+            (0.58, 0.0, 0.795),
+            (0.58, 0.0, 0.815),
+            (0.58, 0.0, 0.835),
+            (0.58, 0.0, 0.855),
+        ]
+        for i, pos in enumerate(marble_positions, start=1):
+            _e = self._scene.scene.add_entity(
+                gs.morphs.Mesh(
+                    coacd_options=coacd_options,
+                    file=get_asset_path(
+                        "blender_kit/5cd459e5-fccb-44c5-a368-9249218e10ff/obj.glb", pattern_is_dir=False
+                    ),
+                    scale=0.12,
+                    pos=pos,
+                    euler=(0.0, 0.0, 0.0),
+                    fixed=False,
+                    collision=True,
+                ),
+                material=gs.materials.Rigid(rho=1200.0, friction=0.6),
+                surface=gs.surfaces.Smooth(double_sided=True),
+            )
+            self._entities[f"marble_{i}"] = {"entity": _e}
         # Code Block: sand
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
-                pos=(0.58, 0.0, 0.788), euler=(0, 0, 0), radius=0.028, height=0.015, fixed=False, collision=True
+                pos=(0.59, 0.01, 1.19), euler=(0, 0, 0), radius=0.02, height=0.2, fixed=False, collision=True
             ),
-            material=gs.materials.MPM.Sand(rho=1000.0, sampler="random", friction_angle=45),
-            surface=gs.surfaces.Default(color=(0.9, 0.8, 0.2), vis_mode="recon", double_sided=True),
+            material=gs.materials.MPM.Sand(rho=800.0, sampler="pbs", friction_angle=30),
+            surface=gs.surfaces.Default(color=(0.9, 0.8, 0.3), vis_mode="particle", double_sided=True),
         )
         self._entities["sand"] = {"entity": _e}
         # Code Block: wooden pencil case
@@ -173,7 +116,7 @@ class SeparateMarblesAndSandMut1Env(SeparateMarblesAndSandEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["wooden pencil case"] = {"entity": _e}
+        self._entities["wooden_pencil_case"] = {"entity": _e}
         # Code Block: sunglasses
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -203,13 +146,4 @@ class SeparateMarblesAndSandMut1Env(SeparateMarblesAndSandEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["pentel eraser"] = {"entity": _e}
-        # Code Block: jar_inner
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Cylinder(
-                pos=(0.58, 0.0, 0.76 + 0.045), euler=(0, 0, 0), radius=0.042, height=0.09, fixed=True, collision=True
-            ),
-            material=gs.materials.Rigid(rho=200.0, friction=1.0),
-            surface=gs.surfaces.Default(color=(0.8, 0.8, 0.8), vis_mode="collision", double_sided=True),
-        )
-        self._entities["jar_inner"] = {"entity": _e}
+        self._entities["pentel_eraser"] = {"entity": _e}

@@ -15,10 +15,10 @@ class RaisePlatformMut4Env(RaisePlatformEnv):
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
         return (
-            ("cup support 1", "cup support 2"),
-            ("support cube 1"),
-            ("heavy book", "support cube 2"),
-            "cardboard tube",
+            ("cup_support_1", "cup_support_2"),
+            ("support_cube_1"),
+            ("heavy_book", "support_cube_2"),
+            "cardboard_tube",
         )
 
     def _add_custom_entities(self) -> None:
@@ -41,7 +41,7 @@ class RaisePlatformMut4Env(RaisePlatformEnv):
             material=gs.materials.Rigid(rho=100),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["heavy book"] = {"entity": _e}
+        self._entities["heavy_book"] = {"entity": _e}
         # Code Block: cup support 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -56,7 +56,7 @@ class RaisePlatformMut4Env(RaisePlatformEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["cup support 1"] = {"entity": _e}
+        self._entities["cup_support_1"] = {"entity": _e}
         # Code Block: cup support 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -71,14 +71,14 @@ class RaisePlatformMut4Env(RaisePlatformEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["cup support 2"] = {"entity": _e}
+        self._entities["cup_support_2"] = {"entity": _e}
         # Code Block: support cube 1
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(pos=(0.57, 0.0, 0.3), euler=(0, 0, 0), size=(0.02, 0.02, 0.03), fixed=True, collision=True),
             material=gs.materials.Rigid(rho=200.0, friction=1),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
         )
-        self._entities["support cube 1"] = {"entity": _e}
+        self._entities["support_cube_1"] = {"entity": _e}
         # Code Block: support cube 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -87,7 +87,7 @@ class RaisePlatformMut4Env(RaisePlatformEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
         )
-        self._entities["support cube 2"] = {"entity": _e}
+        self._entities["support_cube_2"] = {"entity": _e}
         # Code Block: cardboard tube
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
@@ -101,4 +101,4 @@ class RaisePlatformMut4Env(RaisePlatformEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Default(color=(0.74, 0.66, 0.52), roughness=0.8, ior=1.5),
         )
-        self._entities["cardboard tube"] = {"entity": _e}
+        self._entities["cardboard_tube"] = {"entity": _e}

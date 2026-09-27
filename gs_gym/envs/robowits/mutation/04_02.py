@@ -14,7 +14,7 @@ class PinchCardMut2Env(PinchCardEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return ("bank card", "eraser", "eco bag", "soap bar")
+        return ("bank_card", "eraser", "eco_bag", "soap_bar")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -36,7 +36,7 @@ class PinchCardMut2Env(PinchCardEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.4),
             surface=gs.surfaces.Smooth(double_sided=True),
         )
-        self._entities["bank card"] = {"entity": _e}
+        self._entities["bank_card"] = {"entity": _e}
 
         # Code Block: eraser
         _e = self._scene.scene.add_entity(
@@ -67,7 +67,7 @@ class PinchCardMut2Env(PinchCardEnv):
             material=gs.materials.Rigid(rho=200.0, friction=1.2),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["small table"] = {"entity": _e}
+        self._entities["small_table"] = {"entity": _e}
         # Code Block: target cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -76,7 +76,7 @@ class PinchCardMut2Env(PinchCardEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.4, ior=1.5),
         )
-        self._entities["target cube"] = {"entity": _e}
+        self._entities["target_cube"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -85,7 +85,7 @@ class PinchCardMut2Env(PinchCardEnv):
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Default(color=(0.2, 0.8, 0.2), roughness=0.4, ior=1.5),
         )
-        self._entities["target area"] = {"entity": _e}
+        self._entities["target_area"] = {"entity": _e}
         # Code Block: soap bar
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -94,7 +94,7 @@ class PinchCardMut2Env(PinchCardEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.3),
             surface=gs.surfaces.Smooth(color=(0.95, 0.92, 0.9), double_sided=True),
         )
-        self._entities["soap bar"] = {"entity": _e}
+        self._entities["soap_bar"] = {"entity": _e}
         # Code Block: eco bag
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -109,4 +109,4 @@ class PinchCardMut2Env(PinchCardEnv):
             material=gs.materials.Rigid(rho=200.0, friction=0.8),
             surface=gs.surfaces.Rough(color=(0.9, 0.9, 0.9), double_sided=True),
         )
-        self._entities["eco bag"] = {"entity": _e}
+        self._entities["eco_bag"] = {"entity": _e}
