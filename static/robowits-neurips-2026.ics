@@ -1,0 +1,16 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RoboWits//NeurIPS 2026 poster//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:robowits-neurips2026-139850@umass-embodied-agi.github.io
+DTSTAMP:20261105T000000Z
+DTSTART:20261210T150000Z
+DTEND:20261210T180000Z
+SUMMARY:RoboWits poster - NeurIPS 2026
+LOCATION:Hall C1\, Georgia World Congress Center\, Atlanta
+DESCRIPTION:RoboWits: Unexpected Challenges for Robotic Creative Problem Solving\nPoster session at NeurIPS 2026\, Evaluations & Datasets Track.\nhttps://umass-embodied-agi.github.io/RoboWits/
+URL:https://neurips.cc/virtual/2026/loc/atlanta/poster/139850
+END:VEVENT
+END:VCALENDAR
