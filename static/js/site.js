@@ -12,8 +12,12 @@
   var POLICIES = [
     { key: "act",  label: "ACT" },
     { key: "pi0",  label: "π₀" },
-    { key: "pi05", label: "π₀.₅" }
+    { key: "pi05", label: "π₀.₅" },
+    { key: "astra", label: "Astra-Policy" },
+    { key: "fable", label: "Fable 5.2" }
   ];
+  /* Astra-Policy and Fable 5.2 ran on smaller episode budgets, and Fable has
+     gaps (cells it never ran are null), so missing values render as a dash. */
   /* The gallery is clips only — tasks without a recorded clip are left out
      rather than represented by a still. The results table still covers all 30. */
   var CLIPS = RW.tasks.filter(function (t) { return !!t.video; });
@@ -172,13 +176,14 @@
   var lb = $("#lightbox");
 
   function pct(v) { return v.toFixed(1) + "%"; }
+  var DASH = '<span class="zero">—</span>';
 
   function taskDetail(t) {
     var head = "<tr><th>Policy</th><th>Seed SR</th><th>Seed PS</th><th>Mut SR</th><th>Mut PS</th></tr>";
     var rows = POLICIES.map(function (p) {
       var r = t.results[p.key];
-      return "<tr><td>" + p.label + "</td><td>" + pct(r.seed[0]) + "</td><td>" + r.seed[1].toFixed(2) +
-             "</td><td>" + pct(r.mut[0]) + "</td><td>" + r.mut[1].toFixed(2) + "</td></tr>";
+      var c = function (x) { return x ? "<td>" + pct(x[0]) + "</td><td>" + x[1].toFixed(2) + "</td>" : "<td>" + DASH + "</td><td>" + DASH + "</td>"; };
+      return "<tr><td>" + p.label + "</td>" + c(r.seed) + c(r.mut) + "</tr>";
     }).join("");
 
     var media = '<video controls autoplay muted loop playsinline preload="auto" poster="' + POS + t.poster + '">' +
@@ -329,7 +334,7 @@
       { cond: "seed", label: "Seed task",        color: "var(--seed)" },
       { cond: "mut",  label: "Mutated variants", color: "var(--mut)" }
     ];
-    var data = POLICIES.map(function (p) {
+    var data = POLICIES.filter(function (p) { return avg[p.key].seed && avg[p.key].mut; }).map(function (p) {
       return { label: p.label, key: p.key, seed: avg[p.key].seed, mut: avg[p.key].mut };
     });
 
@@ -411,12 +416,14 @@
   }
 
   /* --- per-task table ------------------------------------------------------ */
+  function sr(x) { return x ? x[0] : -1; }
+
   function drawTable() {
     var rows = rowsForSuite();
     var avg = RW.averages[chartState.suite];
     var maxV = Math.max.apply(null, rows.map(function (t) {
       return Math.max.apply(null, POLICIES.map(function (p) {
-        return Math.max(t.results[p.key].seed[0], t.results[p.key].mut[0]); })); }));
+        return Math.max(sr(t.results[p.key].seed), sr(t.results[p.key].mut)); })); }));
 
     var head =
       '<thead><tr class="pol"><th class="task"></th>' +
@@ -430,11 +437,13 @@
        muted beside it — since there is no longer a metric switch. The wash
        encodes the success rate only. */
     function cells(r, isAvg) {
-      var bestSeed = Math.max.apply(null, POLICIES.map(function (p) { return r[p.key].seed[0]; }));
-      var bestMut  = Math.max.apply(null, POLICIES.map(function (p) { return r[p.key].mut[0]; }));
+      var bestSeed = Math.max.apply(null, POLICIES.map(function (p) { return sr(r[p.key].seed); }));
+      var bestMut  = Math.max.apply(null, POLICIES.map(function (p) { return sr(r[p.key].mut); }));
       return POLICIES.map(function (p, i) {
         return ["seed", "mut"].map(function (cond, j) {
-          var sr = r[p.key][cond][0], ps = r[p.key][cond][1];
+          var cell = r[p.key][cond];
+          if (!cell) return '<td class="v' + (i && !j ? " sep" : "") + '"><span class="num">' + DASH + "</span></td>";
+          var sr = cell[0], ps = cell[1];
           var best = !isAvg && sr > 0 && sr === (cond === "seed" ? bestSeed : bestMut);
           var w = Math.max(0, Math.min(1, sr / maxV)) * 100;
           var color = cond === "seed" ? "var(--seed-wash)" : "var(--mut-wash)";
@@ -456,8 +465,8 @@
     $("#resultTable").innerHTML = head + "<tbody>" + body + avgRow + "</tbody>";
     $("#tableTitle").textContent = "Per-task results";
     $("#tableSub").textContent = chartState.suite === "rw10"
-      ? "RoboWits-10 · success rate and progress score · 50 episodes per seed task, 20 per mutation"
-      : "RoboWits-Full · success rate and progress score · all 30 seed tasks and their mutation families";
+      ? "RoboWits-10 · success rate and progress score · 50 episodes per seed task, 20 per mutation (Astra-Policy 10 / 5, Fable 5.2 5 / 1-3)"
+      : "RoboWits-Full · success rate and progress score · all 30 seed tasks and their mutation families · Fable 5.2 ran seed only and skipped tasks 15 and 22, so it has no average";
 
     $$("#resultTable tbody tr[data-id]").forEach(function (tr) {
       var id = tr.getAttribute("data-id");
