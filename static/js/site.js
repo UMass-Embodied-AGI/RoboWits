@@ -17,7 +17,8 @@
     { key: "fable", label: "Fable 5.2" }
   ];
   /* Astra-Policy and Fable 5.2 ran on smaller episode budgets, and Fable has
-     gaps (cells it never ran are null), so missing values render as a dash. */
+     gaps (cells it never ran are null), so missing values render as a dash.
+     Fable's Full-suite averages cover only the tasks it ran. */
   /* The gallery is clips only — tasks without a recorded clip are left out
      rather than represented by a still. The results table still covers all 30. */
   var CLIPS = RW.tasks.filter(function (t) { return !!t.video; });
@@ -412,7 +413,8 @@
     });
 
     $(metric === "sr" ? "#chartSubSR" : "#chartSubPS").textContent = "Mean over the " +
-      (chartState.suite === "rw10" ? "10 RoboWits-10 tasks" : "30 RoboWits-Full tasks");
+      (chartState.suite === "rw10" ? "10 RoboWits-10 tasks"
+        : "30 RoboWits-Full tasks · Fable 5.2: seed over 28 tasks, mutations over 10");
   }
 
   /* --- per-task table ------------------------------------------------------ */
@@ -466,7 +468,7 @@
     $("#tableTitle").textContent = "Per-task results";
     $("#tableSub").textContent = chartState.suite === "rw10"
       ? "RoboWits-10 · success rate and progress score · 50 episodes per seed task, 20 per mutation (Astra-Policy 10 / 5, Fable 5.2 5 / 1-3)"
-      : "RoboWits-Full · success rate and progress score · all 30 seed tasks and their mutation families · Fable 5.2 ran seed only and skipped tasks 15 and 22, so it has no average";
+      : "RoboWits-Full · success rate and progress score · all 30 seed tasks and their mutation families · Fable 5.2 averages only the tasks it ran: seed on 28 (not 15 and 22), mutations on the 10 RoboWits-10 tasks";
 
     $$("#resultTable tbody tr[data-id]").forEach(function (tr) {
       var id = tr.getAttribute("data-id");

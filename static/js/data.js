@@ -1922,8 +1922,14 @@ window.RW = {
     ]
    },
    "fable": {
-    "seed": null,
-    "mut": null
+    "seed": [
+     42.4,
+     0.72
+    ],
+    "mut": [
+     41.0,
+     0.7
+    ]
    }
   }
  },
