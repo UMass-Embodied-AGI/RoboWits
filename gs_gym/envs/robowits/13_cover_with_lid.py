@@ -5,6 +5,8 @@ Task: Cover a pot precisely using the correct sized lid.
 
 from __future__ import annotations
 
+import os
+
 import genesis as gs
 import numpy as np
 import torch
@@ -19,15 +21,28 @@ from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
 class CoverWithLidEnv(RoboWitsEnv):
     """Cover a pot precisely using the correct sized lid.
 
-    This requires reasoning about cross-sectional fit. Only the correctly
-    sized circular lid will cover the opening with minimal excess. The
-    circular geometry and ring reference enable precise centering.
+    This requires reasoning about cross-sectional fit. Only the correctly sized circular lid will cover the
+    opening with minimal excess. The circular geometry and ring reference enable precise centering without
+    measurements.
 
-    Success criteria:
-    - Exactly one lid is above the pot
-    - Lid overlaps pot by at least 80%
-    - Lid size is appropriate (85%-140% of pot area)
+    Success criteria, judged against the pot's opening (the hole inside its rolled lip), not its footprint.
+    Exactly one object in COVER_CANDIDATES must satisfy all of:
+    - It is above the pot
+    - It covers at least 80% of the opening
+    - It is larger than the opening but no wider than the lip: lid area / opening area in [1, (lip / hole)^2]
+    - It is not being held by either gripper
     """
+
+    # Objects judged as covers. The tool-substitution mutations add their plate.
+    COVER_CANDIDATES: tuple[str, ...] = ("small_lid", "lid_medium", "lid_large")
+
+    # Unit-scale radii (m) of each pot mesh's opening ("hole": inner edge of the lip) and of the lip's
+    # outer edge, keyed by BlenderKit id. Measured as the min/max vertex radius within the top 5% of the
+    # mesh's height (Z-up); both meshes are centred on their origin in xy.
+    POT_OPENINGS = {
+        "3aee9353-e21a-40d4-b160-e2a0af1fff7f": (0.2695, 0.3574),
+        "2cf9e625-d115-46a9-98af-c771663006db": (0.1404, 0.2391),
+    }
 
     @property
     def task_description(self) -> str:
@@ -155,15 +170,29 @@ class CoverWithLidEnv(RoboWitsEnv):
             "entity": large_lid,
         }
 
+    def _pot_opening(self, pot_info: dict) -> tuple[np.ndarray, float]:
+        """Return the pot's opening as a (64, 2) xy circle and the max lid/opening area ratio (lip / hole)^2."""
+        morph = self.get_entity("pot_without_lid").morph
+        hole_r, lip_r = self.POT_OPENINGS[os.path.basename(os.path.dirname(morph.file))]
+        scale = float(np.atleast_1d(morph.scale)[0])
+        theta = np.linspace(0.0, 2.0 * np.pi, 64, endpoint=False)
+        circle = hole_r * scale * np.stack([np.cos(theta), np.sin(theta)], axis=1)
+        return circle + np.asarray(pot_info["pos"][:2], dtype=float), (lip_r / hole_r) ** 2
+
+    def _lid_fits(self, lid_hull, opening: np.ndarray, size_ratio_max: float) -> bool:
+        """Whether a lid's xy hull is larger than the pot's opening but no wider than its lip (by area)."""
+        if lid_hull is None or len(lid_hull) < 3:
+            return False
+        size_ratio = self._polygon_area(np.asarray(lid_hull, dtype=float)) / self._polygon_area(opening)
+        return 1.0 <= size_ratio <= size_ratio_max
+
     def _check_success(self) -> torch.Tensor:
-        """Check if task is successful: exactly one lid covers pot correctly."""
+        """Check if task is successful: exactly one lid covers the pot's opening correctly."""
         objs_info = self.collect_objs_info()
 
         TABLE_X_MIN, TABLE_X_MAX = 0.21, 1.00
         TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
-        OVERLAP_RATIO_MIN = 0.80
-        SIZE_RATIO_MIN = 0.85
-        SIZE_RATIO_MAX = 1.40
+        COVERAGE_MIN = 0.80
         Z_ABOVE_EPS = 0.01
 
         def get_hull(obj):
@@ -188,15 +217,6 @@ class CoverWithLidEnv(RoboWitsEnv):
                 and np.all(ys <= TABLE_Y_MAX + 1e-3)
             )
 
-        def compute_overlap_ratio(hull1, hull2):
-            if hull1 is None or hull2 is None:
-                return 0.0
-            area1 = self._polygon_area(hull1)
-            if area1 <= 1e-9:
-                return 0.0
-            inter_area = _utils.intersection_area(hull1, hull2)
-            return inter_area / area1
-
         pot = objs_info.get("pot_without_lid")
         if pot is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -208,16 +228,14 @@ class CoverWithLidEnv(RoboWitsEnv):
         if not is_within_table_bounds(pot_hull):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        pot_area = self._polygon_area(pot_hull)
-        if pot_area <= 1e-6:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
+        opening, size_ratio_max = self._pot_opening(pot)
+        opening_area = self._polygon_area(opening)
 
         pot_z = float(pot["pos"][2])
 
-        lid_names = ["small_lid", "lid_medium", "lid_large"]
         valid_candidates = []
 
-        for lname in lid_names:
+        for lname in self.COVER_CANDIDATES:
             lid = objs_info.get(lname)
             if lid is None:
                 continue
@@ -237,12 +255,14 @@ class CoverWithLidEnv(RoboWitsEnv):
             if not (lid_z > pot_z + Z_ABOVE_EPS):
                 continue
 
-            size_ratio = lid_area / pot_area
-            if size_ratio < SIZE_RATIO_MIN or size_ratio > SIZE_RATIO_MAX:
+            if not self._lid_fits(lid_hull, opening, size_ratio_max):
                 continue
 
-            overlap = compute_overlap_ratio(lid_hull, pot_hull)
-            if overlap < OVERLAP_RATIO_MIN - 1e-6:
+            coverage = _utils.intersection_area(lid_hull, opening) / opening_area
+            if coverage < COVERAGE_MIN - 1e-6:
+                continue
+
+            if not _utils.check_released(lid, self._robot):
                 continue
 
             valid_candidates.append(lname)
@@ -318,20 +338,9 @@ class CoverWithLidEnv(RoboWitsEnv):
         HEIGHT_LIFT_THRESHOLD = 0.02
 
         POT = "pot_without_lid"
-        LID_MEDIUM = "lid_medium"
-        LID_SMALL = "small_lid"
-        LID_LARGE = "lid_large"
 
-        INITIAL_HEIGHTS = {
-            LID_SMALL: 0.7668,
-            LID_MEDIUM: 0.7707,
-            LID_LARGE: 0.7752,
-        }
-        MULTIPLIERS = {
-            LID_MEDIUM: 1.0,
-            LID_SMALL: 0.6,
-            LID_LARGE: 0.6,
-        }
+        FIT_MULTIPLIER = 1.0  # a movable cover that passes _check_success's size check
+        MISFIT_MULTIPLIER = 0.6
 
         if POT not in objs_info:
             score_t = torch.tensor(0.0, dtype=torch.float32, device=self._device)
@@ -466,6 +475,16 @@ class CoverWithLidEnv(RoboWitsEnv):
 
         pot_hull = get_hull_2d(POT)
         pot_pos = get_pos(POT) if POT in objs_info else None
+        # Overlap is measured as coverage of the pot's opening, and the full multiplier goes to the movable
+        # cover that passes the size check, both matching _check_success. A cover fixed to the table (the
+        # intended lid in the tool-substitution mutations) can never be used, so it gets the misfit multiplier.
+        opening_np, size_ratio_max = self._pot_opening(objs_info[POT])
+        opening = [(float(x), float(y)) for x, y in opening_np]
+
+        def multiplier(lid_name):
+            fits = lid_name in objs_info and self._lid_fits(get_hull_2d(lid_name), opening_np, size_ratio_max)
+            fixed = self.get_entity(lid_name).morph.fixed
+            return FIT_MULTIPLIER if fits and not fixed else MISFIT_MULTIPLIER
 
         def compute_lid_score(lid_name, multiplier):
             if lid_name not in objs_info:
@@ -474,7 +493,7 @@ class CoverWithLidEnv(RoboWitsEnv):
             lid_pos = get_pos(lid_name)
             lid_bounds = get_bounds(lid_name)
             lid_hull = get_hull_2d(lid_name)
-            initial_height = INITIAL_HEIGHTS.get(lid_name, 0.77)
+            initial_height = float(self.get_entity(lid_name).morph.pos[2])
 
             dist_right = float(np.linalg.norm(right_ee_pos - lid_pos))
             dist_left = float(np.linalg.norm(left_ee_pos - lid_pos))
@@ -489,7 +508,7 @@ class CoverWithLidEnv(RoboWitsEnv):
             is_lifted = lid_z > initial_height + HEIGHT_LIFT_THRESHOLD
 
             lid_within_pot = bounds_within_hull(lid_bounds, pot_hull)
-            overlap_ratio = compute_overlap_ratio(lid_hull, pot_hull)
+            overlap_ratio = compute_overlap_ratio(lid_hull, opening)
             pot_z = float(pot_pos[2]) if pot_pos is not None else 0.0
             lid_on_pot = overlap_ratio >= 0.8 and lid_z > pot_z + 0.01
 
@@ -516,10 +535,6 @@ class CoverWithLidEnv(RoboWitsEnv):
 
             return raw_score * multiplier
 
-        score_medium = compute_lid_score(LID_MEDIUM, MULTIPLIERS[LID_MEDIUM])
-        score_small = compute_lid_score(LID_SMALL, MULTIPLIERS[LID_SMALL])
-        score_large = compute_lid_score(LID_LARGE, MULTIPLIERS[LID_LARGE])
-
-        final_score = max(score_medium, score_small, score_large)
+        final_score = max(compute_lid_score(name, multiplier(name)) for name in self.COVER_CANDIDATES)
         score_t = torch.tensor(final_score, dtype=torch.float32, device=self._device)
         return score_t, {"score": score_t}

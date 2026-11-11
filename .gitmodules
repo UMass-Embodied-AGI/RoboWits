@@ -2,3 +2,7 @@
 	path = third_party/lerobot
 	url = https://github.com/Icefoxzhx/lerobot.git
 	branch = gs-gym-patches
+[submodule "third_party/genesis"]
+	path = third_party/genesis
+	url = https://github.com/Icefoxzhx/Genesis.git
+	branch = robowits

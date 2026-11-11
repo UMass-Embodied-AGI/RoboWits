@@ -1,0 +1,14 @@
+# RoboWits defaults for robot=bimanual_piper (merged over robowits_default.yaml, before config_overrides).
+# Arm bases bolted to the table top near its back edge (x = 0.17), 0.23 m either side of center (right arm at -y).
+# The real rigs' bases stand at table height: the real client's startup tip is "5 cm" above the table and 0.05 m
+# above the arm base. (An earlier digital twin put them at Marvin's 1.08 m, but that was never measured.) From here
+# the arms reach 100% / 88% tip-down of the default object area 5 cm above the table. RoboWits keeps Marvin's ego camera.
+robot:
+  position: [0.20, 0.0, 0.76]
+  euler: [0.0, 0.0, 0.0]
+
+# From clear of the arm bases (x <= 0.27 at y = +-0.23) to where a tip can still point straight down across the
+# whole width.
+reachable_bounds:
+  x: [0.30, 0.60]
+  y: [-0.45, 0.45]

@@ -12,7 +12,7 @@ import torch
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held
+from gs_gym.envs.robowits.utils import check_released, check_still
 
 
 @register_task("robowits/04-pinch-card-v0")
@@ -27,6 +27,7 @@ class PinchCardEnv(RoboWitsEnv):
     Success criteria:
     - Bank card's 2D footprint overlaps target area by at least 50%
     - Bank card is resting on the target surface (not floating)
+    - Bank card has settled (low linear and angular speed)
     - Bank card is not being held by either gripper
     """
 
@@ -92,7 +93,9 @@ class PinchCardEnv(RoboWitsEnv):
                 collision=True,
             ),
             material=gs.materials.Rigid(rho=200.0, friction=0.4),
-            surface=gs.surfaces.Smooth(double_sided=True, color=(0.036, 0.177, 0.8)),
+            # No color override: the card's design is five coloured submeshes (blue body, white logo and text, red,
+            # orange and black marks), and a surface color paints all of them the body blue.
+            surface=gs.surfaces.Smooth(double_sided=True),
         )
         self._entities["bank_card"] = {
             "entity": bank_card,
@@ -186,8 +189,13 @@ class PinchCardEnv(RoboWitsEnv):
         if card_z > TARGET_TOP_Z + RESTING_Z_TOL:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
+        # Card must have settled. A card that slips out of the gripper or is thrown passes the height and
+        # overlap checks for a step while it tumbles through the band above the target.
+        if not check_still(card):
+            return torch.tensor([False], dtype=torch.bool, device=self._device)
+
         # Card must not be held by either gripper
-        if check_being_held(card, self._robot):
+        if not check_released(card, self._robot):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         def get_poly(obj):
@@ -425,7 +433,7 @@ class PinchCardEnv(RoboWitsEnv):
         TARGET_TOP_Z = 0.961  # top of target cube
         RESTING_Z_TOL = 0.05
         card_resting = card_z <= TARGET_TOP_Z + RESTING_Z_TOL
-        card_not_held = not check_being_held(objs_info[CARD], self._robot)
+        card_not_held = check_released(objs_info[CARD], self._robot)
 
         if card_on_target and card_resting and card_not_held:
             score = 1.0

@@ -14,6 +14,7 @@ import torch
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
+from gs_gym.envs.robowits.utils import check_still
 from gs_gym.scenes.schema import MPMOptionsArgs
 
 
@@ -28,7 +29,7 @@ class StabilizeEggEnv(RoboWitsEnv):
     Success criteria:
     - Egg's base is inside the bowl's footprint
     - Egg is upright (tilt <= 5 degrees from vertical)
-    - Egg is stationary (low velocity)
+    - Egg and bowl are still (utils.check_still, speed <= 1 cm/s)
     - Objects remain within table bounds
     """
 
@@ -162,7 +163,7 @@ class StabilizeEggEnv(RoboWitsEnv):
         TABLE_X_MIN, TABLE_X_MAX = 0.21, 1.00
         TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
         TILT_DEG_MAX = 5.0
-        SPEED_MAX = 0.01
+        SPEED_MAX = 0.01  # stricter than the shared 2 cm/s speed limit; spin uses the shared limit
         MARGIN = 1e-3
 
         egg = objs_info.get("egg")
@@ -247,17 +248,8 @@ class StabilizeEggEnv(RoboWitsEnv):
             if tilt > TILT_DEG_MAX:
                 return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        egg_vel = egg.get("vel")
-        if egg_vel is not None:
-            speed = math.sqrt(float(egg_vel[0]) ** 2 + float(egg_vel[1]) ** 2 + float(egg_vel[2]) ** 2)
-            if speed > SPEED_MAX:
-                return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        bowl_vel = bowl.get("vel")
-        if bowl_vel is not None:
-            speed = math.sqrt(float(bowl_vel[0]) ** 2 + float(bowl_vel[1]) ** 2 + float(bowl_vel[2]) ** 2)
-            if speed > SPEED_MAX:
-                return torch.tensor([False], dtype=torch.bool, device=self._device)
+        if not (check_still(egg, lin_tol=SPEED_MAX) and check_still(bowl, lin_tol=SPEED_MAX)):
+            return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         return torch.tensor([True], dtype=torch.bool, device=self._device)
 
@@ -322,15 +314,6 @@ class StabilizeEggEnv(RoboWitsEnv):
                 b = b[0]
             return b
 
-        def get_vel(name):
-            obj = objs_info.get(name)
-            if obj is None:
-                return None
-            v = obj.get("vel")
-            if v is None:
-                return None
-            return _to_vec3(v)
-
         def is_point_in_aabb_xy(point, bounds):
             if bounds is None or point is None:
                 return False
@@ -354,12 +337,7 @@ class StabilizeEggEnv(RoboWitsEnv):
         def is_egg_upright():
             egg_euler = get_euler(EGG)
             tilt = tilt_from_vertical_deg(egg_euler)
-            egg_vel = get_vel(EGG)
-            is_stable = True
-            if egg_vel is not None:
-                speed = float(np.linalg.norm(egg_vel))
-                is_stable = speed < 0.05
-            return tilt <= TILT_DEG_MAX and is_stable
+            return tilt <= TILT_DEG_MAX and check_still(objs_info[EGG])
 
         def is_egg_in_bowl():
             egg_pos = get_pos(EGG)

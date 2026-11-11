@@ -19,11 +19,14 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-CameraType = Literal["rasterizer", "batch", "nyx"]
+CameraType = Literal["rasterizer", "batch", "nyx", "luisa"]
 
 #: Samples per pixel for Nyx. Enough to be clean once the denoiser runs. Matches what
 #: mcaps uses for its Nyx cameras (spp=32, mode="pt_fast", denoise=True).
 NYX_DEFAULT_SPP = 32
+
+#: Samples per pixel for LuisaRender (denoised).
+LUISA_DEFAULT_SPP = 64
 
 #: Nyx render mode. FastPathTracer is the usable-latency path tracer; RefPathTracer is
 #: the ground-truth reference.
@@ -39,9 +42,6 @@ GALLERY_CAM_POS = (1.5122, -0.767, 1.8931)
 GALLERY_CAM_LOOKAT = (0.838, -0.3497, 1.2837)
 GALLERY_CAM_FOV = 40
 
-#: Env maps live in a separate assets repo from the gs-gym ones.
-ENVMAP_REPO = "Genesis-Intelligence/Digital_twin_asset"
-ENVMAP_DIR = "envmap/4K"
 
 #: Per-task env map, so each scene gets a distinct backdrop. Tasks not listed fall back to
 #: DEFAULT_ENV_MAP.
@@ -87,6 +87,45 @@ def env_map_for_task(task_id: str | None) -> str:
     return TASK_ENVMAP.get((task_id or "").zfill(2), DEFAULT_ENV_MAP)
 
 
+def env_map_path(texture: str | None = None) -> str:
+    """Local path of an env-map texture: an absolute path, a bare .exr name resolved against
+    ``assets/hf_assets/envmap/``, or a path inside ``assets/``. Defaults to DEFAULT_ENV_MAP."""
+    import os
+
+    from gs_gym.common.utils.asset_utils import get_asset_path
+
+    path = texture or DEFAULT_ENV_MAP
+    if os.path.isabs(path) or os.path.exists(path):
+        return path
+    if "/" in path:
+        return get_asset_path(path)
+    return get_asset_path(f"hf_assets/envmap/{path}")
+
+
+def make_luisa_renderer(env_map: str | None = None, env_multiplier: float | None = None, lights: tuple = ()):
+    """The scene-level LuisaRender renderer that ``luisa`` cameras need, lit by the same panorama as Nyx.
+
+    Genesis imports LuisaRenderPy from genesis/ext/LuisaRender/build/bin, which the plain submodule checkout does not
+    have: link a LuisaRender build of the commit Genesis pins at third_party/genesis/genesis/ext/LuisaRender/build.
+
+    ``lights``: Genesis SphereLights. None by default, so the panorama alone lights the scene: Genesis's own default
+    (a radius-4 sphere light 10 m up at intensity 10) saturates the white table and arms however dim the sky is.
+    """
+    import genesis as gs
+
+    return gs.renderers.RayTracer(
+        env_surface=gs.surfaces.Emission(
+            emissive_texture=gs.textures.ImageTexture(
+                image_path=env_map_path(env_map),
+                encoding="linear",
+                image_color=DEFAULT_ENV_MAP_MULTIPLIER if env_multiplier is None else env_multiplier,
+            ),
+        ),
+        env_radius=15.0,
+        lights=list(lights),
+    )
+
+
 def make_env_map(
     texture: str | None = None, multiplier: float = DEFAULT_ENV_MAP_MULTIPLIER, rotation: float | None = None
 ):
@@ -99,22 +138,9 @@ def make_env_map(
             against NYX_LIGHTS.
         rotation: Optional yaw applied to the map, to steer where the light comes from.
     """
-    import os
-
     import gs_nyx.nyx_py_sdk as nps
 
-    path = texture or DEFAULT_ENV_MAP
-    if not os.path.isabs(path) and not os.path.exists(path):
-        if "/" in path:
-            # A path inside the gs-gym assets repo.
-            from gs_gym.common.utils.asset_utils import get_asset_path
-
-            path = get_asset_path(path, pattern_is_dir=False)
-        else:
-            from huggingface_hub import hf_hub_download
-
-            path = hf_hub_download(ENVMAP_REPO, f"{ENVMAP_DIR}/{path}", repo_type="dataset")
-
+    path = env_map_path(texture)
     env_map = nps.EnvironmentMapAsset()
     env_map.texture = path
     env_map.layout = nps.EEnvMapLayout.LongLat
@@ -200,6 +226,16 @@ def make_camera_options(
                     rotation=env_rotation,
                 ),
             )
+        # NyxCameraOptions defaults to a 0.1 m near plane against the rasterizer's 0.01 m. The wrist cameras sit on
+        # the gripper, so at 0.1 m Nyx clipped away all but the fingertips, and sliced open anything held close
+        # (a grasped mug's rim showed its black inner faces). Match the rasterizer unless the caller sets one.
+        placement.setdefault("near", 0.01)
         return NyxCameraOptions(**placement, **_nyx_extras(spp, render_mode, env_maps))
 
-    raise ValueError(f"Unknown camera_type '{camera_type}'. Available: 'rasterizer', 'batch', 'nyx'")
+    if camera_type == "luisa":
+        # LuisaRender path tracing. The scene must be created with make_luisa_renderer(), which carries the sky.
+        from genesis.options.sensors import RaytracerCameraOptions
+
+        return RaytracerCameraOptions(**placement, spp=spp or LUISA_DEFAULT_SPP, denoise=True)
+
+    raise ValueError(f"Unknown camera_type '{camera_type}'. Available: 'rasterizer', 'batch', 'nyx', 'luisa'")

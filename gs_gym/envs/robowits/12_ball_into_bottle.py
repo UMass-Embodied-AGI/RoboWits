@@ -33,7 +33,7 @@ class BallIntoBottleEnv(RoboWitsEnv):
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
-        return "Transfer the ball from the blue container into the red bottle."
+        return "Transfer the blue ball from the container into the red bottle."
 
     TABLE_Z = 0.76
 

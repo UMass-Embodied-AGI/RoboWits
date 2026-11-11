@@ -1,6 +1,6 @@
 """SeparateMarblesAndSand environment for RoboWits.
 
-Task: Remove sand from the jar and keep the marbles in the jar.
+Task: Remove the sand from the cup, keeping the marbles in the cup and the cup upright.
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ import numpy as np
 import torch
 
 from gs_gym.common.utils import get_asset_path
+from gs_gym.common.utils.math_utils import quat_apply
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
 from gs_gym.scenes.schema import MPMOptionsArgs
@@ -21,11 +22,16 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
 
     Individual grains are too small to pick efficiently. By assembling a
     colander over a bowl, the robot creates a gravity-powered separator
-    that splits marbles from sand and enables clean transfer into the jar.
+    that splits marbles from sand and enables clean transfer into the cup.
 
     Success criteria:
-    - All five marbles are inside the jar's 3D AABB
-    - At least 80% of sand particles are outside the jar's XY footprint
+    - All five marbles are inside the cup's 3D AABB
+    - At least ``SAND_REMOVED_MIN`` (95%) of sand particles are outside the cup's XY footprint.
+      Pouring through the colander empties the cup to 99.9% (teleop_mcap/15_SUC.pkl), so the
+      bar costs a real solution nothing while leaving less room for a partial spill.
+    - The cup stands upright (axis within ``CUP_MAX_TILT_DEG`` of vertical). Knocking it
+      over spills the sand past its mouth while the marbles stay inside the (now
+      horizontal) AABB, which otherwise passes both checks above.
     """
 
     # MPM sand plus marbles: far faster on the GPU backend.
@@ -34,9 +40,11 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
     @property
     def task_description(self) -> str:
         """Return a description of the current task."""
-        return "Remove sand from the jar and keep the marbles in the jar."
+        return "Remove the sand from the cup, keeping the marbles in the cup and the cup upright."
 
     TABLE_Z = 0.76
+    CUP_MAX_TILT_DEG = 30.0
+    SAND_REMOVED_MIN = 0.95
 
     def __init__(
         self,
@@ -74,20 +82,20 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         )
         return args
 
-    # The jar and everything it holds move as one rigid cluster. Exposed as a class
+    # The cup and everything it holds move as one rigid cluster. Exposed as a class
     # attribute so the mutations can extend it instead of re-declaring it: their
     # hand-written copies had drifted to listing "sand" first, which silently made
     # ``marble_1`` the group anchor (``place_group_together`` skips particles when
-    # choosing one) rather than the jar that defines the cluster.
-    JAR_CLUSTER = ("jar", "marble_1", "marble_2", "marble_3", "marble_4", "marble_5", "sand")
+    # choosing one) rather than the cup that defines the cluster.
+    CUP_CLUSTER = ("cup", "marble_1", "marble_2", "marble_3", "marble_4", "marble_5", "sand")
 
     @property
     def placement_groups(self) -> PlacementGroups:
-        """Colander and bowl placed independently; jar, marbles, and sand move as one cluster (MPM sand follows)."""
-        return ("colander", "bowl", self.JAR_CLUSTER)
+        """Colander and bowl placed independently; cup, marbles, and sand move as one cluster (MPM sand follows)."""
+        return ("colander", "bowl", self.CUP_CLUSTER)
 
     def _add_custom_entities(self) -> None:
-        """Add colander, bowl, jar, marbles, and sand."""
+        """Add colander, bowl, cup, marbles, and sand."""
         coacd_options = gs.options.CoacdOptions(
             threshold=0.01, preprocess_resolution=80, max_convex_hull=20, decimate=True
         )
@@ -129,7 +137,7 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
             "entity": bowl,
         }
 
-        jar = self._scene.scene.add_entity(
+        cup = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path(
@@ -146,8 +154,8 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
             material=gs.materials.Rigid(rho=300.0, friction=0.9, sdf_max_res=256),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["jar"] = {
-            "entity": jar,
+        self._entities["cup"] = {
+            "entity": cup,
         }
 
         # Marbles (5 mesh objects)
@@ -198,30 +206,30 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         }
 
     def _check_success(self) -> torch.Tensor:
-        """Check if task is successful: marbles in jar, sand outside jar."""
+        """Check if task is successful: marbles in cup, sand outside cup."""
         objs_info = self.collect_objs_info()
 
         TABLE_X_MIN, TABLE_X_MAX = 0.21, 1.00
         TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
 
-        jar = objs_info.get("jar")
+        cup = objs_info.get("cup")
         sand = objs_info.get("sand")
         marble_names = [f"marble_{i}" for i in range(1, 6)]
         marbles = [objs_info.get(n) for n in marble_names]
 
-        if jar is None or any(m is None for m in marbles) or sand is None:
+        if cup is None or any(m is None for m in marbles) or sand is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        jar_bounds = jar.get("bounds")
-        if jar_bounds is None:
+        cup_bounds = cup.get("bounds")
+        if cup_bounds is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        all_marbles_in_jar = True
-        lo, hi = jar_bounds[0], jar_bounds[1]
+        all_marbles_in_cup = True
+        lo, hi = cup_bounds[0], cup_bounds[1]
         for m in marbles:
             mpos = m.get("pos")
             if mpos is None:
-                all_marbles_in_jar = False
+                all_marbles_in_cup = False
                 break
             if not (
                 (mpos[0] >= lo[0] - 1e-4)
@@ -231,10 +239,10 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
                 and (mpos[2] >= lo[2] - 1e-4)
                 and (mpos[2] <= hi[2] + 1e-4)
             ):
-                all_marbles_in_jar = False
+                all_marbles_in_cup = False
                 break
 
-        if not all_marbles_in_jar:
+        if not all_marbles_in_cup:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         sand_pos = sand.get("pos")
@@ -246,19 +254,19 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         if sand_pos.shape[0] == 0:
-            frac_sand_outside_jar = 1.0
+            frac_sand_outside_cup = 1.0
         else:
-            # Sand counts as "in jar" if within the jar's XY column at any height.
+            # Sand counts as "in cup" if within the cup's XY column at any height.
             # Using the full 3D AABB would count sand that leaked straight down out of
-            # the fixed cup onto the table below (z < jar AABB floor ≈ table surface) as
+            # the cup onto the table below (z < cup AABB floor ≈ table surface) as
             # "removed" without any real separation — a reward hack. Requiring horizontal
-            # displacement out of the jar footprint measures genuine sand removal.
+            # displacement out of the cup footprint measures genuine sand removal.
             inside_x = (sand_pos[:, 0] >= lo[0] - 1e-4) & (sand_pos[:, 0] <= hi[0] + 1e-4)
             inside_y = (sand_pos[:, 1] >= lo[1] - 1e-4) & (sand_pos[:, 1] <= hi[1] + 1e-4)
             sand_inside_mask = inside_x & inside_y
-            frac_sand_outside_jar = 1.0 - np.mean(sand_inside_mask.astype(float))
+            frac_sand_outside_cup = 1.0 - np.mean(sand_inside_mask.astype(float))
 
-        sand_condition = frac_sand_outside_jar >= 0.8 - 1e-6
+        sand_condition = frac_sand_outside_cup >= self.SAND_REMOVED_MIN - 1e-6
 
         def rigid_on_table(obj):
             hull = obj.get("convex_hull_2d")
@@ -273,7 +281,15 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
                 TABLE_Y_MIN - 1e-3 <= pos[1] <= TABLE_Y_MAX + 1e-3
             )
 
-        jar_on_table = rigid_on_table(jar)
+        cup_on_table = rigid_on_table(cup)
+
+        # The cup's up axis in its body frame is whatever maps to world +z in its
+        # (upright) morph orientation; a reset yaw leaves that axis vertical.
+        q_init = torch.as_tensor(self._entities["cup"]["initial_quat"], dtype=torch.float32)
+        q_init_inv = q_init * torch.tensor([1.0, -1.0, -1.0, -1.0])
+        body_up = quat_apply(q_init_inv, torch.tensor([0.0, 0.0, 1.0]))
+        world_up = quat_apply(torch.as_tensor(cup["quat"], dtype=torch.float32), body_up)
+        cup_upright = float(world_up[2]) >= np.cos(np.deg2rad(self.CUP_MAX_TILT_DEG))
         marbles_on_table = all(rigid_on_table(m) for m in marbles)
 
         if sand_pos.shape[0] == 0:
@@ -285,9 +301,10 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         sand_on_table = frac_sand_on_table >= 0.5
 
         result = (
-            bool(all_marbles_in_jar)
+            bool(all_marbles_in_cup)
             and bool(sand_condition)
-            and bool(jar_on_table)
+            and bool(cup_on_table)
+            and bool(cup_upright)
             and bool(marbles_on_table)
             and bool(sand_on_table)
         )
@@ -301,25 +318,25 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        jar = objs_info.get("jar")
+        cup = objs_info.get("cup")
         sand = objs_info.get("sand")
         marble_names = [f"marble_{i}" for i in range(1, 6)]
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
-        if jar is None or sand is None:
+        if cup is None or sand is None:
             return zero, {"success": zero}
 
-        jar_bounds = jar.get("bounds")
-        if jar_bounds is None:
+        cup_bounds = cup.get("bounds")
+        if cup_bounds is None:
             return zero, {"success": zero}
-        lo, hi = np.array(jar_bounds[0], dtype=float), np.array(jar_bounds[1], dtype=float)
+        lo, hi = np.array(cup_bounds[0], dtype=float), np.array(cup_bounds[1], dtype=float)
 
-        # EE proximity to jar (0 → 0.2)
+        # EE proximity to cup (0 → 0.2)
         APPROACH, REACH, TOUCH = 0.3, 0.15, 0.05
-        jar_pos = np.array(jar.get("pos", [0.0, 0.0, 0.0]), dtype=float)
+        cup_pos = np.array(cup.get("pos", [0.0, 0.0, 0.0]), dtype=float)
         right_ee = self._robot.right_ee_pose[0, :3].cpu().numpy()
         left_ee = self._robot.left_ee_pose[0, :3].cpu().numpy()
-        min_dist = min(float(np.linalg.norm(right_ee - jar_pos)), float(np.linalg.norm(left_ee - jar_pos)))
+        min_dist = min(float(np.linalg.norm(right_ee - cup_pos)), float(np.linalg.norm(left_ee - cup_pos)))
         if min_dist <= TOUCH:
             ee_score = 0.2
         elif min_dist <= REACH:
@@ -329,13 +346,13 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         else:
             ee_score = 0.0
 
-        # Fraction of sand outside jar
+        # Fraction of sand outside cup
         sand_pos = sand.get("pos")
         if sand_pos is not None:
             sand_pos = np.asarray(sand_pos)
             if sand_pos.ndim == 2 and sand_pos.shape[1] == 3 and sand_pos.shape[0] > 0:
-                # In-jar = within the jar's XY column (see _check_success): avoids
-                # crediting sand that leaked straight down out of the fixed cup as removed.
+                # In-cup = within the cup's XY column (see _check_success): avoids
+                # crediting sand that leaked straight down out of the cup as removed.
                 inside = (
                     (sand_pos[:, 0] >= lo[0] - 1e-4)
                     & (sand_pos[:, 0] <= hi[0] + 1e-4)
@@ -348,7 +365,7 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
         else:
             frac_sand_outside = 1.0
 
-        # Fraction of marbles still inside jar
+        # Fraction of marbles still inside cup
         marbles_in = 0
         n_marbles = len(marble_names)
         for name in marble_names:
@@ -366,8 +383,8 @@ class SeparateMarblesAndSandEnv(RoboWitsEnv):
                 marbles_in += 1
         frac_marbles_in = marbles_in / max(n_marbles, 1)
 
-        # Sand removal: 0 → 0.8; marble retention bonus: up to 0.2
-        removal_frac = min(1.0, frac_sand_outside / 0.8)
+        # Sand removal: 0 → 0.8 (full at the success threshold); marble retention bonus: up to 0.2
+        removal_frac = min(1.0, frac_sand_outside / self.SAND_REMOVED_MIN)
         task_score = 0.8 * removal_frac + 0.2 * frac_marbles_in * removal_frac
 
         score = max(ee_score, task_score)

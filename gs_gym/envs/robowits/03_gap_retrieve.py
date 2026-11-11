@@ -11,7 +11,7 @@ import torch
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held, require_objs
+from gs_gym.envs.robowits.utils import check_released, require_objs
 
 
 @register_task("robowits/03-gap-retrieve-v0")
@@ -274,7 +274,7 @@ class GapRetrieveEnv(RoboWitsEnv):
         overlap_area = polygon_area(inter_poly) if len(inter_poly) >= 3 else 0.0
         overlap_fraction = overlap_area / key_area
 
-        lemon_not_held = not check_being_held(key, self._robot)
+        lemon_not_held = check_released(key, self._robot)
 
         return torch.tensor(
             [on_table and overlap_fraction >= 0.8 and lemon_not_held],

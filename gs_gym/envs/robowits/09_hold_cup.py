@@ -14,7 +14,7 @@ import torch
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held
+from gs_gym.envs.robowits.utils import check_released, check_still
 
 
 @register_task("robowits/09-hold-cup-v0")
@@ -27,7 +27,7 @@ class HoldCupEnv(RoboWitsEnv):
 
     Success criteria:
     - Cup's 2D footprint overlaps target area by at least 50%
-    - Cup is stable with near-zero linear velocity
+    - Cup is still (utils.check_still, speed <= 0.5 cm/s)
     - Cup is upright (tilt from vertical <= 20 degrees)
     - Cup remains within table bounds
     - Cup is not being held by either gripper
@@ -275,12 +275,8 @@ class HoldCupEnv(RoboWitsEnv):
 
         overlap_ok = (inter_area / cup_area) >= 0.5
 
-        vel = cup.get("vel")
-        if vel is None:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        vnorm = math.sqrt(float(vel[0]) ** 2 + float(vel[1]) ** 2 + float(vel[2]) ** 2)
-        stable_ok = vnorm <= 0.005
+        # Stricter than the shared 2 cm/s speed limit
+        stable_ok = check_still(cup, lin_tol=0.005)
 
         upright_ok = is_upright(cup, UPRIGHT_TOLERANCE_DEG)
 
@@ -294,7 +290,7 @@ class HoldCupEnv(RoboWitsEnv):
                 cup_ok = False
                 break
 
-        not_held = not check_being_held(cup, self._robot)
+        not_held = check_released(cup, self._robot)
 
         return torch.tensor(
             [overlap_ok and stable_ok and upright_ok and cup_ok and not_held], dtype=torch.bool, device=self._device

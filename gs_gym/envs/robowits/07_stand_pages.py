@@ -175,7 +175,7 @@ class StandPagesEnv(RoboWitsEnv):
             bounds = info.get("bounds")
             if not is_on_table(bounds):
                 return torch.tensor([False], dtype=torch.bool, device=self._device)
-            if _utils.check_being_held(info, self._robot):
+            if not _utils.check_released(info, self._robot):
                 return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         return torch.tensor([True], dtype=torch.bool, device=self._device)
@@ -212,7 +212,7 @@ class StandPagesEnv(RoboWitsEnv):
             obj = objs_info.get(name)
             if obj is None:
                 return 0.0
-            if _utils.check_being_held(obj, self._robot):
+            if not _utils.check_released(obj, self._robot):
                 return 0.0
             euler = obj.get("euler")
             if euler is None:

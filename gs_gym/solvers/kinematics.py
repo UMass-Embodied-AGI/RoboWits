@@ -156,12 +156,22 @@ class KinematicsSolver:
             raise ValueError(f"'{solver}' solver not available. Available: {available}")
 
         # Iterative IK solving
+        self.last_solve_nonfinite = False
         for _ in range(max_solver_iters):
             try:
                 velocity = pink.solve_ik(self.configuration, tasks, dt, solver=solver)
             except pink.exceptions.NoSolutionFound:
                 continue
-            self.update_configuration(self.configuration.integrate(velocity, dt))
+            # A degenerate QP can return NaN (17_01 ep 2: a converged target with a pi rotation). Integrating it
+            # would make the whole configuration NaN, so stop and keep the last finite one instead.
+            if not np.all(np.isfinite(velocity)):
+                self.last_solve_nonfinite = True
+                break
+            q_next = self.configuration.integrate(velocity, dt)
+            if not np.all(np.isfinite(q_next)):
+                self.last_solve_nonfinite = True
+                break
+            self.update_configuration(q_next)
 
             # Check for early convergence
             if all(np.linalg.norm(ft.compute_error(self.configuration)) <= stop_threshold for ft in frame_tasks):

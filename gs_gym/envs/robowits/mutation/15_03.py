@@ -20,7 +20,7 @@ class SeparateMarblesAndSandMut3Env(SeparateMarblesAndSandEnv):
         clutter_area = {"x_min": 0.25, "x_max": 0.88, "y_min": -0.62, "y_max": 0.62}
         for name in ("mesh_strainer",):
             self._object_reachable_areas[name] = clutter_area
-        # The bowl competes with the jar/marble cluster and the colander; give it
+        # The bowl competes with the cup/marble cluster and the colander; give it
         # the full default reachable x-range so a free spot exists.
         self._object_reachable_areas["bowl"] = {"x_min": 0.2, "x_max": 0.75, "y_min": -0.45, "y_max": 0.45}
 
@@ -70,7 +70,7 @@ class SeparateMarblesAndSandMut3Env(SeparateMarblesAndSandEnv):
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["bowl"] = {"entity": _e}
-        # Code Block: jar
+        # Code Block: cup
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -85,7 +85,7 @@ class SeparateMarblesAndSandMut3Env(SeparateMarblesAndSandEnv):
             material=gs.materials.Rigid(rho=300.0, friction=0.9, sdf_max_res=256),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["jar"] = {"entity": _e}
+        self._entities["cup"] = {"entity": _e}
         # Code Block: mesh strainer
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

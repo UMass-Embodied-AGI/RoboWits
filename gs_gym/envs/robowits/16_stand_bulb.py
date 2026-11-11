@@ -13,7 +13,7 @@ from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.placement import _is_fixed_entity
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held, require_objs
+from gs_gym.envs.robowits.utils import check_released, check_still, require_objs
 
 
 @register_task("robowits/16-stand-bulb-v0")
@@ -27,7 +27,7 @@ class StandBulbEnv(RoboWitsEnv):
     Success criteria:
     - Tall object overlaps target patch by at least 80%
     - Tall object is upright (Z extent dominates XY extents)
-    - Tall object is stable (low velocity)
+    - Tall object is still (utils.check_still)
     - Objects remain within table bounds
     - Tall object is not being held
     """
@@ -171,7 +171,6 @@ class StandBulbEnv(RoboWitsEnv):
 
         TABLE_X_MIN, TABLE_X_MAX = 0.21, 1.00
         TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
-        VEL_THRESHOLD = 0.05
         OVERLAP_RATIO_REQ = 0.80
         TABLE_MARGIN = 1e-3
 
@@ -284,10 +283,7 @@ class StandBulbEnv(RoboWitsEnv):
             xy_max = max(xmax - xmin, ymax - ymin)
             is_upright = z_ext > xy_max
 
-        v = tall.get("vel", None)
-        is_still = True
-        if v is not None and isinstance(v, np.ndarray) and v.shape == (3,):
-            is_still = float(np.linalg.norm(v)) <= VEL_THRESHOLD
+        is_still = check_still(tall)
 
         if not (is_upright and is_still):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
@@ -304,7 +300,7 @@ class StandBulbEnv(RoboWitsEnv):
         if overlap_ratio + 1e-6 < OVERLAP_RATIO_REQ:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        if check_being_held(tall, self._robot):
+        if not check_released(tall, self._robot):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         return torch.tensor([True], dtype=torch.bool, device=self._device)
@@ -501,17 +497,13 @@ class StandBulbEnv(RoboWitsEnv):
 
         bonus = 0.0
         tall_obj = objs_info[TALL]
-        tall_vel = tall_obj.get("vel")
         tall_bounds = tall_obj.get("bounds")
         if tall_bounds is not None:
             (xmin, ymin, zmin), (xmax, ymax, zmax) = tall_bounds
             z_ext = zmax - zmin
             xy_max = max(xmax - xmin, ymax - ymin)
             is_upright = z_ext > xy_max
-            is_stable = True
-            if tall_vel is not None and isinstance(tall_vel, np.ndarray) and tall_vel.shape == (3,):
-                is_stable = float(np.linalg.norm(tall_vel)) <= 0.05
-            if is_upright and is_stable and not check_being_held(tall_obj, self._robot):
+            if is_upright and check_still(tall_obj) and check_released(tall_obj, self._robot):
                 bonus = 0.1
 
         tall_overlap_ratio = compute_overlap_ratio(TALL)

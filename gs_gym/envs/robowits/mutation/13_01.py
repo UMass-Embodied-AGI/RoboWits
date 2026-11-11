@@ -11,6 +11,13 @@ CoverWithLidEnv = _import("gs_gym.envs.robowits.13_cover_with_lid").CoverWithLid
 
 @register_task("robowits/13_01-v0")
 class CoverWithLidMut1Env(CoverWithLidEnv):
+    """Add1 mutation of task 13 (CoverWithLid).
+
+    This requires reasoning about cross-sectional fit. Only the correctly sized circular lid will cover the
+    opening with minimal excess. The circular geometry and ring reference enable precise centering without
+    measurements.
+    """
+
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
@@ -42,8 +49,8 @@ class CoverWithLidMut1Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.1576, 0.1576, 0.5),
-                pos=(0.67, -0.145, 0.76 + 0.0482 * 0.1576),
+                scale=(0.1418, 0.1418, 0.5),
+                pos=(0.67, -0.145, 0.76 + 0.0482 * 0.1418),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
                 collision=True,
@@ -57,8 +64,8 @@ class CoverWithLidMut1Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.2048, 0.2048, 0.5),
-                pos=(0.64, 0.14, 0.76 + 0.0482 * 0.2048),
+                scale=(0.2207, 0.2207, 0.5),
+                pos=(0.64, 0.14, 0.76 + 0.0482 * 0.2207),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
                 collision=True,
@@ -72,8 +79,8 @@ class CoverWithLidMut1Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.3152, 0.3152, 0.5),
-                pos=(0.40, 0.095, 0.76 + 0.0482 * 0.3152),
+                scale=(0.3145, 0.3145, 0.5),
+                pos=(0.40, 0.095, 0.76 + 0.0482 * 0.3145),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
                 collision=True,

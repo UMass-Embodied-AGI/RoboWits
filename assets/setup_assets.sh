@@ -33,6 +33,11 @@ if [[ "$SKIP_HF" -eq 0 ]]; then
     hf download "$HF_REPO" \
         --repo-type dataset \
         --local-dir "$HF_ASSETS_DIR"
+    # BlenderKit models no longer downloadable from BlenderKit ship in the HF repo instead
+    if [[ -d "$HF_ASSETS_DIR/blender_kit" ]]; then
+        mkdir -p "$ASSETS_DIR/blender_kit"
+        cp -r "$HF_ASSETS_DIR/blender_kit/." "$ASSETS_DIR/blender_kit/"
+    fi
 fi
 
 if [[ "$SKIP_BLENDERKIT" -eq 0 ]]; then

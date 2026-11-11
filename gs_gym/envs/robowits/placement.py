@@ -145,7 +145,7 @@ def particle_frame_from_anchor(cloud_initial_pos, anchor_initial_pos, anchor_ini
     Both the scene sampler and the dataset converter derive the stored transform this way,
     from the anchor's *settled* pose rather than the pose placement asked for. Those differ
     whenever the container is dynamic and gets nudged while the scene settles -- as task 15's
-    jar is by the sand pouring onto it -- and using the placement-time pose left the cloud
+    cup is by the sand pouring onto it -- and using the placement-time pose left the cloud
     offset from the container it belongs to.
     """
     q0 = np.asarray(anchor_initial_quat, dtype=np.float64).reshape(4)

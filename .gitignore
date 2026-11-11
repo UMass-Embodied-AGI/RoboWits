@@ -30,6 +30,7 @@ video/
 tmp/
 /data
 checkpoints/
+assets/
 
 # Generated documentation
 docs/

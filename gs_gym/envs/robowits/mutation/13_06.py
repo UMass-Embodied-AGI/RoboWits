@@ -11,6 +11,13 @@ CoverWithLidEnv = _import("gs_gym.envs.robowits.13_cover_with_lid").CoverWithLid
 
 @register_task("robowits/13_06-v0")
 class CoverWithLidMut6Env(CoverWithLidEnv):
+    """Trap2 mutation of task 13 (CoverWithLid).
+
+    This requires reasoning about cross-sectional fit. Only the correctly sized circular lid will cover the
+    opening with minimal excess. The circular geometry and ring reference enable precise centering without
+    measurements.
+    """
+
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
@@ -42,7 +49,7 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.1585, 0.1585, 0.5),
+                scale=(0.1418, 0.1418, 0.5),
                 pos=(0.50, -0.14, 0.76765),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
@@ -57,7 +64,7 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.214, 0.214, 0.5),
+                scale=(0.2207, 0.2207, 0.5),
                 pos=(0.37, 0.13, 0.77032),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
@@ -72,7 +79,7 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.317, 0.317, 0.5),
+                scale=(0.3145, 0.3145, 0.5),
                 pos=(0.62, 0.08, 0.77528),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
@@ -87,8 +94,8 @@ class CoverWithLidMut6Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/9eeac844-2584-473c-bb5f-1908f3e3dbaa/obj.glb", pattern_is_dir=False),
-                scale=0.576,
-                pos=(0.64, -0.12, 0.77152),
+                scale=0.5388,
+                pos=(0.64, -0.12, 0.7708),
                 euler=(0, 0, 0),
                 fixed=True,
                 collision=True,

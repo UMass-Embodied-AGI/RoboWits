@@ -52,7 +52,7 @@ class SeparateMarblesAndSandMut5Env(SeparateMarblesAndSandEnv):
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["bowl"] = {"entity": _e}
-        # Code Block: jar
+        # Code Block: cup
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
@@ -67,7 +67,7 @@ class SeparateMarblesAndSandMut5Env(SeparateMarblesAndSandEnv):
             material=gs.materials.Rigid(rho=300.0, friction=0.9, sdf_max_res=256),
             surface=gs.surfaces.Rough(double_sided=True),
         )
-        self._entities["jar"] = {"entity": _e}
+        self._entities["cup"] = {"entity": _e}
         # Code Block: coffee filter
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(

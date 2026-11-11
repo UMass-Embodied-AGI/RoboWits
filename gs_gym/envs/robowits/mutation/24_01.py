@@ -16,7 +16,6 @@ class RaisePlatformMut1Env(RaisePlatformEnv):
         """Define placement groups for random initialization."""
         return (
             ("cup_support_1", "cup_support_2"),
-            ("support_cube_1"),
             ("heavy_book", "support_cube_2"),
             "cardboard_tube",
             "kitchen_towel",
@@ -74,13 +73,6 @@ class RaisePlatformMut1Env(RaisePlatformEnv):
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["cup_support_2"] = {"entity": _e}
-        # Code Block: support cube 1
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Box(pos=(0.57, 0.0, 0.3), euler=(0, 0, 0), size=(0.02, 0.02, 0.03), fixed=True, collision=True),
-            material=gs.materials.Rigid(rho=200.0, friction=1),
-            surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
-        )
-        self._entities["support_cube_1"] = {"entity": _e}
         # Code Block: support cube 2
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(

@@ -53,7 +53,10 @@ class FlatScene:
         img_resolution: tuple[int, int] | None = None,
         enable_collision: bool = False,
         add_ground_plane: bool = False,
+        ground_visible: bool = True,
+        renderer=None,
     ) -> None:
+        """``renderer``: a scene-level Genesis renderer (e.g. gs.renderers.RayTracer for LuisaRender cameras)."""
         self._n_envs = n_envs
 
         # Create Genesis scene
@@ -68,6 +71,11 @@ class FlatScene:
                 enable_collision=enable_collision,
                 tolerance=1e-6,
                 noslip_iterations=10,
+                **(
+                    {"constraint_timeconst": args.constraint_timeconst}
+                    if getattr(args, "constraint_timeconst", None) is not None
+                    else {}
+                ),
             ),
             sph_options=_sph_options_from_args(getattr(args, "sph_options", None)),
             mpm_options=_mpm_options_from_args(getattr(args, "mpm_options", None)),
@@ -78,12 +86,14 @@ class FlatScene:
                 refresh_rate=60,
             ),
             show_viewer=show_viewer,
+            **({"renderer": renderer} if renderer is not None else {}),
         )
 
-        # Add ground plane if requested
+        # Add ground plane if requested. ground_visible=False keeps it as a collision floor but leaves it out of every
+        # renderer (Nyx then shows its environment map's floor instead of the checkerboard).
         self._plane = None
         if add_ground_plane:
-            self._plane = self._scene.add_entity(gs.morphs.Plane())
+            self._plane = self._scene.add_entity(gs.morphs.Plane(visualization=ground_visible))
 
     def build(self) -> None:
         """Build the scene."""

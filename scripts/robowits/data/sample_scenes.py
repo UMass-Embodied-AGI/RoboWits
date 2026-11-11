@@ -59,7 +59,11 @@ try:
     from PIL import Image
     import gs_gym
     from gs_gym.envs.robowits import utils as _utils
-    from gs_gym.envs.robowits.placement import particle_frame_from_anchor, particle_transform_to_local
+    from gs_gym.envs.robowits.placement import (
+        _is_fixed_entity,
+        particle_frame_from_anchor,
+        particle_transform_to_local,
+    )
 
     def to_jsonable(obj):
         if isinstance(obj, np.ndarray):
@@ -159,6 +163,11 @@ try:
         floor = top - FALL_SLACK
         out = []
         for name, info in rigid_only(objs_info).items():
+            # A fixed body cannot fall, and some reach below the table top on purpose: task 04's
+            # small table stands with its legs 7.5 cm into it, which rejected every 04 scene.
+            entity = inner_env._entities.get(name, {}).get("entity")
+            if entity is not None and _is_fixed_entity(entity):
+                continue
             b = info.get("bounds")
             if b is None:
                 continue
@@ -227,10 +236,7 @@ try:
     }
     while len(scenes) < n_scenes and attempts < max_attempts:
         attempts += 1
-        # Force a different random state per attempt. ``vec_env.reset(seed=...)``
-        # only re-seeds gym's ``self.np_random``; the numpy RNG used by the
-        # placement sampler is ``inner_env._random``, so we must seed it too.
-        inner_env.seed(seed + attempts)
+        # A different seed per attempt gives a different random placement.
         vec_env.reset(seed=seed + attempts)
 
         # A reset whose random placement gave up yields the canonical layout, so
@@ -275,11 +281,11 @@ try:
         # Particle clouds are stored once per task, in the cloud's own placement frame,
         # and each scene records only the rigid transform that puts it back in the world.
         # Capturing world coordinates instead (the old format) pinned the cloud to the one
-        # scene it came from: every other scene started with its sand outside the jar.
+        # scene it came from: every other scene started with its sand outside the cup.
         # Derive each cloud's frame from its group anchor's *settled* pose, not from the
         # transform placement applied. The stored rigid poses are post-settle, and a dynamic
-        # container moves in between -- task 15's jar is nudged by the sand pouring onto it,
-        # which left the cloud offset from the jar in ~15% of scenes.
+        # container moves in between -- task 15's cup is nudged by the sand pouring onto it,
+        # which left the cloud offset from the cup in ~15% of scenes.
         cloud_anchor = {}
         for _group in inner_env.placement_groups or ():
             if not isinstance(_group, tuple):

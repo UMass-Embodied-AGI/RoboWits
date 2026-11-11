@@ -33,6 +33,9 @@ class SceneArgs(BaseModel):
     gravity: tuple[float, float, float] = (0.0, 0.0, -9.81)
     dt: float
     substeps: int
+    # Rigid contact stiffness: time (s) to resolve a constraint; Genesis clamps it to >= 2 substeps and defaults
+    # to 0.01. Lower is stiffer. None keeps Genesis's default.
+    constraint_timeconst: float | None = None
 
     # Particle solvers (None → FlatScene defaults)
     sph_options: SPHOptionsArgs | None = None

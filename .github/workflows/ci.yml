@@ -23,7 +23,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install ruff
-        run: pip install ruff
+        run: pip install ruff==0.15.0  # pinned: an unpinned ruff picks up new rules and fails CI on unchanged code
 
       - name: Run ruff format check
         run: ruff format --check --line-length=120 .

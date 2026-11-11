@@ -11,6 +11,15 @@ CoverWithLidEnv = _import("gs_gym.envs.robowits.13_cover_with_lid").CoverWithLid
 
 @register_task("robowits/13_02-v0")
 class CoverWithLidMut2Env(CoverWithLidEnv):
+    """Add2 mutation of task 13 (CoverWithLid).
+
+    The intended lid is fixed, forcing tool substitution. The agent must reason about circular fit and select a
+    different flat, round object with a diameter just larger than the opening to achieve precise coverage.
+    """
+
+    # lid_medium is fixed to the table; the plate is the substitute cover.
+    COVER_CANDIDATES = (*CoverWithLidEnv.COVER_CANDIDATES, "plate_medium")
+
     @property
     def _object_reachable_areas(self) -> dict:
         # The parent exposes this as a property, so extend it rather than assigning.
@@ -64,7 +73,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.1743, 0.1743, 0.5),
+                scale=(0.1733, 0.1733, 0.5),
                 pos=(0.36, -0.10, 0.7684),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
@@ -79,10 +88,10 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.2694, 0.2694, 0.5),
+                scale=(0.2697, 0.2697, 0.5),
                 pos=(0.70, 0.04, 0.7730),
                 euler=(0.0, 0.0, 90.0),
-                fixed=False,
+                fixed=True,
                 collision=True,
             ),
             material=gs.materials.Rigid(rho=500, friction=1.5),
@@ -94,7 +103,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.3803, 0.3803, 0.5),
+                scale=(0.3844, 0.3844, 0.5),
                 pos=(0.70, -0.34, 0.7783),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
@@ -109,8 +118,8 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/2746f256-610e-4b14-949c-6bd5e2718f5a/obj.glb", pattern_is_dir=False),
-                scale=0.6914,
-                pos=(0.62, 0.22, 0.7659),
+                scale=0.6582,
+                pos=(0.62, 0.22, 0.7656),
                 euler=(0, 0, 0),
                 fixed=False,
                 collision=True,
@@ -122,7 +131,7 @@ class CoverWithLidMut2Env(CoverWithLidEnv):
         # Code Block: coaster medium
         _e = self._scene.scene.add_entity(
             gs.morphs.Cylinder(
-                pos=(0.64, -0.02, 0.763), euler=(0, 0, 0), radius=0.085, height=0.006, fixed=True, collision=True
+                pos=(0.64, -0.02, 0.763), euler=(0, 0, 0), radius=0.0856, height=0.006, fixed=True, collision=True
             ),
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.55, 0.36, 0.2), double_sided=True),

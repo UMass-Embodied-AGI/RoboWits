@@ -11,6 +11,15 @@ CoverWithLidEnv = _import("gs_gym.envs.robowits.13_cover_with_lid").CoverWithLid
 
 @register_task("robowits/13_03-v0")
 class CoverWithLidMut3Env(CoverWithLidEnv):
+    """Pivot1 mutation of task 13 (CoverWithLid).
+
+    The intended lid is fixed, forcing tool substitution. The agent must reason about circular fit and select a
+    different flat, round object with a diameter just larger than the opening to achieve precise coverage.
+    """
+
+    # lid_medium is fixed to the table; the plate is the substitute cover.
+    COVER_CANDIDATES = (*CoverWithLidEnv.COVER_CANDIDATES, "plate_medium")
+
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
@@ -42,7 +51,7 @@ class CoverWithLidMut3Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.0788, 0.0788, 0.5),
+                scale=(0.0827, 0.0827, 0.5),
                 pos=(0.60, -0.10, 0.7640),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
@@ -57,10 +66,10 @@ class CoverWithLidMut3Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.1072, 0.1072, 0.5),
+                scale=(0.1288, 0.1288, 0.5),
                 pos=(0.40, 0.12, 0.7655),
                 euler=(0.0, 0.0, 90.0),
-                fixed=False,
+                fixed=True,
                 collision=True,
             ),
             material=gs.materials.Rigid(rho=500, friction=1.5),
@@ -72,7 +81,7 @@ class CoverWithLidMut3Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/c1a05823-5cb6-4e64-b3f3-5fd5a86cfc0b/obj.glb", pattern_is_dir=False),
-                scale=(0.1418, 0.1418, 0.5),
+                scale=(0.1835, 0.1835, 0.5),
                 pos=(0.68, -0.12, 0.7672),
                 euler=(0.0, 0.0, 90.0),
                 fixed=False,
@@ -87,8 +96,8 @@ class CoverWithLidMut3Env(CoverWithLidEnv):
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/2746f256-610e-4b14-949c-6bd5e2718f5a/obj.glb", pattern_is_dir=False),
-                scale=0.384,
-                pos=(0.50, 0.12, 0.7633),
+                scale=0.3144,
+                pos=(0.50, 0.12, 0.7627),
                 euler=(0.0, 0.0, 0.0),
                 fixed=False,
                 collision=True,

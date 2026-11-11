@@ -5,6 +5,7 @@ import genesis as gs
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups
+from gs_gym.envs.robowits.water_mug import add_water_mug
 
 DifferentiateCubesEnv = _import("gs_gym.envs.robowits.30_differentiate_cubes").DifferentiateCubesEnv
 
@@ -55,21 +56,14 @@ class DifferentiateCubesMut1Env(DifferentiateCubesEnv):
             surface=gs.surfaces.Metal(color=(0.9, 0.1, 0.1), double_sided=False, metal_type="iron"),
         )
         self._entities["metal_cube"] = {"entity": _e}
-        # Code Block: water pitcher
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/c242567e-052d-4561-b2c0-2fed8a5e576b/obj.glb", pattern_is_dir=False),
-                scale=1.5,
-                pos=(0.40, -0.05, 0.854),
-                euler=(0, 0, 180),
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0),
+        # Code Block: water mug (the shared water-filled mug, see water_mug.py)
+        add_water_mug(
+            self,
+            (0.40, -0.05),
+            180.0,
             surface=gs.surfaces.Rough(double_sided=True),
+            coacd_options=coacd_options,
         )
-        self._entities["pitcher"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -94,14 +88,3 @@ class DifferentiateCubesMut1Env(DifferentiateCubesEnv):
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["cat_figurine"] = {"entity": _e}
-        # Code Block: pitcher water
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Cylinder(
-                pos=(0.40, -0.05, 1.105), euler=(0, 0, 0), radius=0.035, height=0.4, fixed=False, collision=True
-            ),
-            material=gs.materials.SPH.Liquid(
-                rho=500.0, stiffness=8e5, exponent=7.0, mu=0.005, gamma=0.01, sampler="pbs"
-            ),
-            surface=gs.surfaces.Rough(double_sided=True, vis_mode="recon"),
-        )
-        self._entities["water"] = {"entity": _e}

@@ -66,8 +66,8 @@ class RaisePlatformEnv(RoboWitsEnv):
 
     @property
     def placement_groups(self) -> PlacementGroups:
-        """Book and support cube grouped, other support cube independent."""
-        return (("heavy_book", "support_cube_2"), "support_cube_1")
+        """The book moves with the support cube that props it up."""
+        return (("heavy_book", "support_cube_2"),)
 
     def _add_custom_entities(self) -> None:
         """Add heavy book, cup supports, and support cubes."""
@@ -127,22 +127,6 @@ class RaisePlatformEnv(RoboWitsEnv):
         )
         self._entities["cup_support_2"] = {
             "entity": cup2,
-        }
-
-        # Support cube 1 (box, fixed)
-        cube1 = self._scene.scene.add_entity(
-            gs.morphs.Box(
-                pos=(0.57, 0.0, 0.3),
-                euler=(0.0, 0.0, 0.0),
-                size=(0.02, 0.02, 0.03),
-                fixed=True,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0, friction=1),
-            surface=gs.surfaces.Default(color=(0.7, 0.7, 0.7), roughness=0.5),
-        )
-        self._entities["support_cube_1"] = {
-            "entity": cube1,
         }
 
         # Support cube 2 (box, fixed)
@@ -273,7 +257,7 @@ class RaisePlatformEnv(RoboWitsEnv):
         if not (is_in_contact_vert(book_zmin, cup1_zmax) and is_in_contact_vert(book_zmin, cup2_zmax)):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        if _utils.check_being_held(book, self._robot):
+        if not _utils.check_released(book, self._robot):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         return torch.tensor([True], dtype=torch.bool, device=self._device)
@@ -336,7 +320,7 @@ class RaisePlatformEnv(RoboWitsEnv):
 
         # Placement: book near cup top height and aligned (0.8 → 1.0, but not held)
         near_height = abs(book_zmin - target_z) <= 0.05
-        held = _utils.check_being_held(book, self._robot)
+        held = not _utils.check_released(book, self._robot)
         place_score = 0.8 + 0.2 * align_frac if near_height and align_frac > 0.5 and not held else 0.0
 
         score = max(ee_score, lift_score, align_score if lift_frac > 0.5 else 0.0, place_score)

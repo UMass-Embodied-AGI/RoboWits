@@ -374,7 +374,7 @@
   },
   "12": {
     "name": "Ball Into Bottle",
-    "instruction": "Transfer the ball from the blue container into the red bottle.",
+    "instruction": "Transfer the blue ball from the container into the red bottle.",
     "category": "Geometry",
     "variants": {
       "12_ball_into_bottle": {
@@ -479,7 +479,7 @@
   },
   "15": {
     "name": "Separate Marbles And Sand",
-    "instruction": "Remove sand from the jar and keep the marbles in the jar.",
+    "instruction": "Remove the sand from the cup, keeping the marbles in the cup and the cup upright.",
     "category": "Material",
     "variants": {
       "15_separate_marbles_and_sand": {

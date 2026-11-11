@@ -5,6 +5,7 @@ import genesis as gs
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups
+from gs_gym.envs.robowits.water_mug import add_water_mug
 
 RetrieveCubeEnv = _import("gs_gym.envs.robowits.02_retrieve_cube").RetrieveCubeEnv
 
@@ -33,7 +34,7 @@ class RetrieveCubeMut8Env(RetrieveCubeEnv):
         groups entirely it stayed at its authored pose while the cup was relocated,
         which put the liquid outside its container on every reset.
         """
-        return (*super().placement_groups, ("cup", "water"), "spoon")
+        return (*super().placement_groups, ("water_mug", "water"), "spoon")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -89,32 +90,5 @@ class RetrieveCubeMut8Env(RetrieveCubeEnv):
             surface=gs.surfaces.Smooth(double_sided=True),
         )
         self._entities["spoon"] = {"entity": _e}
-        # Code Block: cup
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/3d998505-6bbb-4cc2-8359-c147ac531430/obj.glb", pattern_is_dir=False),
-                scale=1.2,
-                pos=(0.66, -0.05, 0.8151),
-                euler=(0.0, 0.0, 30.0),
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0),
-            surface=gs.surfaces.Smooth(double_sided=True),
-        )
-        self._entities["cup"] = {"entity": _e}
-        # Code Block: water
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Cylinder(
-                pos=(0.66, -0.05, 0.7988),
-                euler=(0.0, 0.0, 0.0),
-                radius=0.018,
-                height=0.055,
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.SPH.Liquid(rho=1000.0, stiffness=60000.0, exponent=7.0, mu=0.01, gamma=0.02),
-            surface=gs.surfaces.Default(color=(0.7, 0.85, 1.0), double_sided=True, vis_mode="recon"),
-        )
-        self._entities["water"] = {"entity": _e}
+        # Code Block: cup with its water (the shared water-filled mug, see water_mug.py)
+        add_water_mug(self, (0.66, -0.05), 30.0, coacd_options=coacd_options)

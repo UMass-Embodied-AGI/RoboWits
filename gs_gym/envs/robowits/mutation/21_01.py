@@ -27,45 +27,12 @@ class SealColanderMut1Env(SealColanderEnv):
             threshold=0.01, preprocess_resolution=80, max_convex_hull=20, decimate=True
         )
 
-        # Code Block: perforated container
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("toolbench/slotted_spoon.glb", pattern_is_dir=False),
-                scale=0.8847,
-                pos=(0.44, -0.06, 0.779),
-                euler=(90, 0, 0),
-                fixed=True,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0, friction=0.6),
-            surface=gs.surfaces.Rough(double_sided=True),
-        )
-        self._entities["perforated_container"] = {"entity": _e}
-        # Code Block: pitcher
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/c242567e-052d-4561-b2c0-2fed8a5e576b/obj.glb", pattern_is_dir=False),
-                scale=1.2476,
-                pos=(0.62, -0.10, 0.76 + 0.0721 * 1.2476),
-                euler=(0, 0, 0),
-                fixed=True,
-                collision=True,
-                convexify=False,
-            ),
-            material=gs.materials.Rigid(rho=200.0, sdf_max_res=256),
-            surface=gs.surfaces.Smooth(double_sided=True),
-        )
-        self._entities["pitcher"] = {"entity": _e}
-        self._add_pitcher_blockers(0.62, -0.1)
-        # Code Block: curved holder
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Sphere(radius=0.012, pos=(0.50, -0.15, 0.772), euler=(0, 0, 0), fixed=True, collision=True),
-            material=gs.materials.Rigid(rho=200.0, friction=0.6),
-            surface=gs.surfaces.Smooth(color=(0.85, 0.85, 0.85), double_sided=True),
-        )
-        self._entities["curved_holder"] = {"entity": _e}
+        # Code Block: perforated container (the box ladle, see 21_seal_colander.py)
+        self._add_ladle((0.44, -0.06), yaw_deg=180.0)
+        # Code Block: pitcher with its water (task 25's, see 21_seal_colander.py)
+        self._add_pitcher_with_water(0.62, -0.1)
+        # Code Block: curved holder (the dome, see 21_seal_colander.py)
+        self._add_curved_holder((0.50, -0.15))
         # Code Block: flowerpot
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
@@ -126,14 +93,3 @@ class SealColanderMut1Env(SealColanderEnv):
             surface=gs.surfaces.Glass(color=(0.2, 0.2, 0.2), double_sided=True),
         )
         self._entities["wine_bottle"] = {"entity": _e}
-        # Code Block: water
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Cylinder(
-                pos=(0.62, -0.10, 0.86), euler=(0, 0, 0), radius=0.045, height=0.13, fixed=False, collision=True
-            ),
-            material=gs.materials.SPH.Liquid(
-                rho=500.0, stiffness=80000.0, exponent=7.0, mu=0.005, gamma=0.01, sampler="pbs"
-            ),
-            surface=gs.surfaces.Default(color=(0.6, 0.7, 1.0), double_sided=True, vis_mode="recon"),
-        )
-        self._entities["water"] = {"entity": _e}

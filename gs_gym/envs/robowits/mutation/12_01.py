@@ -13,8 +13,8 @@ BallIntoBottleEnv = _import("gs_gym.envs.robowits.12_ball_into_bottle").BallInto
 class BallIntoBottleMut1Env(BallIntoBottleEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
-        """Define placement groups for random initialization."""
-        return (("ball_container", "small_ball"), "red_bottle", "funnel", "cat_figurine")
+        """Define placement groups for random initialization (the seed's order: the wide fixed bottle first)."""
+        return ("red_bottle", "funnel", ("ball_container", "small_ball"), "cat_figurine")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -22,29 +22,31 @@ class BallIntoBottleMut1Env(BallIntoBottleEnv):
             threshold=0.01, preprocess_resolution=80, max_convex_hull=20, decimate=True
         )
 
-        # Code Block: red bottle
+        # Code Block: red bottle (the seed's size, fixed)
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
-                coacd_options=coacd_options,
+                coacd_options=gs.options.CoacdOptions(
+                    threshold=0.01, preprocess_resolution=150, max_convex_hull=50, decimate=True
+                ),
                 file=get_asset_path("blender_kit/ffb3fbe7-1355-465f-8750-475210d8c949/obj.glb", pattern_is_dir=False),
-                scale=1.0,
-                pos=(0.48, 0.0, 0.76 + 0.1422),
+                scale=(1.4, 1.4, 1.0),
+                pos=(0.48, 0.0, 0.88026),
                 euler=(0.0, 0.0, 0.0),
-                fixed=False,
+                fixed=True,
                 collision=True,
             ),
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(double_sided=True, color=(0.8, 0.2, 0.2)),
         )
         self._entities["red_bottle"] = {"entity": _e}
-        # Code Block: funnel
+        # Code Block: funnel (the seed's size, lying on its side)
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("hf_assets/funnel.glb", pattern_is_dir=False),
-                scale=1.0,
-                pos=(0.58, 0.15, 0.76 + 0.0682),
-                euler=(0.0, 0.0, 0.0),
+                scale=(0.7, 0.7, 1.1),
+                pos=(0.58, 0.15, 0.825),
+                euler=(0.0, -90.0, 0.0),
                 fixed=False,
                 collision=True,
             ),
@@ -52,18 +54,18 @@ class BallIntoBottleMut1Env(BallIntoBottleEnv):
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["funnel"] = {"entity": _e}
-        # Code Block: ball container
+        # Code Block: ball container (the seed's size)
         _e = self._scene.scene.add_entity(
             gs.morphs.Mesh(
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/3d998505-6bbb-4cc2-8359-c147ac531430/obj.glb", pattern_is_dir=False),
-                scale=1.0,
-                pos=(0.63, -0.12, 0.76 + 0.1332),
+                scale=1.1,
+                pos=(0.63, -0.12, 0.76 + 0.0459 * 1.1),
                 euler=(0.0, 0.0, 0.0),
                 fixed=False,
                 collision=True,
             ),
-            material=gs.materials.Rigid(rho=200.0, friction=1.2),
+            material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(color=(0.8, 0.9, 1.0), opacity=0.3, double_sided=True),
         )
         self._entities["ball_container"] = {"entity": _e}
@@ -82,9 +84,14 @@ class BallIntoBottleMut1Env(BallIntoBottleEnv):
             surface=gs.surfaces.Rough(double_sided=True),
         )
         self._entities["cat_figurine"] = {"entity": _e}
-        # Code Block: small ball
+        # Code Block: small ball (the seed's size, dropped into the container)
         _e = self._scene.scene.add_entity(
-            gs.morphs.Sphere(pos=(0.63, -0.12, 0.79), radius=0.007, fixed=False, collision=True),
+            gs.morphs.Sphere(
+                pos=(0.63, -0.12, 0.85),
+                radius=0.005,
+                fixed=False,
+                collision=True,
+            ),
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Smooth(color=(0.2, 0.6, 0.9), double_sided=True),
         )

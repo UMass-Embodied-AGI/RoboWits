@@ -20,7 +20,8 @@ from gs_gym.common.utils.math_utils import quat_to_rot6d
 from gs_gym.envs.base_gym_env import GenesisGymEnv
 from gs_gym.envs.robowits import utils as _utils
 from gs_gym.envs.robowits.placement import _is_fixed_entity
-from gs_gym.robots.bimanual_marvin import BimanualMarvinRobot
+from gs_gym.robots.bimanual import BBox, BimanualRobot
+from gs_gym.robots.registry import get_robot_class
 from gs_gym.scenes.flat_scene import FlatScene
 from gs_gym.sensors.camera_factory import GALLERY_CAM_FOV, GALLERY_CAM_LOOKAT, GALLERY_CAM_POS
 
@@ -37,28 +38,33 @@ class RoboWitsEnv(GenesisGymEnv):
     """Base class for RoboWits manipulation environments.
 
     Provides:
-    - BimanualMarvin robot with 18-DOF control
+    - A bimanual robot (``BimanualRobot`` subclass, chosen by the config's ``robot.type`` or the
+      ``robot`` argument; Marvin by default)
     - Random object placement with collision avoidance
     - Custom entity support via _add_custom_entities()
     - Reachable area bounds for placement
     """
 
-    # Robot dimensions
-    ROBOT_DOF = 16  # 7 arm joints + 1 gripper width per arm
+    # Every control mode the env implements; set at construction and switchable with set_control_mode().
+    CONTROL_MODES = ("JOINT_ABS", "JOINT_DELTA", "EE_ABS", "EE_ABS_ROT6D", "EE_DELTA")
 
-    # Bimanual Marvin arm 3D occupied volume at rest pose (robot base at (0,0,1.08)).
-    # Measured from all link-center positions after reset(); values are link centers
-    # only — add ~0.04 m for link radius when using as collision bounds.
-    # Forearm+wrist+gripper (the region near table height, z ≈ 0.84–0.94 m):
-    #   Right arm: x=[0.018, 0.622], y=[-0.334, -0.244], z=[0.857, 0.935]
-    #   Left arm:  x=[0.019, 0.619], y=[ 0.243,  0.332], z=[0.842, 0.933]
-    # Full arm (shoulder through gripper):
-    #   Right arm: x=[0.000, 0.622], y=[-0.334, -0.037], z=[0.857, 1.200]
-    #   Left arm:  x=[0.000, 0.619], y=[ 0.037,  0.332], z=[0.842, 1.200]
-    ARM_FOREARM_BBOX_RIGHT = {"x": (0.018, 0.622), "y": (-0.334, -0.244), "z": (0.857, 0.935)}
-    ARM_FOREARM_BBOX_LEFT = {"x": (0.019, 0.619), "y": (0.243, 0.332), "z": (0.842, 0.933)}
-    ARM_FULL_BBOX_RIGHT = {"x": (0.000, 0.622), "y": (-0.334, -0.037), "z": (0.857, 1.200)}
-    ARM_FULL_BBOX_LEFT = {"x": (0.000, 0.619), "y": (0.037, 0.332), "z": (0.842, 1.200)}
+    # Arm 3D occupied volume at the rest pose (link centers, world frame); see the robot's
+    # REST_FOOTPRINT. Forearm = forearm/wrist/gripper, the part near table height.
+    @property
+    def ARM_FOREARM_BBOX_RIGHT(self) -> BBox:  # noqa: N802
+        return self._robot_class().REST_FOOTPRINT["forearm_right"]
+
+    @property
+    def ARM_FOREARM_BBOX_LEFT(self) -> BBox:  # noqa: N802
+        return self._robot_class().REST_FOOTPRINT["forearm_left"]
+
+    @property
+    def ARM_FULL_BBOX_RIGHT(self) -> BBox:  # noqa: N802
+        return self._robot_class().REST_FOOTPRINT["full_right"]
+
+    @property
+    def ARM_FULL_BBOX_LEFT(self) -> BBox:  # noqa: N802
+        return self._robot_class().REST_FOOTPRINT["full_left"]
 
     # Default reachable bounds (x, y) for object placement. x_min stays behind the
     # table's front edge (x = 0.211); at 0.2 an anchor could land just off the table.
@@ -85,7 +91,7 @@ class RoboWitsEnv(GenesisGymEnv):
     def placement_entity_extra_hulls(self, name: str) -> list:
         """Return arm exclusion hulls for entities tall enough to collide with the arm at rest.
 
-        The forearm/wrist/gripper links sit at z ≈ 0.84–0.93 m. An entity whose top
+        The forearm/wrist/gripper links sit at z ≈ 0.84–0.93 m (Marvin). An entity whose top
         (TABLE_HEIGHT + height) reaches into an arm's band gets that arm's exclusion
         hull injected into its placement collision check. Short entities are unconstrained.
 
@@ -112,6 +118,22 @@ class RoboWitsEnv(GenesisGymEnv):
 
         return [_hull(bbox) for bbox in (self.ARM_FOREARM_BBOX_RIGHT, self.ARM_FOREARM_BBOX_LEFT) if top > bbox["z"][0]]
 
+    def _resolve_backend_preference(self, genesis_backend: str) -> str:
+        """Resolve "auto" as the base class does, except that Nyx cameras need the CUDA backend.
+
+        Nyx is a CUDA path tracer and cannot render a CPU-backend scene, so "auto" picks "cuda" for it even on the
+        rigid tasks that otherwise prefer the CPU; an explicit "cpu" with Nyx is an error rather than a renderer crash.
+        """
+        backend = super()._resolve_backend_preference(genesis_backend)
+        camera_type = getattr(self, "_camera_type", None)
+        if camera_type in ("nyx", "luisa") and backend == "cpu":
+            if genesis_backend == "auto":
+                return "cuda"
+            raise ValueError(
+                f"camera_type '{camera_type}' needs the CUDA backend; pass genesis_backend='cuda' or 'auto'"
+            )
+        return backend
+
     def __init__(
         self,
         config_name: str = "robowits_default",
@@ -132,6 +154,7 @@ class RoboWitsEnv(GenesisGymEnv):
         gallery_fov: float | None = None,
         add_walls: bool = False,
         show_ground: bool = True,
+        robot: str | None = None,
         **kwargs,
     ):
         """Initialize the RoboWits environment.
@@ -142,22 +165,24 @@ class RoboWitsEnv(GenesisGymEnv):
             show_viewer: Whether to show the viewer
             max_episode_steps: Maximum steps per episode
             control_mode: Robot control mode. Options:
-                - "JOINT_ABS": 16D absolute joint position control (radians)
-                - "JOINT_DELTA": 16D delta joint position control (radians, added to current)
+                - "JOINT_ABS": absolute joint position control (radians); the robot's JOINT_DIM,
+                  arm joints + 1 gripper width per arm (16D for Marvin)
+                - "JOINT_DELTA": delta joint position control (radians, added to current), JOINT_DIM
                 - "EE_DELTA": 14D delta EE control
                 - "EE_ABS": 14D absolute EE control (IK handled internally)
                 - "EE_ABS_ROT6D": 20D absolute EE control with 6D rotations (IK handled internally)
             observation_mode: Observation state format. Options:
                 - "EE": 14D (ee_pos + ee_axis_angle + gripper)
                 - "EE_ROT6D": 20D (ee_pos + ee_rot6d + gripper)
-                - "JOINT": 16D (joints + gripper)
+                - "JOINT": JOINT_DIM (joints + gripper; 16D for Marvin)
             config_overrides: Optional dictionary of config values to override.
                               Supports nested keys via dict merging.
             eval_dataset_json: Optional path to evaluation dataset JSON file.
                                If provided, overrides the config-based evaluation settings.
-            camera_type: Renderer backing the ego + wrist cameras: "rasterizer", "batch", or
-                         "nyx". Training and eval run on "rasterizer"; "nyx" is a path tracer
-                         meant for offline stills/videos, not rollout observations. Defaults to
+            camera_type: Renderer backing the ego + wrist cameras: "rasterizer", "batch", "nyx" or
+                         "luisa". Training and eval run on "rasterizer"; "nyx" and "luisa" (LuisaRender,
+                         which renders glass as refractive) are path tracers meant for offline
+                         stills/videos, not rollout observations. Defaults to
                          $GS_GYM_CAMERA_TYPE, else "rasterizer" — the env var is how callers that
                          build envs through a fixed kwargs dict (lerobot-eval, whose GsGymEnv
                          config has no field for this) can still pick the renderer.
@@ -171,7 +196,10 @@ class RoboWitsEnv(GenesisGymEnv):
                        so physics is unchanged either way.
             show_ground: Add the ground plane. Turn it off for presentation renders so the
                          environment map becomes the visible floor and backdrop instead of the
-                         default checkerboard.
+                         default checkerboard. With camera_type "nyx" the plane is kept for
+                         collision but always invisible, so evals keep their floor physics.
+            robot: Registered robot name (a BimanualRobot subclass), overriding the config's
+                   robot.type. Defaults to the config's, "bimanual_marvin" for RoboWits.
             **kwargs: Additional arguments
         """
         self._n_envs = 1  # Always single env now (vectorization handled externally)
@@ -188,6 +216,9 @@ class RoboWitsEnv(GenesisGymEnv):
         self._gallery_fov = gallery_fov or GALLERY_CAM_FOV
         self._add_walls = add_walls
         self._show_ground = show_ground
+        # Read by _robot_class(), which the base __init__ already needs for the space sizes, so a
+        # robot chosen through config_overrides has to be picked up here too
+        self._robot_type = robot or ((config_overrides or {}).get("robot") or {}).get("type")
         # Per-object placement areas, keyed by entity name. Declared here so every
         # env (and any subclass adding clutter) can populate it without first
         # checking whether the seed task happened to create it. Tasks 05 and 13
@@ -196,6 +227,9 @@ class RoboWitsEnv(GenesisGymEnv):
             self._object_reachable_areas: dict[str, dict[str, float]] = {}
 
         super().__init__(config_name=config_name, **kwargs)
+
+        # The robot's own defaults (base pose, placement bounds), before the caller's overrides
+        self._apply_robot_config_overlay()
 
         # Apply config overrides
         if config_overrides:
@@ -207,8 +241,20 @@ class RoboWitsEnv(GenesisGymEnv):
                 self._config["termination"] = {}
             self._config["termination"]["max_episode_steps"] = max_episode_steps
 
+        if robot is not None:
+            self._config.setdefault("robot", {})["type"] = robot
+
         # Load and convert config
         self._args = self._config_to_env_args(self._config)
+
+        # LuisaRender cameras need a scene-level ray-tracing renderer, which carries the sky
+        renderer = None
+        if self._camera_type == "luisa":
+            from gs_gym.sensors.camera_factory import make_luisa_renderer
+
+            renderer = make_luisa_renderer(
+                self._camera_kwargs.get("env_map"), self._camera_kwargs.get("env_multiplier")
+            )
 
         # Create scene with collision enabled
         self._scene = FlatScene(
@@ -217,22 +263,26 @@ class RoboWitsEnv(GenesisGymEnv):
             show_viewer=show_viewer,
             enable_collision=True,
             add_ground_plane=show_ground,
+            # Under Nyx the checkerboard plane sits inside the environment map's room and looks fake. Keep it for
+            # collision (objects knocked off the table must still land) but hide it, so the room's floor shows.
+            ground_visible=self._camera_type not in ("nyx", "luisa"),
+            renderer=renderer,
         )
         self.dt = self._args.scene_args.dt
 
         # Create robot
         # Validate control_mode
-        valid_modes = ("JOINT_ABS", "JOINT_DELTA", "EE_ABS", "EE_ABS_ROT6D", "EE_DELTA")
-        if control_mode not in valid_modes:
-            raise ValueError(f"Unknown control_mode '{control_mode}'. Available: {valid_modes}")
+        if control_mode not in self.CONTROL_MODES:
+            raise ValueError(f"Unknown control_mode '{control_mode}'. Available: {self.CONTROL_MODES}")
 
         # Pass control mode directly to robot
-        self._robot = BimanualMarvinRobot(
+        self._robot = self._robot_class()(
             n_envs=self._n_envs,
             scene=self._scene.scene,
             args=self._args.robot_args,
             device=self.device,
             control_mode=control_mode,
+            control_dt=self.dt,  # one action per scene step: joint targets limited to MAX_JOINT_SPEED
         )
 
         # Create all cameras (ego + wrist) before scene.build()
@@ -253,6 +303,12 @@ class RoboWitsEnv(GenesisGymEnv):
 
         # Build scene after all entities and cameras are added
         self._scene.build()
+
+        # The rasterizer meshes SPH liquids through thin rigid walls (water drawn inside an empty mug); clip it.
+        if self._scene.scene.sim.sph_solver.is_active:
+            from gs_gym.common.utils import sph_recon_clip
+
+            sph_recon_clip.install()
 
         # Capture initial entity poses from morph definitions (must be after scene.build())
         self._capture_initial_entity_poses()
@@ -303,16 +359,7 @@ class RoboWitsEnv(GenesisGymEnv):
         )
 
         # ── Wrist cameras (attached to gripper base links) ───────────────
-        # Offset transform (pika gripper + D405 realsense)
-        wrist_offset_T = np.array(
-            [
-                [-1, 0, 0, 0.009],
-                [0, 1, 0, 0.04931],
-                [0, 0, -1, 0.06159 - 0.0037 + 0.002],
-                [0, 0, 0, 1],
-            ],
-            dtype=np.float32,
-        )
+        wrist_offset_T = self._robot.WRIST_CAMERA_OFFSET_T
 
         robot_entity = self._robot.robot_entity
         entity_idx = robot_entity.idx
@@ -541,7 +588,7 @@ class RoboWitsEnv(GenesisGymEnv):
 
         # Load the particle file. Scene entries may name it via ``particles_file`` so
         # tasks that share a container can share one cloud (the whole 15 family builds an
-        # identical jar); otherwise fall back to the {stem}_particles.npz convention.
+        # identical cup); otherwise fall back to the {stem}_particles.npz convention.
         from pathlib import Path as _Path
 
         named = {
@@ -1057,8 +1104,22 @@ class RoboWitsEnv(GenesisGymEnv):
             except Exception as e:
                 logger.error(f"Failed to render placement-debug PNG: {e}")
 
+    def reset(self, *, seed: int | list | None = None, options: dict[str, Any] | None = None):
+        """Reset the episode; a seed makes the sampled scene reproducible.
+
+        gymnasium's ``reset(seed=)`` seeds only ``self.np_random``, which RoboWits never draws from:
+        object placement (and any task-level randomization) uses ``self._random``, so that is the
+        generator seeded here. The global numpy/torch RNGs are left alone, unlike ``seed()``: they
+        belong to the caller, e.g. a policy's sampling noise during lerobot-eval. Episodes that take
+        their scene from an eval dataset never sample, so this does not change them.
+        """
+        first = (seed[0] if seed else None) if isinstance(seed, list | tuple) else seed
+        if first is not None:
+            self._random = np.random.default_rng(first)
+        return super().reset(seed=seed, options=options)
+
     def seed(self, seed: int) -> None:
-        """Set random seed for reproducibility."""
+        """Seed the env's placement RNG and the global numpy/torch RNGs."""
         np.random.seed(seed)
         self._random = np.random.default_rng(seed)
         torch.manual_seed(seed)
@@ -1112,22 +1173,16 @@ class RoboWitsEnv(GenesisGymEnv):
         Returns:
             dict: Observations with:
                 - "agent_pos": robot state (dimension depends on observation_mode)
-                    - EE: 14D, EE_ROT6D: 20D, JOINT: 16D
+                    - EE: 14D, EE_ROT6D: 20D, JOINT: the robot's JOINT_DIM (16D for Marvin)
                 - "pixels": dict of (H, W, 3) camera images
         """
         robot = self._robot
-        dofs_raw = robot.robot_entity.get_dofs_position()
-        dofs = robot._dof_to_sequential(dofs_raw)
-
-        right_gripper = dofs[:, 7:8] + dofs[:, 8:9]
-        left_gripper = dofs[:, 16:17] + dofs[:, 17:18]
+        right_joints, right_gripper, left_joints, left_gripper = robot.joint_state()
 
         # EE positions from Genesis are in world frame; training data uses robot-base-relative
         # frame. Subtract robot base position so observations match the training distribution.
         robot_base_pos = torch.tensor(robot.args.position, dtype=torch.float32, device=self._device).unsqueeze(0)
 
-        right_joints = dofs[:, :7]
-        left_joints = dofs[:, 9:16]
         right_ee_pos = robot.ee_link_right.get_pos(relative=False) - robot_base_pos
         left_ee_pos = robot.ee_link_left.get_pos(relative=False) - robot_base_pos
         right_ee_quat = robot.ee_link_right.get_quat(relative=False)
@@ -1264,13 +1319,30 @@ class RoboWitsEnv(GenesisGymEnv):
         """Current control mode."""
         return self._control_mode
 
+    def set_control_mode(self, control_mode: str) -> None:
+        """Interpret actions in `control_mode` from the next step on; the robot and scene keep their state.
+
+        The env implements every control mode in CONTROL_MODES. A policy that acts through more than one (e.g. a
+        VLM harness with both end-effector and joint tools) switches between them between steps; through a vector
+        env: `env.call("set_control_mode", "JOINT_ABS")`. Policies that never call this keep the constructor's mode.
+        """
+        if control_mode not in self.CONTROL_MODES:
+            raise ValueError(f"Unknown control_mode '{control_mode}'. Available: {self.CONTROL_MODES}")
+        self._control_mode = control_mode
+        self._robot.control_mode = control_mode
+        self.single_action_space, _ = self._get_spaces_from_config(self._config)
+        self.action_space = (
+            self._batch_space(self.single_action_space, self._n_envs) if self._n_envs > 1 else self.single_action_space
+        )
+        self.action_buf = torch.zeros((1, self._robot.action_dim), device=self._device)
+
     @property
     def observation_mode(self) -> str:
         """Current observation mode (EE or JOINT)."""
         return self._observation_mode
 
     @property
-    def robot(self) -> BimanualMarvinRobot:
+    def robot(self) -> BimanualRobot:
         """Robot instance."""
         return self._robot
 
@@ -1313,7 +1385,7 @@ class RoboWitsEnv(GenesisGymEnv):
         """Collect object info squeezed to a single env for use in _check_success().
 
         Returned shapes:
-        - rigid:    pos (3,), vel (3,), quat (4,), euler (3,), bounds (2, 3), convex_hull_2d ndarray or None
+        - rigid:    pos (3,), vel (3,), ang (3,), quat (4,), euler (3,), bounds (2, 3), convex_hull_2d ndarray or None
         - particle: pos (n_particles, 3), vel (n_particles, 3), bounds (2, 3)
         """
         from genesis.engine.entities.particle_entity import ParticleEntity
@@ -1338,6 +1410,7 @@ class RoboWitsEnv(GenesisGymEnv):
                         "material": "rigid",
                         "pos": entity.get_pos(relative=False).cpu().numpy()[env_idx],
                         "vel": entity.get_vel().cpu().numpy()[env_idx],
+                        "ang": entity.get_ang().cpu().numpy()[env_idx],  # angular velocity, rad/s
                         # ``quat`` is the authoritative orientation: ``_place_objects`` prefers
                         # it over ``euler`` when replaying a dumped scene, so orientation
                         # survives round-tripping regardless of Euler edge cases.
@@ -1407,12 +1480,40 @@ class RoboWitsEnv(GenesisGymEnv):
             robot_args=ManipulatorRobotArgs(**config.get("robot", {})),
         )
 
+    def _robot_type_name(self) -> str:
+        """Registered name of the robot this env builds: the ``robot`` argument, else the config's ``robot.type``."""
+        return self._robot_type or self._config.get("robot", {}).get("type", "bimanual_marvin")
+
+    def _apply_robot_config_overlay(self) -> None:
+        """Merge ``configs/robots/robowits_<robot>.yaml`` into the config, if the robot has one.
+
+        The env config is written for Marvin; another robot carries its own base pose and placement
+        bounds there. Applied before ``config_overrides``, so explicit overrides still win.
+        """
+        import yaml
+
+        configs_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "configs", "robots")
+        path = os.path.normpath(os.path.join(configs_dir, f"robowits_{self._robot_type_name()}.yaml"))
+        if os.path.exists(path):
+            with open(path) as f:
+                self._apply_config_overrides(yaml.safe_load(f) or {})
+
+    def _robot_class(self) -> type[BimanualRobot]:
+        """The robot class this env builds (see ``_robot_type_name``)."""
+        name = self._robot_type_name()
+        cls = get_robot_class(name)
+        if not issubclass(cls, BimanualRobot):
+            raise TypeError(f"RoboWits needs a BimanualRobot, but robot '{name}' is {cls.__name__}")
+        return cls
+
     def _get_spaces_from_config(self, config: dict):
         """Get space information from config."""
+        # Called from the base __init__, before the robot exists, so sizes come from its class
+        joint_dim = self._robot_class().JOINT_DIM
         # Action space depends on control mode:
         # EE_DELTA / EE_ABS: 14-DOF [right: 3 pos + 3 rot + 1 gripper, left: same]
         # EE_ABS_ROT6D: 20-DOF [right: 3 pos + 6 rot + 1 gripper, left: same]
-        # JOINT_ABS / JOINT_DELTA: 16-DOF [right: 7 arm + 1 gripper, left: same]
+        # JOINT_ABS / JOINT_DELTA: the robot's JOINT_DIM [right: arm + 1 gripper, left: same]
         if self._control_mode in ("EE_DELTA", "EE_ABS", "EE_ABS_ROT6D"):
             action_dim = 20 if self._control_mode == "EE_ABS_ROT6D" else 14
             if self._control_mode == "EE_DELTA":
@@ -1423,9 +1524,9 @@ class RoboWitsEnv(GenesisGymEnv):
                 # pos: lo=[-0.5, -0.8, 0.0], hi=[0.8, 0.8, 0.8]; aa: lo=-pi, hi=pi; grip: lo=0.0, hi=0.1
                 action_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(action_dim,), dtype=np.float32)
         elif self._control_mode in ("JOINT_ABS", "JOINT_DELTA"):
-            # JOINT_ABS/JOINT_DELTA layout: [right_joints(7), right_grip(1), left_joints(7), left_grip(1)]
-            # arm: lo=[-3.1067, -1.8, -3.1067, -2.5307, -3.1067, -1.047, -1.047], hi=[3.1067, 2.0944, 3.1067, -0.08727, 3.1067, 1.047, 1.047]; grip: lo=0.0, hi=0.1
-            action_dim = self.ROBOT_DOF
+            # JOINT_ABS/JOINT_DELTA layout: [right_joints(n), right_grip(1), left_joints(n), left_grip(1)]
+            # limits: the robot's ARM_LOWER/ARM_UPPER; grip: lo=0.0, hi=2 * FINGER_MAX
+            action_dim = joint_dim
             action_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(action_dim,), dtype=np.float32)
         else:
             raise ValueError(
@@ -1434,12 +1535,12 @@ class RoboWitsEnv(GenesisGymEnv):
             )
 
         # State dimension depends on observation_mode
-        state_dim = {"JOINT": 16, "EE_ROT6D": 20}.get(self._observation_mode, 14)
+        state_dim = {"JOINT": joint_dim, "EE_ROT6D": 20}.get(self._observation_mode, 14)
 
         observation_space = gym.spaces.Dict(
             {
                 "agent_pos": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(state_dim,), dtype=np.float32),
-                "agent_pos_joint": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32),
+                "agent_pos_joint": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(joint_dim,), dtype=np.float32),
                 "agent_pos_ee": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(14,), dtype=np.float32),
                 "agent_pos_ee_rot6d": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32),
                 "pixels": gym.spaces.Dict(

@@ -13,6 +13,7 @@ from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits import utils as _utils
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
+from gs_gym.envs.robowits.water_mug import add_water_mug
 
 
 @register_task("robowits/30-differentiate-cubes-v0")
@@ -65,7 +66,7 @@ class DifferentiateCubesEnv(RoboWitsEnv):
     @property
     def placement_groups(self) -> PlacementGroups:
         """No randomization for this task."""
-        return (("mug", "wooden_cube", "metal_cube"), "target_area")  # , ("pitcher", "water")
+        return (("mug", "wooden_cube", "metal_cube"), "target_area")  # , ("water_mug", "water")
 
     def _add_custom_entities(self) -> None:
         """Add mug, wooden cube, metal cube, water pitcher, water, and target area."""
@@ -123,46 +124,15 @@ class DifferentiateCubesEnv(RoboWitsEnv):
             "entity": metal_cube,
         }
 
-        # Water pitcher (mesh)
-        pitcher = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path(
-                    "hf_assets/simplify_red_cup.obj",
-                    pattern_is_dir=False,
-                ),
-                scale=1.5,
-                pos=(0.68, -0.10, 0.854),
-                euler=(90.0, 0.0, 0.0),
-                fixed=False,
-                collision=True,
-                convexify=False,
-            ),
-            material=gs.materials.Rigid(rho=500.0, sdf_max_res=256),
+        # The shared water-filled mug (see water_mug.py)
+        add_water_mug(
+            self,
+            (0.68, -0.10),
+            0.0,
+            rho=500.0,
             surface=gs.surfaces.Glass(color=(0.4, 0.4, 0.4), double_sided=True),
+            coacd_options=coacd_options,
         )
-        self._entities["pitcher"] = {
-            "entity": pitcher,
-        }
-
-        # Water (SPH liquid)
-        water = self._scene.scene.add_entity(
-            gs.morphs.Cylinder(
-                pos=(0.68, -0.1, 1.105),
-                euler=(0.0, 0.0, 0.0),
-                radius=0.035,
-                height=0.4,
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.SPH.Liquid(
-                rho=500.0, stiffness=8e5, exponent=7.0, mu=0.005, gamma=0.01, sampler="pbs"
-            ),
-            surface=gs.surfaces.Default(color=(0.55, 0.75, 1.0), double_sided=True, vis_mode="recon"),
-        )
-        self._entities["water"] = {
-            "entity": water,
-        }
 
         # Target area (box, fixed, no collision)
         target_area = self._scene.scene.add_entity(

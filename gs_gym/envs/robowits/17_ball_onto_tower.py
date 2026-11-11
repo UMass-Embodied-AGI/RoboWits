@@ -5,8 +5,6 @@ Task: Place the ball stably on top of the tower.
 
 from __future__ import annotations
 
-import math
-
 import genesis as gs
 import numpy as np
 import torch
@@ -14,7 +12,13 @@ import torch
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held
+from gs_gym.envs.robowits.utils import (
+    approach_score,
+    at_goal_score,
+    check_released,
+    check_still,
+    progress_frac,
+)
 
 
 @register_task("robowits/17-ball-onto-tower-v0")
@@ -27,7 +31,7 @@ class BallOntoTowerEnv(RoboWitsEnv):
     a hollow cup-like surface where the ball can rest stably in the center.
 
     Success criteria:
-    - Ball is stable (low velocity)
+    - Ball is still (utils.check_still)
     - Ball is on top of the tower base (XY projection over base footprint)
     - Ball center is above the top of the tower base
     - Ball is not being held by either gripper
@@ -179,6 +183,44 @@ class BallOntoTowerEnv(RoboWitsEnv):
             "entity": ball,
         }
 
+    def _ball_on_top(self, base: dict, ball: dict) -> bool:
+        """Whether the ball's center is above the tower base's top and inside its footprint."""
+        base_bounds = base.get("bounds")
+        ball_pos = ball.get("pos")
+        if base_bounds is None or ball_pos is None:
+            return False
+
+        base_top_z = float(base_bounds[1][2])
+        ball_center_z = float(ball_pos[2])
+        height_ok = ball_center_z > base_top_z + 0.005
+
+        base_hull = base.get("convex_hull_2d")
+        ball_xy = (float(ball_pos[0]), float(ball_pos[1]))
+
+        def point_in_polygon(pt, poly):
+            x, y = pt
+            inside = False
+            n = len(poly)
+            if n < 3:
+                return False
+            for i in range(n):
+                x1, y1 = float(poly[i][0]), float(poly[i][1])
+                x2, y2 = float(poly[(i + 1) % n][0]), float(poly[(i + 1) % n][1])
+                if (y1 > y) != (y2 > y):
+                    xinters = (x2 - x1) * (y - y1) / (y2 - y1 + 1e-9) + x1
+                    if x < xinters + 1e-12:
+                        inside = not inside
+            return inside
+
+        if base_hull is not None and len(base_hull) >= 3:
+            on_top_ok = point_in_polygon(ball_xy, base_hull)
+        else:
+            x_min, y_min = float(base_bounds[0][0]) - 0.005, float(base_bounds[0][1]) - 0.005
+            x_max, y_max = float(base_bounds[1][0]) + 0.005, float(base_bounds[1][1]) + 0.005
+            on_top_ok = (x_min <= ball_xy[0] <= x_max) and (y_min <= ball_xy[1] <= y_max)
+
+        return height_ok and on_top_ok
+
     def _check_success(self) -> torch.Tensor:
         """Check if task is successful: ball on top of tower, stable, not held."""
         objs_info = self.collect_objs_info()
@@ -214,168 +256,47 @@ class BallOntoTowerEnv(RoboWitsEnv):
         if not in_table_xy(base) or not in_table_xy(ball):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        vel = ball.get("vel")
-        if vel is None:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
+        stability_ok = check_still(ball)
 
-        speed = math.sqrt(float(vel[0]) ** 2 + float(vel[1]) ** 2 + float(vel[2]) ** 2)
-        stable_linear = speed < 0.05
-        stable_vertical = abs(float(vel[2])) < 0.03
-        stability_ok = stable_linear and stable_vertical
-
-        base_bounds = base.get("bounds")
-        ball_pos = ball.get("pos")
-        if base_bounds is None or ball_pos is None:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        base_top_z = float(base_bounds[1][2])
-        ball_center_z = float(ball_pos[2])
-        height_ok = ball_center_z > base_top_z + 0.005
-
-        base_hull = base.get("convex_hull_2d")
-        ball_xy = (float(ball_pos[0]), float(ball_pos[1]))
-
-        def point_in_polygon(pt, poly):
-            x, y = pt
-            inside = False
-            n = len(poly)
-            if n < 3:
-                return False
-            for i in range(n):
-                x1, y1 = float(poly[i][0]), float(poly[i][1])
-                x2, y2 = float(poly[(i + 1) % n][0]), float(poly[(i + 1) % n][1])
-                if (y1 > y) != (y2 > y):
-                    xinters = (x2 - x1) * (y - y1) / (y2 - y1 + 1e-9) + x1
-                    if x < xinters + 1e-12:
-                        inside = not inside
-            return inside
-
-        if base_hull is not None and len(base_hull) >= 3:
-            on_top_ok = point_in_polygon(ball_xy, base_hull)
-        else:
-            x_min, y_min = float(base_bounds[0][0]) - 0.005, float(base_bounds[0][1]) - 0.005
-            x_max, y_max = float(base_bounds[1][0]) + 0.005, float(base_bounds[1][1]) + 0.005
-            on_top_ok = (x_min <= ball_xy[0] <= x_max) and (y_min <= ball_xy[1] <= y_max)
+        height_and_on_top_ok = self._ball_on_top(base, ball)
 
         # Check ball is not being held by either gripper
-        not_held = not check_being_held(ball, self._robot)
+        not_held = check_released(ball, self._robot)
 
-        return torch.tensor(
-            [stability_ok and height_ok and on_top_ok and not_held], dtype=torch.bool, device=self._device
-        )
+        return torch.tensor([stability_ok and height_and_on_top_ok and not_held], dtype=torch.bool, device=self._device)
 
     def get_reward(self) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """Compute dense reward based on milestone-based progress score."""
+        """Dense reward on the shared ladder (utils.STAGE_*), each stage a condition of the success check.
+
+        0 -> 0.2     a gripper approaches the ball or the small ring
+        0.2 -> 0.4   (added to the approach score) the ball moves toward the tower, from where it spawned
+        0.5 -> 0.65  the small ring is on the tower (what lets the ball rest there), plus the ball's progress
+        0.7          the goal geometry is met (ball on top of the tower) but the ball is still held
+        0.85         the goal geometry is met and the ball released, but still moving
+        1.0          success
+        """
+        if self._check_success().item():
+            score_t = torch.ones((), dtype=torch.float32, device=self._device)
+            return score_t, {"score": score_t}
+
         objs_info = self.collect_objs_info()
+        base, ball, ring = objs_info.get("tower_base"), objs_info.get("ball"), objs_info.get("small_ring")
+        if base is None or ball is None or base.get("bounds") is None:
+            score_t = torch.zeros((), dtype=torch.float32, device=self._device)
+            return score_t, {"score": score_t}
 
-        SMALL_RING = "small_ring"
-        BALL = "ball"
-        TOWER_BASE = "tower_base"
+        score = approach_score(self._robot, [ball["pos"], ring["pos"] if ring is not None else None])
+        spawn = self._entities.get("ball", {}).get("spawn_pos")
+        frac = progress_frac(ball["pos"], spawn, base["pos"])
+        score += 0.2 * frac  # on top of the approach score
 
-        REACH_THRESHOLD = 0.15
-        TOUCH_THRESHOLD = 0.05
-        APPROACH_THRESHOLD = 0.4
+        if ring is not None:
+            ring_xy = float(np.linalg.norm(np.asarray(ring["pos"][:2], dtype=float) - np.asarray(base["pos"][:2])))
+            if ring_xy < 0.08 and float(ring["pos"][2]) >= float(base["bounds"][1][2]) - 0.02:
+                score = max(score, 0.5 + 0.15 * frac)
 
-        INITIAL_RING_POS = np.array([0.69, 0.08, 0.7704])
-        INITIAL_BALL_POS = np.array([0.34, 0.0, 0.773])
-        TOWER_BASE_POS = np.array([0.605, 0.0, 0.803])
+        if self._ball_on_top(base, ball):
+            score = max(score, at_goal_score(check_released(ball, self._robot)))
 
-        for name in [SMALL_RING, BALL, TOWER_BASE]:
-            if name not in objs_info:
-                score_t = torch.tensor(0.0, dtype=torch.float32, device=self._device)
-                return score_t, {"score": score_t}
-
-        def get_pos(name):
-            p = objs_info[name]["pos"]
-            return np.array([p[0], p[1], p[2]], dtype=float)
-
-        def get_bounds(name):
-            b = objs_info[name].get("bounds")
-            if b is None:
-                return None
-            return np.array(b, dtype=float)
-
-        def is_ring_on_tower():
-            ring_pos = get_pos(SMALL_RING)
-            base_pos = get_pos(TOWER_BASE)
-            base_bounds = get_bounds(TOWER_BASE)
-            if base_bounds is None:
-                return False
-            xy_dist = float(np.linalg.norm(ring_pos[:2] - base_pos[:2]))
-            base_top_z = float(base_bounds[1, 2])
-            ring_z = ring_pos[2]
-            return xy_dist < 0.08 and ring_z >= base_top_z - 0.02
-
-        def is_ball_on_tower():
-            ball_pos = get_pos(BALL)
-            base_pos = get_pos(TOWER_BASE)
-            base_bounds = get_bounds(TOWER_BASE)
-            if base_bounds is None:
-                return False
-            xy_dist = float(np.linalg.norm(ball_pos[:2] - base_pos[:2]))
-            base_top_z = float(base_bounds[1, 2])
-            ball_z = ball_pos[2]
-            v = objs_info[BALL].get("vel")
-            is_stable = True
-            if v is not None:
-                speed = float(np.linalg.norm(v))
-                is_stable = speed < 0.1
-            return xy_dist < 0.05 and ball_z > base_top_z + 0.01 and is_stable
-
-        right_ee_pos = self._robot.right_ee_pose[0, :3].cpu().numpy()
-        left_ee_pos = self._robot.left_ee_pose[0, :3].cpu().numpy()
-
-        ring_pos = get_pos(SMALL_RING)
-        dist_right_to_ring = float(np.linalg.norm(right_ee_pos - ring_pos))
-        dist_left_to_ring = float(np.linalg.norm(left_ee_pos - ring_pos))
-        min_dist_to_ring = min(dist_right_to_ring, dist_left_to_ring)
-
-        ring_score = 0.0
-        if is_ring_on_tower():
-            ring_score = 0.6
-        elif min_dist_to_ring <= TOUCH_THRESHOLD:
-            ring_displacement = float(np.linalg.norm(ring_pos - INITIAL_RING_POS))
-            ring_toward_tower = max(0.0, 1.0 - float(np.linalg.norm(ring_pos[:2] - TOWER_BASE_POS[:2])) / 0.3)
-            progress = min(1.0, (ring_displacement * 0.5 + ring_toward_tower * 0.5))
-            ring_score = 0.4 + progress * 0.2
-        elif min_dist_to_ring <= REACH_THRESHOLD:
-            reach_progress = 1.0 - (min_dist_to_ring - TOUCH_THRESHOLD) / (REACH_THRESHOLD - TOUCH_THRESHOLD)
-            reach_progress = max(0.0, min(1.0, reach_progress))
-            ring_score = 0.2 + reach_progress * 0.2
-        elif min_dist_to_ring < APPROACH_THRESHOLD:
-            approach_progress = 1.0 - (min_dist_to_ring - REACH_THRESHOLD) / (APPROACH_THRESHOLD - REACH_THRESHOLD)
-            approach_progress = max(0.0, min(1.0, approach_progress))
-            ring_score = approach_progress * 0.2
-        ring_score = min(0.6, ring_score)
-
-        ball_pos = get_pos(BALL)
-        dist_right_to_ball = float(np.linalg.norm(right_ee_pos - ball_pos))
-        dist_left_to_ball = float(np.linalg.norm(left_ee_pos - ball_pos))
-        min_dist_to_ball = min(dist_right_to_ball, dist_left_to_ball)
-
-        ball_score = 0.0
-        if is_ball_on_tower():
-            ball_score = 0.4
-        else:
-            ball_height_gain = max(0.0, ball_pos[2] - INITIAL_BALL_POS[2])
-            ball_toward_tower = max(0.0, 1.0 - float(np.linalg.norm(ball_pos[:2] - TOWER_BASE_POS[:2])) / 0.3)
-
-            if ball_height_gain > 0.02 or ball_toward_tower > 0.5:
-                height_progress = min(1.0, ball_height_gain / 0.08)
-                position_progress = ball_toward_tower
-                combined_progress = max(height_progress, position_progress)
-                ball_score = 0.2 + combined_progress * 0.2
-            elif min_dist_to_ball <= TOUCH_THRESHOLD:
-                ball_score = 0.2
-            elif min_dist_to_ball <= REACH_THRESHOLD:
-                reach_progress = 1.0 - (min_dist_to_ball - TOUCH_THRESHOLD) / (REACH_THRESHOLD - TOUCH_THRESHOLD)
-                reach_progress = max(0.0, min(1.0, reach_progress))
-                ball_score = reach_progress * 0.2
-            elif min_dist_to_ball < APPROACH_THRESHOLD:
-                approach_progress = 1.0 - (min_dist_to_ball - REACH_THRESHOLD) / (APPROACH_THRESHOLD - REACH_THRESHOLD)
-                approach_progress = max(0.0, min(1.0, approach_progress))
-                ball_score = approach_progress * 0.1
-
-        total_score = ring_score + ball_score
-        score_t = torch.tensor(total_score, dtype=torch.float32, device=self._device)
+        score_t = torch.tensor(score, dtype=torch.float32, device=self._device)
         return score_t, {"score": score_t}

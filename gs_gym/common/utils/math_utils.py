@@ -159,7 +159,7 @@ def quat_to_rot6d(quat: torch.Tensor) -> torch.Tensor:
     Uses the rot6d layout of the RoboWits datasets: the first two *rows* of the rotation
     matrix, flattened row-major -> [R00, R01, R02, R10, R11, R12]. Verified against
     converted_lerobot_0410/18 (same recordings, axis-angle) — note this is the transpose of
-    the column layout used by gs-core's ``RotationMatrix.to_rot6d``.
+    the column layout some rot6d implementations use.
 
     Args:
         quat: (*, 4) quaternion in wxyz format

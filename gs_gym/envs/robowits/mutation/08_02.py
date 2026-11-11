@@ -64,8 +64,8 @@ class RoundDoughSheetMut2Env(RoundDoughSheetEnv):
                 scale=0.9,
                 pos=(0.665, -0.18, 0.7948),
                 euler=(0.0, 0.0, 0.0),
-                fixed=True,
-                collision=False,
+                fixed=False,
+                collision=True,
             ),
             material=gs.materials.Rigid(
                 rho=450.0, friction=0.6, coup_friction=0.15, coup_softness=0.003, coup_restitution=0.0
@@ -81,8 +81,8 @@ class RoundDoughSheetMut2Env(RoundDoughSheetEnv):
                 scale=1.0,
                 pos=(0.668, -0.39, 0.778),
                 euler=(0.0, 0.0, 90.0),
-                fixed=True,
-                collision=False,
+                fixed=False,
+                collision=True,
             ),
             material=gs.materials.Rigid(
                 rho=650.0, friction=0.6, coup_friction=0.15, coup_softness=0.003, coup_restitution=0.0

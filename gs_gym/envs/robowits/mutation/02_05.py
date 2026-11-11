@@ -5,6 +5,7 @@ import genesis as gs
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups
+from gs_gym.envs.robowits.water_mug import add_water_mug
 
 RetrieveCubeEnv = _import("gs_gym.envs.robowits.02_retrieve_cube").RetrieveCubeEnv
 
@@ -27,7 +28,7 @@ class RetrieveCubeMut5Env(RetrieveCubeEnv):
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
-        return (("deep_narrow_container", "cube"), "target_area", ("cup", "water"), "teaspoon")
+        return (("deep_narrow_container", "cube"), "target_area", ("water_mug", "water"), "teaspoon")
 
     def _add_custom_entities(self) -> None:
         """Add custom entities using genesis APIs."""
@@ -44,27 +45,21 @@ class RetrieveCubeMut5Env(RetrieveCubeEnv):
                 pos=(0.56, 0.00, 0.76 + 0.1332 * 0.6),
                 euler=(0, 0, 0),
                 fixed=True,
-                collision=False,
+                collision=True,
             ),
             material=gs.materials.Rigid(rho=200.0),
             surface=gs.surfaces.Glass(color=(0.9, 0.9, 1.0), double_sided=True),
         )
         self._entities["deep_narrow_container"] = {"entity": _e}
-        # Code Block: cup
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Mesh(
-                coacd_options=coacd_options,
-                file=get_asset_path("blender_kit/3d998505-6bbb-4cc2-8359-c147ac531430/obj.glb", pattern_is_dir=False),
-                scale=1.1,
-                pos=(0.47, -0.15, 0.76 + (0.0918 * 1.1) / 2.0),
-                euler=(0, 0, 0),
-                fixed=True,
-                collision=True,
-            ),
-            material=gs.materials.Rigid(rho=200.0),
+        # Code Block: cup with its water (the shared water-filled mug, see water_mug.py)
+        add_water_mug(
+            self,
+            (0.47, -0.15),
+            0.0,
+            fixed=True,
             surface=gs.surfaces.Rough(double_sided=True),
+            coacd_options=coacd_options,
         )
-        self._entities["cup"] = {"entity": _e}
         # Code Block: target area
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
@@ -98,17 +93,3 @@ class RetrieveCubeMut5Env(RetrieveCubeEnv):
             surface=gs.surfaces.Rough(color=(0.8, 0.6, 0.4), double_sided=True),
         )
         self._entities["cube"] = {"entity": _e}
-        # Code Block: water
-        _e = self._scene.scene.add_entity(
-            gs.morphs.Cylinder(
-                pos=(0.47, -0.15, 0.76 + 0.055 / 2.0 + 0.02),
-                euler=(0, 0, 0),
-                radius=0.018,
-                height=0.055,
-                fixed=False,
-                collision=True,
-            ),
-            material=gs.materials.SPH.Liquid(rho=1000.0, stiffness=60000.0, exponent=7.0, mu=0.01, gamma=0.02),
-            surface=gs.surfaces.Default(color=(0.7, 0.85, 1.0), double_sided=True, vis_mode="recon"),
-        )
-        self._entities["water"] = {"entity": _e}

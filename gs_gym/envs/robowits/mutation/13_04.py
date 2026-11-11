@@ -11,6 +11,13 @@ CoverWithLidEnv = _import("gs_gym.envs.robowits.13_cover_with_lid").CoverWithLid
 
 @register_task("robowits/13_04-v0")
 class CoverWithLidMut4Env(CoverWithLidEnv):
+    """Pivot2 mutation of task 13 (CoverWithLid).
+
+    This requires reasoning about cross-sectional fit. Only the correctly sized circular lid will cover the
+    opening with minimal excess. The circular geometry and ring reference enable precise centering without
+    measurements.
+    """
+
     @property
     def placement_groups(self) -> PlacementGroups | None:
         """Define placement groups for random initialization."""
@@ -28,7 +35,7 @@ class CoverWithLidMut4Env(CoverWithLidEnv):
                 coacd_options=coacd_options,
                 file=get_asset_path("blender_kit/2cf9e625-d115-46a9-98af-c771663006db/obj.glb", pattern_is_dir=False),
                 scale=0.1212,
-                pos=(0.50, 0.00, 0.8454),
+                pos=(0.50, 0.00, 0.76 + 0.4119 * 0.1212),  # table top + mesh half-height * scale
                 euler=(0.0, 0.0, 0.0),
                 fixed=True,
                 collision=True,

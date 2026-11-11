@@ -25,6 +25,8 @@ class RetrieveRollEnv(RoboWitsEnv):
 
     Success criteria:
     - Roll overlaps target area by at least 50%
+    - Roll rests on the target area (its lowest point within CONTACT_Z_TOL of the pad's top), not above it
+    - Roll is released (utils.check_released) and still (utils.check_still)
     - Roll remains within table bounds
     """
 
@@ -34,6 +36,11 @@ class RetrieveRollEnv(RoboWitsEnv):
         return "Place the roll on the green target area."
 
     TABLE_Z = 0.76
+    # How far the roll's lowest collision point may sit above the target pad's top and still count as resting on it.
+    # The pad has no collision geometry, so this stands in for contact.
+    CONTACT_Z_TOL = 0.01
+    OVERLAP_MIN = 0.5  # share of the roll's footprint that must lie over the target
+    TABLE_XY = (0.21, 1.00, -0.69, 0.69)  # x_min, x_max, y_min, y_max
 
     def __init__(
         self,
@@ -121,166 +128,92 @@ class RetrieveRollEnv(RoboWitsEnv):
             "entity": roll,
         }
 
+    def _footprint(self, obj: dict) -> np.ndarray | None:
+        """An object's outline in the table plane: its convex hull, else its box's footprint."""
+        hull = obj.get("convex_hull_2d")
+        if hull is not None and len(hull) >= 3:
+            return np.asarray(hull, dtype=float)[:, :2]
+        bounds = obj.get("bounds")
+        if bounds is None:
+            return None
+        (xmin, ymin, _), (xmax, ymax, _) = np.asarray(bounds, dtype=float)
+        return np.array([[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]])
+
+    def _roll_overlap(self, roll: dict, target: dict) -> float:
+        """Share of the roll's footprint over the target; 0 if either footprint leaves the table."""
+        roll_fp, target_fp = self._footprint(roll), self._footprint(target)
+        if roll_fp is None or target_fp is None:
+            return 0.0
+        x_min, x_max, y_min, y_max = self.TABLE_XY
+        for fp in (roll_fp, target_fp):
+            if (
+                fp[:, 0].min() < x_min - 1e-3
+                or fp[:, 0].max() > x_max + 1e-3
+                or fp[:, 1].min() < y_min - 1e-3
+                or fp[:, 1].max() > y_max + 1e-3
+            ):
+                return 0.0
+        roll_area = _utils.polygon_area(roll_fp)
+        if roll_area <= 1e-9:
+            return 0.0
+        return _utils.intersection_area(roll_fp, target_fp) / roll_area
+
+    def _roll_on_pad(self, roll: dict, target: dict) -> bool:
+        """Whether the roll's lowest point is at the pad's top (the pad has no collision geometry)."""
+        roll_b, target_b = roll.get("bounds"), target.get("bounds")
+        if roll_b is None or target_b is None:
+            return False
+        return float(roll_b[0][2]) <= float(target_b[1][2]) + self.CONTACT_Z_TOL
+
+    def _roll_at_goal(self, roll: dict, target: dict) -> bool:
+        """The goal geometry: the roll lies on the pad, at least OVERLAP_MIN of its footprint over it."""
+        return self._roll_overlap(roll, target) >= self.OVERLAP_MIN and self._roll_on_pad(roll, target)
+
     def _check_success(self) -> torch.Tensor:
-        """Check if task is successful: roll on target area."""
-        objs_info = self.collect_objs_info()
-
-        TABLE_X_MIN, TABLE_X_MAX = 0.21, 1.00
-        TABLE_Y_MIN, TABLE_Y_MAX = -0.69, 0.69
-
-        def get_hull_xy(bounds, hull_2d):
-            if hull_2d is not None and len(hull_2d) >= 3:
-                return [(float(p[0]), float(p[1])) for p in hull_2d]
-            if bounds is None:
-                return None
-            xmin, ymin = float(bounds[0][0]), float(bounds[0][1])
-            xmax, ymax = float(bounds[1][0]), float(bounds[1][1])
-            return [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
-
-        def is_within_table_bounds(poly):
-            if poly is None:
-                return False
-            for x, y in poly:
-                if x < TABLE_X_MIN - 1e-3 or x > TABLE_X_MAX + 1e-3:
-                    return False
-                if y < TABLE_Y_MIN - 1e-3 or y > TABLE_Y_MAX + 1e-3:
-                    return False
-            return True
-
-        def polygon_area(poly):
-            if poly is None or len(poly) < 3:
-                return 0.0
-            n = len(poly)
-            area = 0.0
-            for i in range(n):
-                j = (i + 1) % n
-                area += poly[i][0] * poly[j][1]
-                area -= poly[j][0] * poly[i][1]
-            return abs(area) / 2.0
-
-        def compute_overlap_ratio(poly_a, poly_b):
-            inter_area = _utils.intersection_area(poly_a, poly_b)
-            a_area = polygon_area(poly_a)
-            if a_area <= 1e-9:
-                return 0.0
-            return inter_area / a_area
-
-        roll = objs_info.get("hollow_roll")
-        target = objs_info.get("green_target_area")
-
+        """Check if task is successful: roll lies on the target area, released and still."""
+        objs_info = self.collect_objs_info(["hollow_roll", "green_target_area"])
+        roll, target = objs_info.get("hollow_roll"), objs_info.get("green_target_area")
         if roll is None or target is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        roll_hull = get_hull_xy(roll.get("bounds"), roll.get("convex_hull_2d"))
-        target_hull = get_hull_xy(target.get("bounds"), target.get("convex_hull_2d"))
-
-        if roll_hull is None or target_hull is None:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        if not is_within_table_bounds(roll_hull):
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-        if not is_within_table_bounds(target_hull):
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        overlap = compute_overlap_ratio(roll_hull, target_hull)
-        return torch.tensor([overlap >= 0.5], dtype=torch.bool, device=self._device)
+        success = (
+            self._roll_at_goal(roll, target) and _utils.check_released(roll, self._robot) and _utils.check_still(roll)
+        )
+        return torch.tensor([success], dtype=torch.bool, device=self._device)
 
     def get_reward(self) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """Compute reward: 1.0 on success, else milestone progress in [0, 1)."""
-        success = self._check_success()
-        if success.item():
+        """Dense reward on the shared ladder (utils.STAGE_*), each stage a condition of the success check.
+
+        0 -> 0.2     a gripper approaches the rod or the roll
+        0.2 -> 0.5   (added to the approach score) the roll moves toward the target, from where it spawned
+        0.5 -> 0.65  the roll's footprint covers the target, up to OVERLAP_MIN (at any height)
+        0.7          the goal geometry is met (lying on the pad, overlapping) but the roll is still held
+        0.85         the goal geometry is met and the roll released, but still moving
+        1.0          success
+        """
+        if self._check_success().item():
             reward = torch.ones(1, dtype=torch.float32, device=self._device)
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        roll = objs_info.get("hollow_roll")
-        target = objs_info.get("green_target_area")
-        rod = objs_info.get("long_rod")
-
+        roll, target, rod = objs_info.get("hollow_roll"), objs_info.get("green_target_area"), objs_info.get("long_rod")
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
-        if roll is None or target is None or rod is None:
+        if roll is None or target is None or roll.get("pos") is None or target.get("pos") is None:
             return zero, {"success": zero}
 
-        def get_pos(obj):
-            p = obj.get("pos")
-            return np.array(p, dtype=float) if p is not None else None
+        score = _utils.approach_score(self._robot, [roll["pos"], rod.get("pos") if rod is not None else None])
 
-        roll_pos = get_pos(roll)
-        target_pos = get_pos(target)
-        rod_pos = get_pos(rod)
-        if roll_pos is None or target_pos is None or rod_pos is None:
-            return zero, {"success": zero}
+        # Progress ends once the roll's center is within half the target's width of the target's center
+        target_fp = self._footprint(target)
+        done_dist = 0.5 * float(min(np.ptp(target_fp[:, 0]), np.ptp(target_fp[:, 1]))) if target_fp is not None else 0.0
+        spawn = self._entities.get("hollow_roll", {}).get("spawn_pos")
+        frac = _utils.progress_frac(roll["pos"], spawn, target["pos"], done_dist=done_dist)
+        score += 0.3 * frac  # on top of the approach score
 
-        # EE proximity to rod (stage 1: 0 → 0.2)
-        APPROACH, REACH, TOUCH = 0.3, 0.15, 0.05
-        right_ee = self._robot.right_ee_pose[0, :3].cpu().numpy()
-        left_ee = self._robot.left_ee_pose[0, :3].cpu().numpy()
-        min_dist_rod = min(float(np.linalg.norm(right_ee - rod_pos)), float(np.linalg.norm(left_ee - rod_pos)))
-        if min_dist_rod <= TOUCH:
-            ee_score = 0.2
-        elif min_dist_rod <= REACH:
-            ee_score = 0.1 + 0.1 * (REACH - min_dist_rod) / (REACH - TOUCH)
-        elif min_dist_rod < APPROACH:
-            ee_score = 0.1 * (APPROACH - min_dist_rod) / (APPROACH - REACH)
-        else:
-            ee_score = 0.0
+        overlap = self._roll_overlap(roll, target)
+        if overlap > 0.0:
+            score = max(score, 0.5 + (_utils.STAGE_PROGRESS - 0.5) * min(1.0, overlap / self.OVERLAP_MIN))
+        if self._roll_at_goal(roll, target):
+            score = max(score, _utils.at_goal_score(_utils.check_released(roll, self._robot)))
 
-        # Object footprints, shared by stages 2 and 3.
-        def get_hull_xy(obj):
-            hull = obj.get("convex_hull_2d")
-            if hull is not None and len(hull) >= 3:
-                return [(float(p[0]), float(p[1])) for p in hull]
-            b = obj.get("bounds")
-            if b is None:
-                return None
-            xmin, ymin = float(b[0][0]), float(b[0][1])
-            xmax, ymax = float(b[1][0]), float(b[1][1])
-            return [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
-
-        roll_hull = get_hull_xy(roll)
-        target_hull = get_hull_xy(target)
-
-        # Stage 2 saturates once the roll centre reaches the target footprint;
-        # stage 3 takes over from there.
-        contact_dist = 0.0
-        if target_hull is not None:
-            th = np.array(target_hull, dtype=float)
-            contact_dist = 0.5 * float(min(np.ptp(th[:, 0]), np.ptp(th[:, 1])))
-
-        # Roll XY distance to target center (stage 2: 0.2 → 0.8), measured as
-        # progress from where the roll spawned this episode. The roll spawns
-        # 0.3-1.2 m out depending on randomization, so an absolute distance
-        # scale would hand an idle policy most of the stage for free.
-        roll_info = self._entities.get("hollow_roll", {})
-        spawn = roll_info.get("spawn_pos")
-        if spawn is None:
-            spawn = roll_info.get("initial_pos")
-        spawn_dist = None
-        if spawn is not None:
-            spawn_dist = float(np.linalg.norm(np.asarray(spawn, dtype=float)[:2] - target_pos[:2]))
-
-        dist_to_target = float(np.linalg.norm(roll_pos[:2] - target_pos[:2]))
-        if spawn_dist is not None and spawn_dist > contact_dist + 1e-6:
-            dist_frac = (spawn_dist - dist_to_target) / (spawn_dist - contact_dist)
-        else:
-            dist_frac = 1.0 if dist_to_target <= contact_dist else 0.0
-        dist_score = 0.2 + 0.6 * max(0.0, min(1.0, dist_frac))
-
-        # Overlap ratio with target (stage 3: 0.8 → 1.0), gated on real overlap
-        # so a roll that never reaches the target cannot claim the 0.8 floor.
-        overlap_ratio = 0.0
-        if roll_hull is not None and target_hull is not None:
-            inter = _utils.intersection_area(
-                np.array(roll_hull, dtype=float),
-                np.array(target_hull, dtype=float),
-            )
-            roll_area = _utils.polygon_area(np.array(roll_hull, dtype=float))
-            if roll_area > 1e-9:
-                overlap_ratio = inter / roll_area
-        overlap_score = 0.0
-        if overlap_ratio > 0.0:
-            overlap_score = 0.8 + 0.2 * min(1.0, overlap_ratio / 0.5)
-
-        score = max(ee_score, dist_score, overlap_score)
         score_t = torch.tensor(score, dtype=torch.float32, device=self._device)
         return score_t, {"success": zero}

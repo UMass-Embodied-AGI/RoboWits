@@ -12,7 +12,7 @@ import torch
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held
+from gs_gym.envs.robowits.utils import check_released, check_still
 
 
 @register_task("robowits/29-balance-board-v0")
@@ -203,17 +203,10 @@ class BalanceBoardEnv(RoboWitsEnv):
         if not angle_close_to_horizontal(euler, thr_deg=12.0):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        vel = board.get("vel")
-        if vel is None:
+        if not check_still(board):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        vel = np.array(vel).astype(float)
-        if np.linalg.norm(vel) > 0.05:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-        if abs(vel[2]) > 0.04:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        if check_being_held(board, self._robot):
+        if not check_released(board, self._robot):
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         return torch.tensor([True], dtype=torch.bool, device=self._device)
@@ -277,7 +270,7 @@ class BalanceBoardEnv(RoboWitsEnv):
 
         # Board angle close to horizontal (stage 4: 0.8 → 1.0), gated on lift + align + not held
         angle_score = 0.0
-        not_held = not check_being_held(board, self._robot)
+        not_held = check_released(board, self._robot)
         if lift_frac > 0.5 and align_frac > 0.3 and not_held:
             euler = board.get("euler")
             if euler is not None:

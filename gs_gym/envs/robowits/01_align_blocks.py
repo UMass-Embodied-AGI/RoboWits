@@ -9,20 +9,19 @@ import torch
 from gs_gym.common.utils import get_asset_path
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import RoboWitsEnv
+from gs_gym.envs.robowits.utils import check_released
 
 
 @register_task("robowits/01-align-blocks-v0")
 class AlignBlocksEnv(RoboWitsEnv):
     """Align 3 cubes in a straight line using a ruler.
 
-    Task success criteria:
-    1. All objects still on table (not fallen)
-    2. All cubes at table surface height
-    3. Three cubes are collinear within 1cm tolerance
-    4. Minimum 3cm separation between furthest cubes
-
-    Observation: Dict with "agent_pos" (16D robot state) and "pixels" (camera images)
-    Action: 18-DOF joint positions
+    Success criteria:
+    - Every object's center stays within the table's xy bounds (3 cm margin)
+    - Every cube rests on the table (AABB bottom within 2.5 cm of the table surface)
+    - The two furthest-apart cube centers are at least 3 cm apart
+    - The third cube's center is within 1 cm of the line through those two (xy)
+    - No cube is being held by either gripper
     """
 
     @property
@@ -38,10 +37,6 @@ class AlignBlocksEnv(RoboWitsEnv):
     # Ruler configuration
     RULER_SIZE = (0.30, 0.03, 0.005)  # 30cm x 3cm x 0.5cm (fallback box)
     RULER_SCALE = 1.2  # Scale for mesh asset
-
-    # Success thresholds
-    COLLINEARITY_TOLERANCE = 0.01  # 1cm
-    MIN_SPREAD = 0.03  # 3cm minimum separation
 
     def __init__(
         self,
@@ -219,6 +214,8 @@ class AlignBlocksEnv(RoboWitsEnv):
 
         for n in cube_names:
             if not on_table_surface(n, z_tol=0.025):
+                return torch.tensor([False], dtype=torch.bool, device=self._device)
+            if not check_released(objs_info[n], self._robot):
                 return torch.tensor([False], dtype=torch.bool, device=self._device)
 
         pts = [get_xy(n) for n in cube_names]

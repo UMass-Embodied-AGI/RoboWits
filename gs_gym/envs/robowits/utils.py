@@ -189,33 +189,33 @@ def require_objs(env, objs_info: dict, names: list[str]) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def check_being_held(
+def check_released(
     obj_info: dict,
     robot,
     tol: float = 0.03,
 ) -> bool:
-    """Check if an object is being held by either gripper.
+    """Check that neither gripper is holding an object.
 
-    An object is considered "held" if either gripper's end-effector position
-    is within the object's axis-aligned bounding box, expanded by a tolerance
-    to account for the gripper tip not being perfectly centered inside the object.
+    The object counts as held while either gripper's end-effector position is within the object's axis-aligned
+    bounding box, expanded by a tolerance to account for the gripper tip not being perfectly centered inside the
+    object. Stateless, like check_still.
 
     Args:
         obj_info: Object info dict from collect_objs_info(), must contain 'bounds' key
             with shape (2, 3) as [[xmin, ymin, zmin], [xmax, ymax, zmax]].
-        robot: BimanualMarvinRobot instance with right_ee_pose and left_ee_pose attributes.
+        robot: BimanualRobot instance with right_ee_pose and left_ee_pose attributes.
         tol: Tolerance in meters to expand the bounding box on each side.
 
     Returns:
-        True if the object is being held by either gripper, False otherwise.
+        True if neither gripper holds the object (also when 'bounds' is missing or malformed), False otherwise.
     """
     bounds = obj_info.get("bounds")
     if bounds is None:
-        return False
+        return True
 
     bounds = np.array(bounds)
     if bounds.shape != (2, 3):
-        return False
+        return True
 
     xmin, ymin, zmin = bounds[0] - tol
     xmax, ymax, zmax = bounds[1] + tol
@@ -226,10 +226,130 @@ def check_being_held(
     def point_in_bounds(pos):
         return (xmin <= pos[0] <= xmax) and (ymin <= pos[1] <= ymax) and (zmin <= pos[2] <= zmax)
 
-    right_holding = point_in_bounds(right_ee_pos)
-    left_holding = point_in_bounds(left_ee_pos)
+    return not (point_in_bounds(right_ee_pos) or point_in_bounds(left_ee_pos))
 
-    return right_holding or left_holding
+
+def check_upright(obj_info: dict, max_tilt_deg: float = 15.0) -> bool:
+    """Check that an object stands upright: its body z-axis within max_tilt_deg of world up.
+
+    Exact for any orientation (computed from the quaternion, not from roll and pitch separately), and stateless
+    like check_released and check_still. "Upright" is the object's spawn orientation, so it applies to objects
+    whose upright pose is their identity rotation.
+
+    Args:
+        obj_info: Rigid object info dict from collect_objs_info(), with 'quat' (4,) in wxyz order.
+        max_tilt_deg: Largest angle between the body z-axis and world z, in degrees.
+
+    Returns:
+        True if the tilt is within max_tilt_deg; False if 'quat' is missing.
+    """
+    quat = obj_info.get("quat")
+    if quat is None:
+        return False
+    w, x, y, z = (float(q) for q in np.asarray(quat, dtype=float).reshape(4))
+    n2 = w * w + x * x + y * y + z * z
+    if n2 <= 0.0:
+        return False
+    # World z component of the body z-axis, for a possibly non-unit quaternion
+    up_z = 1.0 - 2.0 * (x * x + y * y) / n2
+    return float(np.degrees(np.arccos(np.clip(up_z, -1.0, 1.0)))) <= max_tilt_deg
+
+
+# Stillness limits shared by every task's check_still call. Resting objects measure <= 0.005 m/s; task 04's
+# card sliding off or tumbling measured 0.15-0.42 m/s.
+STILL_LIN_SPEED = 0.02  # m/s
+STILL_ANG_SPEED = 0.5  # rad/s
+
+
+def check_still(
+    obj_info: dict,
+    lin_tol: float = STILL_LIN_SPEED,
+    ang_tol: float = STILL_ANG_SPEED,
+) -> bool:
+    """Check if a rigid object is still: neither moving nor turning.
+
+    Stateless, like check_released: it reads only the current velocities, so it cannot tell an object at rest
+    from one that is motionless for an instant (just released on a perch it will roll off, or at the top of a
+    bounce).
+
+    Args:
+        obj_info: Rigid object info dict from collect_objs_info(), with 'vel' (3,) in m/s and 'ang' (3,) in
+            rad/s. Snapshots recorded before 'ang' existed (eval objs_info.json) are checked on 'vel' alone.
+        lin_tol: Largest linear speed, m/s.
+        ang_tol: Largest angular speed, rad/s.
+
+    Returns:
+        True if both speeds are within their limits; False if 'vel' is missing.
+    """
+    vel = obj_info.get("vel")
+    if vel is None:
+        return False
+    vel = np.asarray(vel, dtype=float)
+    if vel.shape != (3,):
+        raise ValueError(f"check_still takes a rigid object's (3,) velocity, got shape {vel.shape}")
+    if float(np.linalg.norm(vel)) > lin_tol:
+        return False
+    ang = obj_info.get("ang")
+    return ang is None or float(np.linalg.norm(np.asarray(ang, dtype=float))) <= ang_tol
+
+
+# ---------------------------------------------------------------------------
+# Dense-reward stages
+# ---------------------------------------------------------------------------
+
+# Tasks whose dense reward follows their success check share one ladder, so a score means the same thing in each:
+#   0 -> STAGE_APPROACH          a gripper approaches the object
+#   STAGE_APPROACH -> STAGE_PROGRESS   the object moves toward the goal (added to the approach score, so an
+#                                      untouched object at spawn scores 0), then partly meets the goal geometry
+#   STAGE_HELD_AT_GOAL           the goal geometry is met but the object is still held
+#   STAGE_MOVING_AT_GOAL         the goal geometry is met, released, but the object is still moving
+#   1.0                          success
+STAGE_APPROACH = 0.2
+STAGE_PROGRESS = 0.65
+STAGE_HELD_AT_GOAL = 0.7
+STAGE_MOVING_AT_GOAL = 0.85
+
+
+def approach_score(robot, points, approach: float = 0.3, reach: float = 0.15, touch: float = 0.05) -> float:
+    """First rung of the ladder: 0 -> STAGE_APPROACH as the nearer gripper closes on the nearest of `points`.
+
+    Args:
+        robot: BimanualRobot instance with right_ee_pose and left_ee_pose attributes.
+        points: World positions (3,) of the objects worth approaching; None entries are skipped.
+        approach, reach, touch: Distances (m) at which the score starts, reaches half, and reaches full.
+    """
+    ees = [robot.right_ee_pose[0, :3].cpu().numpy(), robot.left_ee_pose[0, :3].cpu().numpy()]
+    pts = [np.asarray(p, dtype=float)[:3] for p in points if p is not None]
+    if not pts:
+        return 0.0
+    d = min(float(np.linalg.norm(ee - p)) for ee in ees for p in pts)
+    if d <= touch:
+        return STAGE_APPROACH
+    if d <= reach:
+        return STAGE_APPROACH * (0.5 + 0.5 * (reach - d) / (reach - touch))
+    if d < approach:
+        return STAGE_APPROACH * 0.5 * (approach - d) / (approach - reach)
+    return 0.0
+
+
+def progress_frac(pos, spawn, goal, done_dist: float = 0.0, fallback_scale: float = 0.3) -> float:
+    """Fraction of the way, in the table plane, from where the object spawned to within done_dist of goal.
+
+    0 at the spawn distance (or farther), 1 within done_dist. Measured from this episode's spawn position, so an
+    idle policy scores 0 wherever randomization put the object. Without a spawn position (e.g. a replayed
+    snapshot), the distance is scored on a fixed fallback_scale instead.
+    """
+    d = float(np.linalg.norm(np.asarray(pos, dtype=float)[:2] - np.asarray(goal, dtype=float)[:2]))
+    if spawn is not None:
+        d0 = float(np.linalg.norm(np.asarray(spawn, dtype=float)[:2] - np.asarray(goal, dtype=float)[:2]))
+        if d0 > done_dist + 1e-6:
+            return float(np.clip((d0 - d) / (d0 - done_dist), 0.0, 1.0))
+    return float(np.clip(1.0 - (d - done_dist) / fallback_scale, 0.0, 1.0))
+
+
+def at_goal_score(released: bool) -> float:
+    """Score for a met goal geometry while success is still pending: held, or released but still moving."""
+    return STAGE_MOVING_AT_GOAL if released else STAGE_HELD_AT_GOAL
 
 
 # ---------------------------------------------------------------------------

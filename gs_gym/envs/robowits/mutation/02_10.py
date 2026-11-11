@@ -42,7 +42,7 @@ class RetrieveCubeMut10Env(RetrieveCubeEnv):
         # Code Block: cube
         _e = self._scene.scene.add_entity(
             gs.morphs.Box(
-                pos=(0.55, 0.0, 0.90), euler=(0.0, 0.0, 0.0), size=(0.015, 0.015, 0.015), fixed=False, collision=True
+                pos=(0.55, 0.0, 0.79), euler=(0.0, 0.0, 0.0), size=(0.015, 0.015, 0.015), fixed=False, collision=True
             ),
             material=gs.materials.Rigid(rho=300.0),
             surface=gs.surfaces.Rough(color=(0.8, 0.6, 0.4), double_sided=True),

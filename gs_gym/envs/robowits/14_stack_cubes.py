@@ -11,21 +11,28 @@ import torch
 
 from gs_gym.envs.registry import register_task
 from gs_gym.envs.robowits.robowits import PlacementGroups, RoboWitsEnv
-from gs_gym.envs.robowits.utils import check_being_held
+from gs_gym.envs.robowits.utils import (
+    STAGE_PROGRESS,
+    approach_score,
+    at_goal_score,
+    check_released,
+    check_still,
+    progress_frac,
+)
 
 
 @register_task("robowits/14-stack-cubes-v0")
 class StackCubesEnv(RoboWitsEnv):
     """Build a stable two-layer stack so the red cube is above the green marker.
 
-    Two base cubes must be placed touching each other, and the red apex cube
-    must be placed on top of them, centered over the green target marker.
+    The check tests only the goal, not how it is reached: the gray cubes are there to raise the red cube, but
+    any support that holds it above the marker counts (one gray cube, both side by side, ...).
 
     Success criteria:
-    - Base cubes are on the table and touching with >= 50% face overlap
-    - Apex cube sits on top of base cubes
-    - Apex cube center is within tolerance of target marker
-    - Apex-target overlap >= 20%
+    - Red cube's bottom is at least RAISE_MIN above the marker's top (raised off the table, not resting on the marker)
+    - Red cube's center is within TARGET_XY_TOL of the marker's center in the table plane
+    - Red cube is not held by either gripper
+    - Red cube is still (utils.check_still)
     """
 
     @property
@@ -35,6 +42,13 @@ class StackCubesEnv(RoboWitsEnv):
 
     TABLE_Z = 0.76
     CUBE_SIZE = (0.05, 0.05, 0.05)
+
+    # The red cube counts as raised when its bottom is this far above the marker's top. Resting on a gray cube
+    # (4.5 cm in 14_01, 5 cm elsewhere) clears it with margin; resting on the table, the marker or a thin
+    # distractor (coaster 8 mm, sunglasses 1.5 cm) does not.
+    RAISE_MIN = 0.035
+    # Red cube center to marker center, in the table plane.
+    TARGET_XY_TOL = 0.025
 
     def __init__(
         self,
@@ -137,115 +151,82 @@ class StackCubesEnv(RoboWitsEnv):
             "entity": apex,
         }
 
-    def _check_success(self) -> torch.Tensor:
-        """Check if task is successful."""
-        objs_info = self.collect_objs_info()
+    def _apex_raised(self, apex: dict, target: dict) -> bool:
+        """Whether the red cube's bottom is at least RAISE_MIN above the marker's top."""
+        return float(apex["bounds"][0][2]) >= float(target["bounds"][1][2]) + self.RAISE_MIN
 
-        b1 = objs_info.get("base_cube_1")
-        b2 = objs_info.get("base_cube_2")
+    def _apex_xy_dist(self, apex: dict, target: dict) -> float:
+        """Red cube center to marker center, in the table plane."""
+        return float(np.linalg.norm(np.asarray(apex["pos"][:2], dtype=float) - np.asarray(target["pos"][:2])))
+
+    def _check_success(self) -> torch.Tensor:
+        """Check if task is successful: the red cube rests, raised and released, above the green marker."""
+        objs_info = self.collect_objs_info(["apex_cube", "apex_target"])
         apex = objs_info.get("apex_cube")
         target = objs_info.get("apex_target")
-
-        if any(x is None for x in [b1, b2, apex, target]):
+        if apex is None or target is None:
             return torch.tensor([False], dtype=torch.bool, device=self._device)
 
-        def is_on_table_surface(bounds, table_z, tolerance=0.015):
-            z_min = float(bounds[0][2])
-            return abs(z_min - table_z) <= tolerance
-
-        def objects_touching(b1, b2, tolerance=0.01):
-            return all(not (b1[1][i] + tolerance < b2[0][i] or b2[1][i] + tolerance < b1[0][i]) for i in range(3))
-
-        if not is_on_table_surface(b1["bounds"], self.TABLE_Z):
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-        if not is_on_table_surface(b2["bounds"], self.TABLE_Z):
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        if not objects_touching(b1["bounds"], b2["bounds"], tolerance=0.01):
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        apex_bottom = float(apex["bounds"][0, 2])
-        b1_top = float(b1["bounds"][1, 2])
-        if apex_bottom < b1_top - 0.01:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        apex_pos = apex["pos"][:2]
-        target_pos = target["pos"][:2]
-        dist = np.sqrt((apex_pos[0] - target_pos[0]) ** 2 + (apex_pos[1] - target_pos[1]) ** 2)
-        if dist > 0.025:
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        if check_being_held(apex, self._robot):
-            return torch.tensor([False], dtype=torch.bool, device=self._device)
-
-        return torch.tensor([True], dtype=torch.bool, device=self._device)
+        success = (
+            self._apex_raised(apex, target)
+            and self._apex_xy_dist(apex, target) <= self.TARGET_XY_TOL
+            and check_released(apex, self._robot)
+            and check_still(apex)
+        )
+        return torch.tensor([success], dtype=torch.bool, device=self._device)
 
     def get_reward(self) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """Compute reward: 1.0 on success, else milestone progress in [0, 1)."""
-        success = self._check_success()
-        if success.item():
+        """Dense reward on the shared ladder (utils.STAGE_*), each stage a condition of the success check.
+
+        Like the success check, the stages reward the goal, not a particular way of building the stack.
+        0 -> 0.2     a gripper approaches a cube
+        0.2 -> 0.4   (added to the approach score) the red cube moves toward the marker, from where it spawned
+        0.45         a support stands under the marker (any object whose top clears RAISE_MIN, its footprint over
+                     the marker's center)
+        0.5 -> 0.65  the red cube is raised but not yet centered, scored by its distance to the marker
+        0.7          the goal geometry is met (raised and centered) but the red cube is still held
+        0.85         the goal geometry is met and the red cube released, but still moving
+        1.0          success
+        """
+        if self._check_success().item():
             reward = torch.ones(1, dtype=torch.float32, device=self._device)
             return reward, {"success": reward}
 
         objs_info = self.collect_objs_info()
-        b1 = objs_info.get("base_cube_1")
-        b2 = objs_info.get("base_cube_2")
         apex = objs_info.get("apex_cube")
         target = objs_info.get("apex_target")
 
         zero = torch.zeros(1, dtype=torch.float32, device=self._device)
-        if any(x is None for x in [b1, b2, apex, target]):
-            return zero, {"success": zero}
-        if any(x.get("bounds") is None for x in [b1, b2, apex]):
+        if apex is None or target is None or apex.get("bounds") is None or target.get("bounds") is None:
             return zero, {"success": zero}
 
-        b1_bounds = np.array(b1["bounds"], dtype=float)
-        b2_bounds = np.array(b2["bounds"], dtype=float)
-        apex_bounds = np.array(apex["bounds"], dtype=float)
-        b1_pos = np.array(b1["pos"][:3], dtype=float)
-        b2_pos = np.array(b2["pos"][:3], dtype=float)
-        apex_pos = np.array(apex["pos"][:3], dtype=float)
-        target_pos = np.array(target["pos"][:3], dtype=float)
+        cubes = [objs_info[n]["pos"] for n in ("base_cube_1", "base_cube_2", "apex_cube") if n in objs_info]
+        score = approach_score(self._robot, cubes)
 
-        # EE proximity to any cube (0 → 0.2)
-        APPROACH, REACH, TOUCH = 0.3, 0.15, 0.05
-        right_ee = self._robot.right_ee_pose[0, :3].cpu().numpy()
-        left_ee = self._robot.left_ee_pose[0, :3].cpu().numpy()
-        min_dist = min(
-            min(float(np.linalg.norm(right_ee - p)), float(np.linalg.norm(left_ee - p)))
-            for p in [b1_pos, b2_pos, apex_pos]
-        )
-        if min_dist <= TOUCH:
-            ee_score = 0.2
-        elif min_dist <= REACH:
-            ee_score = 0.1 + 0.1 * (REACH - min_dist) / (REACH - TOUCH)
-        elif min_dist < APPROACH:
-            ee_score = 0.1 * (APPROACH - min_dist) / (APPROACH - REACH)
-        else:
-            ee_score = 0.0
+        spawn = self._entities.get("apex_cube", {}).get("spawn_pos")
+        frac = progress_frac(apex["pos"], spawn, target["pos"], done_dist=self.TARGET_XY_TOL)
+        score += 0.2 * frac  # on top of the approach score
 
-        # Base cubes approaching each other (0.2 → 0.5)
-        base_dist = float(np.linalg.norm(b1_pos[:2] - b2_pos[:2]))
-        approach_frac = max(0.0, min(1.0, 1.0 - base_dist / 0.3))
-        base_approach_score = 0.2 + 0.3 * approach_frac
+        # A support under the marker, whatever it is built from (within 1 cm, so two cubes meeting over it count)
+        target_top = float(target["bounds"][1][2])
+        tx, ty = (float(v) for v in target["pos"][:2])
+        for name, info in objs_info.items():
+            if name in ("apex_cube", "apex_target", "table") or info.get("bounds") is None:
+                continue
+            b = np.asarray(info["bounds"], dtype=float)
+            if b.shape != (2, 3) or b[1, 2] < target_top + self.RAISE_MIN:
+                continue
+            if b[0, 0] - 0.01 <= tx <= b[1, 0] + 0.01 and b[0, 1] - 0.01 <= ty <= b[1, 1] + 0.01:
+                score = max(score, 0.45)
+                break
 
-        # Base cubes touching and near target (0.5 → 0.7)
-        bases_touching = all(
-            not (b1_bounds[1, i] + 0.01 < b2_bounds[0, i] or b2_bounds[1, i] + 0.01 < b1_bounds[0, i]) for i in range(3)
-        )
-        midpoint = (b1_pos[:2] + b2_pos[:2]) / 2.0
-        target_dist = float(np.linalg.norm(midpoint - target_pos[:2]))
-        target_frac = max(0.0, min(1.0, 1.0 - target_dist / 0.2))
-        base_placed_score = 0.5 + 0.2 * target_frac if bases_touching else 0.0
+        if self._apex_raised(apex, target):
+            dist = self._apex_xy_dist(apex, target)
+            if dist <= self.TARGET_XY_TOL:
+                score = max(score, at_goal_score(check_released(apex, self._robot)))
+            else:
+                align = max(0.0, 1.0 - (dist - self.TARGET_XY_TOL) / 0.1)
+                score = max(score, 0.5 + (STAGE_PROGRESS - 0.5) * align)
 
-        # Apex on top of base cubes and aligned over target (0.7 → 1.0)
-        b1_top = b1_bounds[1, 2]
-        apex_bottom = apex_bounds[0, 2]
-        apex_on_top = apex_bottom >= b1_top - 0.01 and bases_touching
-        apex_xy_dist = float(np.linalg.norm(apex_pos[:2] - target_pos[:2]))
-        apex_align_frac = max(0.0, min(1.0, 1.0 - apex_xy_dist / 0.1))
-        apex_score = (0.7 + 0.3 * apex_align_frac) if apex_on_top else 0.0
-
-        score = max(ee_score, base_approach_score, base_placed_score, apex_score)
         score_t = torch.tensor(score, dtype=torch.float32, device=self._device)
         return score_t, {"success": zero}

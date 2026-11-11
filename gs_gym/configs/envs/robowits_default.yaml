@@ -10,7 +10,11 @@ scene:
   position: [0.0, 0.0, 0.0]
   gravity: [0.0, 0.0, -9.81]
   dt: 0.0333
-  substeps: 4
+  # 16 substeps let Genesis's rigid contact time constant (clamped to >= 2 substeps) drop to 5 ms. At 4 substeps it
+  # was 16.7 ms, soft enough that grasped objects sank into the fingers: 5.8 mm through task 04's 1.7 mm card and
+  # 20 mm into 09_01's cup. Tasks that set their own substeps (SPH/MPM, 26, 16_06) keep their count.
+  substeps: 16
+  constraint_timeconst: 0.005
   show_viewer: false
   show_fps: false
   ground_friction: 1.0

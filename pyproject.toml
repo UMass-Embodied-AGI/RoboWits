@@ -23,21 +23,22 @@ classifiers = [
     "Topic :: Games/Entertainment :: Simulation",
 ]
 dependencies = [
-    "genesis-world==1.3.1",
-    "gs-nyx>=0.1.4",  # Nyx path tracer core (Linux x86_64 / Windows wheels only)
-    "gs-nyx-plugin>=0.1.5",  # Genesis integration: NyxCameraOptions sensor
+    "genesis-world",  # v1.3.1 + fixes on our fork (source defined in [tool.uv.sources])
+    "gs-nyx>=0.1.4; sys_platform != 'darwin'",  # Nyx path tracer core (Linux x86_64 / Windows wheels only)
+    "gs-nyx-plugin>=0.1.5; sys_platform != 'darwin'",  # Genesis integration: NyxCameraOptions sensor
     "torch>=2.8.0",
     "numpy>=1.24.0",
     "gymnasium>=1.0.0",
     "pydantic>=2.0.0",
     "pyyaml>=6.0.0",
-    "importlib-resources>=5.0.0",
-    "h5py>=2.2.6",
     "pin-pink>=3.3.0",  # Combined pinocchio + pink for IK
     "qpsolvers[quadprog]>=4.7.0",  # Required by pink
     "proxsuite==0.7.2",  # Faster QP solver for pink IK (proxqp backend); 0.7.2.post1 has no cp311 wheel
     "lerobot",  # Local lerobot package (source defined in [tool.uv.sources])
     "transformers @ git+https://github.com/huggingface/transformers.git@fix/lerobot_openpi",  # Required for pi0/pi05
+    "openai>=1.0.0",  # VLM baselines (scripts/robowits/eval/vlm/)
+    "langsmith>=0.3.0",  # VLM baseline tracing (scripts/robowits/eval/vlm/)
+    "anthropic>=1.0",
 ]
 
 [tool.uv]
@@ -54,6 +55,7 @@ explicit = true
 
 [tool.uv.sources]
 lerobot = { path = "third_party/lerobot", editable = true }
+genesis-world = { path = "third_party/genesis", editable = true }
 torch = [
   { index = "pytorch-cu129", marker = "sys_platform == 'linux'" },
 ]
@@ -99,12 +101,6 @@ ignore = [
     "ARG001", # unused function argument
     "ARG002", # unused method argument
 ]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG001", "ARG002"]
-"scripts/debug_*.py" = ["E402", "B905", "B007"]
-"scripts/eval_repeat_trial.py" = ["E402"]
-"scripts/debug_pipeline_compare.py" = ["E402"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["gs_gym"]
